@@ -1,9 +1,10 @@
-'use client'
+"use client"
 
-import { motion } from 'framer-motion'
-import { Heart, MapPin, HeartPulse, Verified, ThumbsUp } from 'lucide-react'
+import { motion } from "framer-motion"
+import { Heart, Verified, HeartPulse, MapPin, ThumbsUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
-interface SuccessStory {
+interface Story {
   couple: string
   image: string
   story: string
@@ -13,40 +14,11 @@ interface SuccessStory {
   tags: string[]
 }
 
-export function SuccessStoriesSection() {
-  const stories: SuccessStory[] = [
-    {
-      couple: "Sarah & Michael",
-      image: "/placeholder.svg?height=300&width=300",
-      story:
-        "We matched based on our shared love for blockchain technology. Six months later, we're building our first dApp together!",
-      location: "New York, USA",
-      time: "Together for 6 months",
-      rotation: "-3deg",
-      tags: ["Tech", "Blockchain", "Startups"]
-    },
-    {
-      couple: "Aisha & David",
-      image: "/placeholder.svg?height=300&width=300",
-      story:
-        "The privacy features gave me confidence to be myself. We connected instantly and are now planning our wedding!",
-      location: "London, UK",
-      time: "Engaged after 1 year",
-      rotation: "2deg",
-      tags: ["Privacy", "Travel", "Art"]
-    },
-    {
-      couple: "Carlos & Jun",
-      image: "/placeholder.svg?height=300&width=300",
-      story:
-        "We were matched based on our values and interests. The AI knew we were perfect for each other before we did!",
-      location: "Singapore",
-      time: "Together for 8 months",
-      rotation: "-2deg",
-      tags: ["AI", "Gaming", "Food"]
-    },
-  ]
+interface StoriesSectionProps {
+  stories: Story[]
+}
 
+export default function StoriesSection({ stories }: StoriesSectionProps) {
   return (
     <section className="py-20 relative overflow-hidden bg-white">
       <div className="absolute inset-0 bg-pattern opacity-5"></div>
@@ -89,7 +61,7 @@ export function SuccessStoriesSection() {
               viewport={{ once: true }}
               className="relative group"
             >
-              <div className="polaroid-frame" style={{ "--rotation": story.rotation } as React.CSSProperties}>
+              <div className="polaroid-frame" style={{ transform: `rotate(${story.rotation})` }}>
                 <div className="relative bg-white rounded-lg overflow-hidden h-full hover:shadow-md transition-shadow">
                   <div className="relative h-48 overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9]/10 to-[#EC4899]/10"></div>
@@ -173,9 +145,20 @@ export function SuccessStoriesSection() {
             </motion.div>
           ))}
         </div>
+
+        <div className="flex justify-center">
+          <Button className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl">
+            <span className="flex items-center">
+              Share Your Story
+              <svg className="ml-2 h-4 w-4" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+          </Button>
+        </div>
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#EC4899]/30 to-transparent"></div>
     </section>
   )
-}
+} 

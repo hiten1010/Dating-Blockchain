@@ -1,14 +1,8 @@
-'use client'
+"use client"
 
-import { Heart } from 'lucide-react'
+import { Heart } from "lucide-react"
 
-interface LoadingScreenProps {
-  isLoading: boolean
-}
-
-export function LoadingScreen({ isLoading }: LoadingScreenProps) {
-  if (!isLoading) return null
-  
+export default function LoadingScreen() {
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-[#F9F5FF] to-[#FFF0F5] flex items-center justify-center z-50">
       <div className="text-center">
@@ -24,4 +18,4 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
       </div>
     </div>
   )
-}
+} 

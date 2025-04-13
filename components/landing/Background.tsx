@@ -1,32 +1,32 @@
-'use client'
+"use client"
 
-import { useEffect } from 'react'
-import { Heart } from 'lucide-react'
+import { useEffect } from "react"
+import { Heart } from "lucide-react"
 
-export function AnimatedBackground() {
+export default function Background() {
   // Add cursor trail effect
   useEffect(() => {
     const createCursorTrail = (e: MouseEvent) => {
-      const trail = document.createElement('div');
-      trail.className = 'cursor-trail';
-      trail.style.left = `${e.pageX}px`;
-      trail.style.top = `${e.pageY}px`;
-      document.body.appendChild(trail);
+      const trail = document.createElement('div')
+      trail.className = 'cursor-trail'
+      trail.style.left = `${e.pageX}px`
+      trail.style.top = `${e.pageY}px`
+      document.body.appendChild(trail)
       
       setTimeout(() => {
-        trail.style.opacity = '0';
+        trail.style.opacity = '0'
         setTimeout(() => {
-          document.body.removeChild(trail);
-        }, 500);
-      }, 500);
-    };
+          document.body.removeChild(trail)
+        }, 500)
+      }, 500)
+    }
 
-    window.addEventListener('mousemove', createCursorTrail);
+    window.addEventListener('mousemove', createCursorTrail)
     
     return () => {
-      window.removeEventListener('mousemove', createCursorTrail);
-    };
-  }, []);
+      window.removeEventListener('mousemove', createCursorTrail)
+    }
+  }, [])
 
   return (
     <div className="fixed inset-0 z-0">
@@ -40,7 +40,7 @@ export function AnimatedBackground() {
 
       {/* Animated cursor elements */}
       <div className="path-container">
-        {/* Flowing elegant hearts */}
+        {/* Flowing elegant hearts - keep these */}
         <div className="absolute top-[15%] animate-flowing">
           <div className="elegant-heart glow scale-150"></div>
         </div>
@@ -54,7 +54,7 @@ export function AnimatedBackground() {
           <div className="elegant-heart glow scale-75"></div>
         </div>
 
-        {/* Flowing outlined hearts */}
+        {/* Flowing outlined hearts - keep these */}
         <div className="absolute top-[25%] animate-flowing-reverse">
           <div className="outlined-heart glow-purple scale-150"></div>
         </div>
@@ -65,7 +65,7 @@ export function AnimatedBackground() {
           <div className="outlined-heart glow-purple scale-125"></div>
         </div>
 
-        {/* Barbie pink cursors */}
+        {/* Barbie pink cursors - new elements */}
         <div className="cursor-element style-1" style={{ top: '10%', left: '20%' }}></div>
         <div className="cursor-element style-2" style={{ top: '30%', right: '15%' }}></div>
         <div className="cursor-element style-3" style={{ top: '50%', left: '30%' }}></div>
@@ -121,4 +121,4 @@ export function AnimatedBackground() {
       </div>
     </div>
   )
-}
+} 

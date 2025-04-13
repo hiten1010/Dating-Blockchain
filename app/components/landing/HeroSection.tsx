@@ -1,9 +1,9 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Shield, ArrowRight, Wallet, Heart, UserCircle, Lock, Fingerprint, HeartPulse, Flame, SparklesIcon, Wine, Camera, Plane, Coffee, Bike, Music } from "lucide-react"
+import { Heart, Shield, ArrowRight, Wallet, UserCircle, Lock, Fingerprint } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { useRef, RefObject } from "react"
 
 interface HeroSectionProps {
   sectionRef: (el: HTMLElement | null) => void
@@ -131,13 +131,9 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {[
-                            <Coffee key="coffee" className="h-3 w-3" />,
-                            <Music key="music" className="h-3 w-3" />,
-                            <Bike key="bike" className="h-3 w-3" />,
-                          ].map((icon, i) => (
+                          {[1, 2, 3].map((i) => (
                             <div key={i} className="bg-[#F9F5FF] p-1 rounded-full">
-                              {icon}
+                              <div className="h-3 w-3" />
                             </div>
                           ))}
                         </div>
@@ -180,13 +176,9 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1">
-                          {[
-                            <Wine key="wine" className="h-3 w-3" />,
-                            <Camera key="camera" className="h-3 w-3" />,
-                            <Plane key="plane" className="h-3 w-3" />,
-                          ].map((icon, i) => (
+                          {[1, 2, 3].map((i) => (
                             <div key={i} className="bg-[#F9F5FF] p-1 rounded-full">
-                              {icon}
+                              <div className="h-3 w-3" />
                             </div>
                           ))}
                         </div>
@@ -208,21 +200,6 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                       </div>
                     </div>
 
-                    {/* New dating-themed floating elements */}
-                    <div className="absolute top-[15%] right-[25%] animate-float-medium">
-                      <div className="flex items-center gap-2 bg-white rounded-full shadow-lg px-4 py-2 border border-[#E5E7EB]">
-                        <HeartPulse className="h-4 w-4 text-[#EC4899]" />
-                        <span className="text-xs font-medium">95% Match</span>
-                      </div>
-                    </div>
-
-                    <div className="absolute bottom-[45%] left-[35%] animate-float">
-                      <div className="flex items-center gap-2 bg-white rounded-full shadow-lg px-4 py-2 border border-[#E5E7EB]">
-                        <Flame className="h-4 w-4 text-[#F97316]" />
-                        <span className="text-xs font-medium">Popular Profile</span>
-                      </div>
-                    </div>
-
                     {/* Central element */}
                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24">
                       <div className="relative w-full h-full">
@@ -230,12 +207,6 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="relative">
                             <Heart className="h-10 w-10 text-[#EC4899]" />
-                            <div className="absolute -top-1 -right-1">
-                              <div className="relative">
-                                <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-75"></div>
-                                <SparklesIcon className="h-4 w-4 text-[#F59E0B] relative" />
-                              </div>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -247,8 +218,6 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                       <path d="M280 140 L200 175" stroke="url(#gradient1)" strokeWidth="1" strokeDasharray="5 3" />
                       <path d="M120 250 L200 175" stroke="url(#gradient1)" strokeWidth="1" strokeDasharray="5 3" />
                       <path d="M280 230 L200 175" stroke="url(#gradient1)" strokeWidth="1" strokeDasharray="5 3" />
-                      <path d="M180 80 L200 175" stroke="url(#gradient1)" strokeWidth="1" strokeDasharray="5 3" />
-                      <path d="M240 280 L200 175" stroke="url(#gradient1)" strokeWidth="1" strokeDasharray="5 3" />
 
                       {/* Animated heart pulse along the connection lines */}
                       <circle r="3" fill="#EC4899">
@@ -256,12 +225,6 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                       </circle>
                       <circle r="3" fill="#6D28D9">
                         <animateMotion path="M280 140 L200 175" dur="4s" repeatCount="indefinite" />
-                      </circle>
-                      <circle r="3" fill="#EC4899">
-                        <animateMotion path="M120 250 L200 175" dur="3.5s" repeatCount="indefinite" />
-                      </circle>
-                      <circle r="3" fill="#EC4899">
-                        <animateMotion path="M120 250 L200 175" dur="3.5s" repeatCount="indefinite" />
                       </circle>
 
                       <defs>
@@ -271,17 +234,6 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                         </linearGradient>
                       </defs>
                     </svg>
-
-                    {/* Floating hearts */}
-                    <div className="absolute top-[10%] right-[10%] animate-float-slow opacity-20">
-                      <Heart className="h-6 w-6 text-[#EC4899]" />
-                    </div>
-                    <div className="absolute bottom-[20%] right-[30%] animate-float opacity-20">
-                      <Heart className="h-4 w-4 text-[#EC4899]" />
-                    </div>
-                    <div className="absolute top-[30%] left-[30%] animate-float-medium opacity-20">
-                      <Heart className="h-5 w-5 text-[#EC4899]" />
-                    </div>
                   </div>
                 </div>
               </div>
