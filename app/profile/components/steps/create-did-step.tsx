@@ -3,23 +3,22 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Fingerprint, AlertCircleIcon, CheckCircle2Icon, InfoIcon } from "lucide-react"
+import { Fingerprint, CheckCircle2Icon, InfoIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useToast } from "@/components/ui/use-toast"
 
 interface CreateDIDStepProps {
   onDidCreated: (did: string) => void
 }
 
 export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
+  const { toast } = useToast()
   const [isCreating, setIsCreating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [didId, setDidId] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
 
   const createDID = async () => {
     setIsCreating(true)
-    setError(null)
     setProgress(0)
 
     try {
@@ -47,7 +46,12 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
         onDidCreated(randomDid)
       }, 1000)
     } catch (err) {
-      setError("Failed to create DID. Please try again.")
+      toast({
+        variant: "destructive",
+        title: "DID Creation Failed",
+        description: "Failed to create DID. Please try again.",
+        duration: 3000, // 3 seconds
+      })
     } finally {
       setIsCreating(false)
     }
@@ -70,13 +74,6 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
             </p>
           </div>
         </div>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircleIcon className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
 
         <div className="flex flex-col items-center justify-center space-y-4">
           <div className="h-20 w-20 rounded-full bg-purple-100 flex items-center justify-center">

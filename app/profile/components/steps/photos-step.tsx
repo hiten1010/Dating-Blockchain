@@ -3,9 +3,9 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircleIcon, InfoIcon, UploadIcon, XIcon, StarIcon } from "lucide-react"
+import { InfoIcon, UploadIcon, XIcon, StarIcon } from "lucide-react"
 import type { ProfileData } from "../profile-creation-flow"
+import { useToast } from "@/components/ui/use-toast"
 
 interface PhotosStepProps {
   profileData: ProfileData
@@ -14,12 +14,17 @@ interface PhotosStepProps {
 }
 
 export default function PhotosStep({ profileData, updateProfileData, onContinue }: PhotosStepProps) {
-  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
   const [uploading, setUploading] = useState(false)
 
   const handleContinue = () => {
     if (profileData.photos.length === 0) {
-      setError("Please upload at least one photo")
+      toast({
+        variant: "destructive",
+        title: "Required Field Missing",
+        description: "Please upload at least one photo to continue",
+        duration: 3000, // 3 seconds
+      })
       return
     }
 
@@ -28,7 +33,6 @@ export default function PhotosStep({ profileData, updateProfileData, onContinue 
 
   const simulatePhotoUpload = () => {
     setUploading(true)
-    setError(null)
 
     // Simulate upload delay
     setTimeout(() => {
@@ -81,13 +85,6 @@ export default function PhotosStep({ profileData, updateProfileData, onContinue 
             </p>
           </div>
         </div>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircleIcon className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
 
         <div className="flex flex-col md:flex-row gap-6">
           <div className="w-full md:w-2/3">

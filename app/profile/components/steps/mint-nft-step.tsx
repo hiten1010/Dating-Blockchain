@@ -5,9 +5,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
-  AlertCircleIcon,
   InfoIcon,
   CheckCircle2Icon,
   ArrowLeftIcon,
@@ -19,6 +17,7 @@ import {
 import type { ProfileData } from "../profile-creation-flow"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/components/ui/use-toast"
 
 interface MintNFTStepProps {
   profileData: ProfileData
@@ -28,7 +27,7 @@ interface MintNFTStepProps {
 }
 
 export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit }: MintNFTStepProps) {
-  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
   const [isMinting, setIsMinting] = useState(false)
   const [mintProgress, setMintProgress] = useState(0)
   const [activeTab, setActiveTab] = useState("summary")
@@ -38,41 +37,10 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const nftCardRef = useRef<HTMLDivElement>(null)
-  const [nftHovered, setNftHovered] = useState(false)
   const [mintingStage, setMintingStage] = useState<string | null>(null)
   const [cardAnimationFrame, setCardAnimationFrame] = useState(0)
 
-  // Handle 3D rotation effect for NFT card
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect()
-      setMousePosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      })
-    }
-
-    if (nftCardRef.current && nftHovered) {
-      const rect = nftCardRef.current.getBoundingClientRect()
-      const x = (e.clientX - rect.left) / rect.width
-      const y = (e.clientY - rect.top) / rect.height
-
-      const rotateX = (y - 0.5) * 20 // -10 to 10 degrees
-      const rotateY = (x - 0.5) * 20 // -10 to 10 degrees
-
-      nftCardRef.current.style.transform = `perspective(1000px) rotateX(${-rotateX}deg) rotateY(${rotateY}deg)`
-    }
-  }
-
-  // Reset card rotation when not hovering
-  const handleMouseLeave = () => {
-    if (nftCardRef.current) {
-      nftCardRef.current.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg)"
-    }
-    setNftHovered(false)
-  }
-
-  // Animate card border
+  // Keep only the card border animation
   useEffect(() => {
     const animateCard = () => {
       setCardAnimationFrame((prev) => (prev + 1) % 360)
@@ -85,7 +53,6 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
 
   const handleMint = async () => {
     setIsMinting(true)
-    setError(null)
     setMintProgress(0)
     setShowParticles(true)
     setMintingStage("preparing")
@@ -122,7 +89,12 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
         onMintSuccess(tokenId, txHash)
       }, 2000)
     } catch (err) {
-      setError("Failed to mint NFT. Please try again.")
+      toast({
+        variant: "destructive",
+        title: "NFT Minting Failed",
+        description: "Failed to mint NFT. Please try again.",
+        duration: 3000, // 3 seconds
+      })
       setIsMinting(false)
       setShowParticles(false)
     }
@@ -218,15 +190,15 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
 
   return (
     <>
-      <CardHeader className="text-center">
-        <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent">
+      <CardHeader className="text-center py-3">
+        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent">
           Mint Your Profile as an NFT
         </CardTitle>
-        <CardDescription className="text-lg mt-2">
+        <CardDescription className="text-sm mt-1">
           Review your profile and create your NFT on the Cheqd protocol
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-8 relative overflow-hidden" ref={containerRef} onMouseMove={handleMouseMove}>
+      <CardContent className="space-y-3 px-3 relative" ref={containerRef}>
         {/* Particle canvas for minting animation */}
         <canvas
           ref={canvasRef}
@@ -234,28 +206,21 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
           style={{ opacity: showParticles ? 1 : 0, transition: "opacity 0.5s ease" }}
         />
 
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl border border-purple-100 shadow-sm flex items-start space-x-3">
-          <InfoIcon className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-xl border border-purple-100 shadow-sm flex items-start space-x-3">
+          <InfoIcon className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Once minted, your profile becomes tamper-proof on the Cheqd protocol. You'll own your profile as an NFT in
               your wallet. Sensitive data is stored securely off-chain via Verida.
             </p>
           </div>
         </div>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircleIcon className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="relative z-20">
           <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-purple-100 to-pink-100 p-1 rounded-xl">
             <TabsTrigger
               value="summary"
-              className={`rounded-lg transition-all duration-300 ${
+              className={`rounded-lg transition-all duration-300 text-sm ${
                 activeTab === "summary"
                   ? "bg-white shadow-md text-purple-700 font-medium"
                   : "bg-transparent text-purple-600/70"
@@ -265,7 +230,7 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
             </TabsTrigger>
             <TabsTrigger
               value="data"
-              className={`rounded-lg transition-all duration-300 ${
+              className={`rounded-lg transition-all duration-300 text-sm ${
                 activeTab === "data"
                   ? "bg-white shadow-md text-purple-700 font-medium"
                   : "bg-transparent text-purple-600/70"
@@ -275,155 +240,155 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="summary" className="pt-6 relative">
-            <div className="flex flex-col md:flex-row gap-8">
-              {/* Enhanced 3D NFT Card Preview */}
-              <div className="w-full md:w-1/2">
-                <div
-                  ref={nftCardRef}
-                  className="relative w-full max-w-md mx-auto aspect-[3/4] rounded-2xl overflow-hidden transition-all duration-300 ease-out"
-                  style={{
-                    transformStyle: "preserve-3d",
-                    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.2), 0 0 30px rgba(138, 43, 226, 0.2)",
-                  }}
-                  onMouseEnter={() => setNftHovered(true)}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  {/* Animated border */}
-                  <div
-                    className="absolute -inset-0.5 rounded-2xl z-0"
+          <TabsContent value="summary" className="pt-3 relative">
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* NFT Card Preview with space for expansion */}
+              <div className="w-full md:w-5/12 flex justify-center">
+                <div className="relative w-full h-[400px] max-w-[260px] flex items-center justify-center" style={{ perspective: '1000px' }}>
+                  {/* Background glow effect */}
+                  <div 
+                    className="absolute inset-0 rounded-2xl blur-xl opacity-50"
                     style={{
-                      background: `linear-gradient(${cardAnimationFrame}deg, rgba(138, 43, 226, 0.8), rgba(233, 30, 99, 0.8), rgba(156, 39, 176, 0.8), rgba(138, 43, 226, 0.8))`,
-                      backgroundSize: "400% 400%",
-                      animation: "gradient 3s ease infinite",
+                      background: 'radial-gradient(circle at center, rgba(168, 85, 247, 0.3), rgba(217, 70, 239, 0.3), rgba(236, 72, 153, 0.2))',
+                      transform: 'translateZ(-10px)'
                     }}
                   ></div>
-
-                  {/* Card background with enhanced holographic effect */}
-                  <div className="absolute inset-0 z-10 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900"></div>
-
-                  {/* Holographic pattern */}
+                  
                   <div
-                    className="absolute inset-0 z-20 opacity-40"
+                    ref={nftCardRef}
+                    className="absolute w-full max-w-[250px] aspect-[3/4] rounded-xl overflow-hidden z-10 origin-center"
                     style={{
-                      backgroundImage: `
-                      linear-gradient(125deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 30%, rgba(255,255,255,0) 60%),
-                      radial-gradient(circle at 40% 60%, rgba(255,0,255,0.5), transparent 50%),
-                      radial-gradient(circle at 60% 30%, rgba(0,255,255,0.5), transparent 50%)
-                    `,
-                      backgroundSize: "200% 200%, 100% 100%, 100% 100%",
-                      backgroundPosition: `${mousePosition.x / 5}% ${mousePosition.y / 5}%`,
-                      transitionProperty: "background-position",
-                      transitionDuration: "0.1s",
-                      transitionTimingFunction: "ease-out",
+                      boxShadow: "0 25px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(138, 43, 226, 0.4)",
+                      transform: "scale(1.15)",
                     }}
-                  ></div>
+                  >
+                    {/* Animated border */}
+                    <div
+                      className="absolute -inset-0.5 rounded-xl z-0"
+                      style={{
+                        background: `linear-gradient(${cardAnimationFrame}deg, rgba(138, 43, 226, 0.8), rgba(233, 30, 99, 0.8), rgba(156, 39, 176, 0.8), rgba(138, 43, 226, 0.8))`,
+                        backgroundSize: "400% 400%",
+                        animation: "gradient 3s ease infinite",
+                      }}
+                    ></div>
 
-                  {/* Premium card texture */}
-                  <div
-                    className="absolute inset-0 z-30 opacity-10"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fillOpacity='0.1' fillRule='evenodd'/%3E%3C/svg%3E")`,
-                      backgroundSize: "100px 100px",
-                    }}
-                  ></div>
+                    {/* Card background with enhanced holographic effect */}
+                    <div className="absolute inset-0 z-10 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900"></div>
 
-                  {/* Premium card content */}
-                  <div className="absolute inset-0 p-6 flex flex-col z-40" style={{ transform: "translateZ(20px)" }}>
-                    {/* NFT Badge */}
-                    <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-400 to-amber-600 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-lg">
-                      <Star className="h-4 w-4 text-white" />
-                      <span className="text-white text-xs font-bold tracking-wider">NFT PROFILE</span>
-                    </div>
+                    {/* Holographic pattern */}
+                    <div
+                      className="absolute inset-0 z-20 opacity-40"
+                      style={{
+                        backgroundImage: `
+                        linear-gradient(125deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 30%, rgba(255,255,255,0) 60%),
+                        radial-gradient(circle at 40% 60%, rgba(255,0,255,0.5), transparent 50%),
+                        radial-gradient(circle at 60% 30%, rgba(0,255,255,0.5), transparent 50%)
+                      `,
+                        backgroundSize: "200% 200%, 100% 100%, 100% 100%"
+                      }}
+                    ></div>
 
-                    {/* Profile header */}
-                    <div className="flex items-center gap-4 mt-8 mb-4">
-                      <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-white/80 shadow-lg">
-                        {profileData.photos.length > 0 ? (
-                          <img
-                            src={profileData.photos[profileData.primaryPhotoIndex] || "/placeholder.svg"}
-                            alt="Primary profile photo"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center">
-                            <span className="text-white font-bold text-xl">
-                              {profileData.displayName ? profileData.displayName.charAt(0).toUpperCase() : "?"}
-                            </span>
-                          </div>
-                        )}
+                    {/* Premium card texture */}
+                    <div
+                      className="absolute inset-0 z-30 opacity-10"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fillOpacity='0.1' fillRule='evenodd'/%3E%3C/svg%3E")`,
+                        backgroundSize: "100px 100px",
+                      }}
+                    ></div>
+
+                    {/* Premium card content - more compact */}
+                    <div className="absolute inset-0 p-3 flex flex-col z-40">
+                      {/* NFT Badge */}
+                      <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-amber-600 rounded-lg px-1.5 py-0.5 flex items-center gap-1 shadow-lg">
+                        <Star className="h-2.5 w-2.5 text-white" />
+                        <span className="text-white text-[10px] font-bold tracking-wider">NFT PROFILE</span>
                       </div>
 
-                      <div>
-                        <h3 className="text-xl font-bold text-white drop-shadow-md">
-                          {profileData.displayName || "Your Name"}
-                        </h3>
-                        <p className="text-white/90">
-                          {profileData.age} • {profileData.location || "No location"}
+                      {/* Profile header */}
+                      <div className="flex items-center gap-2 mt-5 mb-1">
+                        <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-white/80 shadow-lg">
+                          {profileData.photos.length > 0 ? (
+                            <img
+                              src={profileData.photos[profileData.primaryPhotoIndex] || "/placeholder.svg"}
+                              alt="Primary profile photo"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center">
+                              <span className="text-white font-bold text-lg">
+                                {profileData.displayName ? profileData.displayName.charAt(0).toUpperCase() : "?"}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <h3 className="text-base font-bold text-white drop-shadow-md">
+                            {profileData.displayName || "Your Name"}
+                          </h3>
+                          <p className="text-white/90 text-xs">
+                            {profileData.age} • {profileData.location || "No location"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator className="bg-white/30 my-1" />
+
+                      {/* Bio */}
+                      <div className="mb-1.5">
+                        <h4 className="text-white/90 font-medium mb-0.5 text-[10px]">Bio</h4>
+                        <p className="text-white/80 text-[10px] line-clamp-2 bg-white/10 p-1.5 rounded-lg backdrop-blur-sm">
+                          {profileData.bio || "No bio provided"}
                         </p>
                       </div>
-                    </div>
 
-                    <Separator className="bg-white/30 my-3" />
+                      {/* Interests */}
+                      <div className="mb-1.5">
+                        <h4 className="text-white/90 font-medium mb-0.5 text-[10px]">Interests</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {profileData.interests.slice(0, 4).map((interest) => (
+                            <div
+                              key={interest}
+                              className="bg-white/20 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[8px] font-medium shadow-sm"
+                            >
+                              {interest}
+                            </div>
+                          ))}
+                          {profileData.interests.length > 4 && (
+                            <div className="bg-white/20 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[8px] font-medium shadow-sm">
+                              +{profileData.interests.length - 4} more
+                            </div>
+                          )}
+                          {profileData.interests.length === 0 && (
+                            <p className="text-white/50 text-[9px] italic">No interests added</p>
+                          )}
+                        </div>
+                      </div>
 
-                    {/* Bio */}
-                    <div className="mb-4">
-                      <h4 className="text-white/90 font-medium mb-1 text-sm">Bio</h4>
-                      <p className="text-white/80 text-sm line-clamp-3 bg-white/10 p-2 rounded-lg backdrop-blur-sm">
-                        {profileData.bio || "No bio provided"}
-                      </p>
-                    </div>
+                      {/* Security Badge */}
+                      <div className="mt-auto flex justify-between items-end">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-1.5 py-0.5 flex items-center gap-1">
+                          <Shield className="h-2.5 w-2.5 text-white/80" />
+                          <span className="text-white/90 text-[9px]">Secured by Cheqd</span>
+                        </div>
 
-                    {/* Interests */}
-                    <div className="mb-4">
-                      <h4 className="text-white/90 font-medium mb-1 text-sm">Interests</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {profileData.interests.map((interest) => (
-                          <div
-                            key={interest}
-                            className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm"
-                          >
-                            {interest}
+                        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-1.5 py-0.5">
+                          <div className="text-[9px] text-white/90 font-mono">
+                            {didId.substring(0, 4)}...{didId.substring(didId.length - 4)}
                           </div>
-                        ))}
-                        {profileData.interests.length === 0 && (
-                          <p className="text-white/50 text-xs italic">No interests added</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Security Badge */}
-                    <div className="mt-auto flex justify-between items-end">
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-                        <Shield className="h-4 w-4 text-white/80" />
-                        <span className="text-white/90 text-xs">Secured by Cheqd</span>
-                      </div>
-
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                        <div className="text-xs text-white/90 font-mono">
-                          {didId.substring(0, 6)}...{didId.substring(didId.length - 4)}
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  {/* Enhanced shine effect */}
-                  <div
-                    className="absolute inset-0 z-50 opacity-0 transition-opacity duration-300"
-                    style={{
-                      opacity: nftHovered ? 0.2 : 0,
-                      transform: `rotate(${mousePosition.x / 5}deg)`,
-                      backgroundImage: "linear-gradient(to tr, transparent, white, transparent)",
-                    }}
-                  ></div>
                 </div>
               </div>
 
-              {/* Profile photos and details */}
-              <div className="w-full md:w-1/2 space-y-6">
+              {/* Profile photos and details - adjusted width */}
+              <div className="w-full md:w-7/12 space-y-2">
                 <div>
-                  <h4 className="font-medium mb-2 text-purple-700">Your Photos</h4>
-                  <div className="grid grid-cols-3 gap-2">
+                  <h4 className="font-medium mb-1 text-xs text-purple-700">Your Photos</h4>
+                  <div className="grid grid-cols-4 gap-1">
                     {profileData.photos.map((photo, index) => (
                       <div
                         key={index}
@@ -439,7 +404,7 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
                       </div>
                     ))}
                     {profileData.photos.length === 0 && (
-                      <div className="col-span-3 bg-gray-100 rounded-md p-4 text-center text-gray-500">
+                      <div className="col-span-4 bg-gray-100 rounded-md p-2 text-center text-gray-500 text-xs">
                         No photos added
                       </div>
                     )}
@@ -447,23 +412,23 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
                 </div>
 
                 <div>
-                  <h4 className="font-medium mb-2 text-purple-700">Profile Details</h4>
-                  <div className="bg-purple-50 p-4 rounded-lg space-y-3">
+                  <h4 className="font-medium mb-1 text-xs text-purple-700">Profile Details</h4>
+                  <div className="bg-purple-50 p-2 rounded-lg space-y-1">
                     <div className="flex justify-between">
-                      <span className="text-sm text-purple-700">Display Name:</span>
-                      <span className="text-sm font-medium">{profileData.displayName || "Not set"}</span>
+                      <span className="text-xs text-purple-700">Display Name:</span>
+                      <span className="text-xs font-medium">{profileData.displayName || "Not set"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-purple-700">Age:</span>
-                      <span className="text-sm font-medium">{profileData.age || "Not set"}</span>
+                      <span className="text-xs text-purple-700">Age:</span>
+                      <span className="text-xs font-medium">{profileData.age || "Not set"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-purple-700">Location:</span>
-                      <span className="text-sm font-medium">{profileData.location || "Not set"}</span>
+                      <span className="text-xs text-purple-700">Location:</span>
+                      <span className="text-xs font-medium">{profileData.location || "Not set"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-purple-700">Relationship Goal:</span>
-                      <span className="text-sm font-medium">{profileData.relationshipGoals || "Not set"}</span>
+                      <span className="text-xs text-purple-700">Relationship Goal:</span>
+                      <span className="text-xs font-medium">{profileData.relationshipGoals || "Not set"}</span>
                     </div>
                   </div>
                 </div>
@@ -471,22 +436,22 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
             </div>
           </TabsContent>
 
-          <TabsContent value="data" className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TabsContent value="data" className="pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="relative">
-                <div className="absolute -inset-4 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
-                <div className="relative bg-white p-6 rounded-2xl border border-purple-100 shadow-md">
-                  <h4 className="font-medium text-center mb-6 text-purple-700">On-Chain Data (Public)</h4>
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
+                <div className="relative bg-white p-2.5 rounded-xl border border-purple-100 shadow-md">
+                  <h4 className="font-medium text-center mb-2 text-xs text-purple-700">On-Chain Data (Public)</h4>
 
-                  <div className="space-y-3">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <h5 className="font-medium text-sm">Public Information</h5>
-                      <div className="h-6 w-6 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 flex items-center justify-center">
-                        <UnlockIcon className="h-3 w-3 text-white" />
+                      <h5 className="font-medium text-xs">Public Information</h5>
+                      <div className="h-4 w-4 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 flex items-center justify-center">
+                        <UnlockIcon className="h-2 w-2 text-white" />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {[
                         { name: "Display Name", value: profileData.displayName || "Not set" },
                         {
@@ -505,9 +470,9 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
                       ].map((item, index) => (
                         <div key={index} className="relative group overflow-hidden">
                           <div className="absolute inset-0 bg-gradient-to-r from-amber-100 to-amber-200 rounded-lg transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-                          <div className="relative flex items-center justify-between p-3 bg-amber-50 rounded-lg z-10">
-                            <span className="text-sm">{item.name}</span>
-                            <span className="text-xs font-mono bg-white/80 px-2 py-0.5 rounded">{item.value}</span>
+                          <div className="relative flex items-center justify-between p-2 bg-amber-50 rounded-lg z-10">
+                            <span className="text-xs">{item.name}</span>
+                            <span className="text-xs font-mono bg-white/80 px-1.5 py-0.5 rounded">{item.value}</span>
                           </div>
                         </div>
                       ))}
@@ -517,19 +482,19 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
               </div>
 
               <div className="relative">
-                <div className="absolute -inset-4 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
-                <div className="relative bg-white p-6 rounded-2xl border border-purple-100 shadow-md">
-                  <h4 className="font-medium text-center mb-6 text-purple-700">Off-Chain Data (Private)</h4>
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
+                <div className="relative bg-white p-2.5 rounded-xl border border-purple-100 shadow-md">
+                  <h4 className="font-medium text-center mb-2 text-xs text-purple-700">Off-Chain Data (Private)</h4>
 
-                  <div className="space-y-3">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <h5 className="font-medium text-sm">Private Information</h5>
-                      <div className="h-6 w-6 rounded-full bg-gradient-to-r from-green-400 to-green-500 flex items-center justify-center">
-                        <LockIcon className="h-3 w-3 text-white" />
+                      <h5 className="font-medium text-xs">Private Information</h5>
+                      <div className="h-4 w-4 rounded-full bg-gradient-to-r from-green-400 to-green-500 flex items-center justify-center">
+                        <LockIcon className="h-2 w-2 text-white" />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {[
                         { name: "Age", value: profileData.age || "Not set" },
                         { name: "Location", value: profileData.location || "Not set" },
@@ -545,15 +510,15 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
                       ].map((item, index) => (
                         <div key={index} className="relative group overflow-hidden">
                           <div className="absolute inset-0 bg-gradient-to-r from-green-100 to-green-200 rounded-lg transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-                          <div className="relative flex items-center justify-between p-3 bg-green-50 rounded-lg z-10">
-                            <span className="text-sm">{item.name}</span>
-                            <span className="text-xs font-mono bg-white/80 px-2 py-0.5 rounded">{item.value}</span>
+                          <div className="relative flex items-center justify-between p-2 bg-green-50 rounded-lg z-10">
+                            <span className="text-xs">{item.name}</span>
+                            <span className="text-xs font-mono bg-white/80 px-1.5 py-0.5 rounded">{item.value}</span>
                           </div>
                         </div>
                       ))}
                     </div>
 
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-[10px] text-muted-foreground mt-1">
                       Private data is encrypted and stored via Verida. You control who can access it.
                     </p>
                   </div>
@@ -565,14 +530,14 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
 
         {isMinting && (
           <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
-            <div className="relative bg-white p-6 rounded-2xl border border-purple-100 shadow-md">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-purple-700">Minting your NFT profile</h4>
-                <span className="text-sm font-medium text-pink-600">{mintProgress}%</span>
+            <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
+            <div className="relative bg-white p-2.5 rounded-xl border border-purple-100 shadow-md">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-medium text-xs text-purple-700">Minting your NFT profile</h4>
+                <span className="text-xs font-medium text-pink-600">{mintProgress}%</span>
               </div>
 
-              <div className="relative h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div className="relative h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-300 ease-out"
                   style={{ width: `${mintProgress}%` }}
@@ -589,7 +554,7 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
                 ></div>
               </div>
 
-              <div className="mt-6 grid grid-cols-4 gap-2">
+              <div className="mt-2 grid grid-cols-4 gap-1">
                 {[
                   { stage: "preparing", label: "Preparing Data", icon: "📋" },
                   { stage: "metadata", label: "Creating Metadata", icon: "🔗" },
@@ -598,22 +563,22 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
                 ].map((step, index) => (
                   <div
                     key={index}
-                    className={`relative flex flex-col items-center p-3 rounded-lg ${
+                    className={`relative flex flex-col items-center p-1.5 rounded-lg ${
                       mintingStage === step.stage
                         ? "bg-gradient-to-br from-purple-100 to-pink-100"
                         : mintingStage &&
-                            index < ["preparing", "metadata", "minting", "finalizing"].indexOf(mintingStage) + 1
-                          ? "bg-gradient-to-br from-purple-50 to-pink-50 opacity-70"
-                          : "bg-gray-50 opacity-50"
+                          index < ["preparing", "metadata", "minting", "finalizing"].indexOf(mintingStage) + 1
+                        ? "bg-gradient-to-br from-purple-50 to-pink-50 opacity-70"
+                        : "bg-gray-50 opacity-50"
                     }`}
                   >
-                    <div className={`text-2xl mb-1 ${mintingStage === step.stage ? "animate-bounce" : ""}`}>
+                    <div className={`text-xs mb-0.5 ${mintingStage === step.stage ? "animate-bounce" : ""}`}>
                       {step.icon}
                     </div>
-                    <span className="text-xs text-center font-medium">{step.label}</span>
+                    <span className="text-[9px] text-center font-medium">{step.label}</span>
 
                     {mintingStage === step.stage && (
-                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-6 h-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-0.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"></div>
                     )}
                   </div>
                 ))}
@@ -623,38 +588,38 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
         )}
 
         {mintProgress === 100 && (
-          <div className="bg-green-50 p-4 rounded-lg flex items-center gap-3">
-            <CheckCircle2Icon className="h-5 w-5 text-green-600" />
-            <p className="text-green-600 font-medium">NFT successfully minted! Proceeding to confirmation...</p>
+          <div className="bg-green-50 p-2 rounded-lg flex items-center gap-2">
+            <CheckCircle2Icon className="h-3.5 w-3.5 text-green-600" />
+            <p className="text-green-600 font-medium text-xs">NFT successfully minted! Proceeding to confirmation...</p>
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col space-y-3 relative z-20">
+      <CardFooter className="flex flex-col space-y-2 relative z-20 px-3 pt-2 pb-3">
         {!isMinting && mintProgress < 100 && (
-          <>
+          <div className="flex w-full gap-3">
             <Button
               onClick={handleMint}
-              className="w-full relative overflow-hidden group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] rounded-xl py-5"
+              className="flex-[2] relative overflow-hidden group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] rounded-xl py-2"
             >
               <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-400/30 to-pink-400/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-              <span className="relative">Mint My NFT Profile</span>
+              <span className="relative text-sm">Mint My NFT Profile</span>
             </Button>
             <Button
               variant="outline"
               onClick={onEdit}
-              className="w-full border-purple-300 hover:border-pink-400 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300"
+              className="flex-[1] border-purple-300 hover:border-pink-400 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 py-1.5 text-sm"
             >
-              <ArrowLeftIcon className="h-4 w-4 mr-2" />
+              <ArrowLeftIcon className="h-3.5 w-3.5 mr-1.5" />
               <span>Edit Profile First</span>
             </Button>
-          </>
+          </div>
         )}
 
         {isMinting && mintProgress < 100 && (
-          <Button disabled className="w-full bg-gradient-to-r from-purple-600/70 to-pink-600/70 rounded-xl py-5">
+          <Button disabled className="w-full bg-gradient-to-r from-purple-600/70 to-pink-600/70 rounded-xl py-2 text-sm">
             <div className="flex items-center">
               <span className="mr-2">Minting in progress...</span>
-              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             </div>
           </Button>
         )}

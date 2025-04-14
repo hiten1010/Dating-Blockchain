@@ -660,15 +660,17 @@ export default function LandingPage() {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center lg:justify-start">
-                          <Button
-                            size="lg"
-                            className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl"
-                          >
-                            <span className="flex items-center">
-                              <Wallet className="mr-2 h-5 w-5" />
-                              Connect Wallet
-                            </span>
-                          </Button>
+                          <Link href="/onboarding">
+                            <Button
+                              size="lg"
+                              className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl"
+                            >
+                              <span className="flex items-center">
+                                <Wallet className="mr-2 h-5 w-5" />
+                                Connect Wallet
+                              </span>
+                            </Button>
+                          </Link>
 
                           <Button
                             size="lg"
@@ -764,9 +766,11 @@ export default function LandingPage() {
                                   ))}
                                 </div>
                               </div>
-                              <Button className="w-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl">
-                                Join Waitlist
-                              </Button>
+                              <Link href="/onboarding">
+                                <Button className="w-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl">
+                                  Join Waitlist
+                                </Button>
+                              </Link>
                               <p className="text-xs text-[#9CA3AF] text-center">
                                 We respect your privacy and will never share your information.
                               </p>

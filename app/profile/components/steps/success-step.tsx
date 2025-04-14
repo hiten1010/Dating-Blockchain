@@ -8,6 +8,8 @@ import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from 
 import { CheckCircle2Icon, ExternalLinkIcon, Sparkles, ShieldCheck, Zap, Users, Star, Shield } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import type { ProfileData } from "../profile-creation-flow"
+import { cn } from "@/lib/utils"
+import { ToastTitle, ToastDescription } from "@/components/ui/use-toast"
 
 interface SuccessStepProps {
   profileData: ProfileData
@@ -145,20 +147,20 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
 
   return (
     <>
-      <CardHeader className="text-center">
-        <div className="flex justify-center mb-4">
-          <div className="h-16 w-16 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center shadow-lg">
-            <CheckCircle2Icon className="h-8 w-8 text-white" />
+      <CardHeader className="text-center py-2">
+        <div className="flex justify-center mb-2">
+          <div className="h-12 w-12 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center shadow-lg">
+            <CheckCircle2Icon className="h-6 w-6 text-white" />
           </div>
         </div>
         <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent">
           Congratulations! Your NFT Profile Is Ready
         </CardTitle>
-        <CardDescription className="text-lg mt-2">
+        <CardDescription className="text-base mt-2">
           You are now the sole owner of this profile NFT. Manage it anytime from your dashboard.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-8 relative" ref={containerRef} onMouseMove={handleMouseMove}>
+      <CardContent className="space-y-4 relative" ref={containerRef} onMouseMove={handleMouseMove}>
         {/* Confetti canvas */}
         {showConfetti && (
           <canvas
@@ -168,12 +170,12 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
           ></canvas>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* NFT Card - Using the same design as in mint-nft-step */}
           <div>
             <div
               ref={nftCardRef}
-              className="relative w-full max-w-md mx-auto aspect-[3/4] rounded-2xl overflow-hidden transition-all duration-300 ease-out"
+              className="relative w-full max-w-[350px] mx-auto aspect-[3/4] rounded-2xl overflow-hidden transition-all duration-300 ease-out"
               style={{
                 transformStyle: "preserve-3d",
                 boxShadow: "0 20px 40px rgba(0, 0, 0, 0.2), 0 0 30px rgba(138, 43, 226, 0.2)",
@@ -221,16 +223,16 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
               ></div>
 
               {/* Premium card content */}
-              <div className="absolute inset-0 p-6 flex flex-col z-40" style={{ transform: "translateZ(20px)" }}>
+              <div className="absolute inset-0 p-3 flex flex-col z-40" style={{ transform: "translateZ(20px)" }}>
                 {/* NFT Badge */}
-                <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-400 to-amber-600 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-lg">
-                  <Star className="h-4 w-4 text-white" />
+                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-amber-600 rounded-lg px-2 py-1 flex items-center gap-1 shadow-lg">
+                  <Star className="h-3 w-3 text-white" />
                   <span className="text-white text-xs font-bold tracking-wider">NFT PROFILE</span>
                 </div>
 
                 {/* Profile header */}
-                <div className="flex items-center gap-4 mt-8 mb-4">
-                  <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-white/80 shadow-lg">
+                <div className="flex items-center gap-2 mt-5 mb-1">
+                  <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-white/80 shadow-lg">
                     {profileData.photos.length > 0 ? (
                       <img
                         src={profileData.photos[profileData.primaryPhotoIndex] || "/placeholder.svg"}
@@ -239,7 +241,7 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center">
-                        <span className="text-white font-bold text-xl">
+                        <span className="text-white font-bold text-lg">
                           {profileData.displayName ? profileData.displayName.charAt(0).toUpperCase() : "?"}
                         </span>
                       </div>
@@ -247,37 +249,42 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-bold text-white drop-shadow-md">
+                    <h3 className="text-lg font-bold text-white drop-shadow-md">
                       {profileData.displayName || "Your Name"}
                     </h3>
-                    <p className="text-white/90">
+                    <p className="text-white/90 text-sm">
                       {profileData.age} • {profileData.location || "No location"}
                     </p>
                   </div>
                 </div>
 
-                <Separator className="bg-white/30 my-3" />
+                <Separator className="bg-white/30 my-1" />
 
                 {/* Bio */}
-                <div className="mb-4">
+                <div className="mb-2">
                   <h4 className="text-white/90 font-medium mb-1 text-sm">Bio</h4>
-                  <p className="text-white/80 text-sm line-clamp-3 bg-white/10 p-2 rounded-lg backdrop-blur-sm">
+                  <p className="text-white/80 text-sm line-clamp-2 bg-white/10 p-2 rounded-lg backdrop-blur-sm">
                     {profileData.bio || "No bio provided"}
                   </p>
                 </div>
 
                 {/* Interests */}
-                <div className="mb-4">
+                <div className="mb-2">
                   <h4 className="text-white/90 font-medium mb-1 text-sm">Interests</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {profileData.interests.map((interest) => (
+                  <div className="flex flex-wrap gap-1.5">
+                    {profileData.interests.slice(0, 4).map((interest) => (
                       <div
                         key={interest}
-                        className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm"
+                        className="bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm"
                       >
                         {interest}
                       </div>
                     ))}
+                    {profileData.interests.length > 4 && (
+                      <div className="bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm">
+                        +{profileData.interests.length - 4} more
+                      </div>
+                    )}
                     {profileData.interests.length === 0 && (
                       <p className="text-white/50 text-xs italic">No interests added</p>
                     )}
@@ -286,14 +293,14 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
 
                 {/* Security Badge */}
                 <div className="mt-auto flex justify-between items-end">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-                    <Shield className="h-4 w-4 text-white/80" />
-                    <span className="text-white/90 text-xs">Secured by Cheqd</span>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg px-1.5 py-0.5 flex items-center gap-1">
+                    <Shield className="h-2.5 w-2.5 text-white/80" />
+                    <span className="text-white/90 text-[9px]">Secured by Cheqd</span>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                    <div className="text-xs text-white/90 font-mono">
-                      {didId.substring(0, 6)}...{didId.substring(didId.length - 4)}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg px-1.5 py-0.5">
+                    <div className="text-[9px] text-white/90 font-mono">
+                      {didId.substring(0, 4)}...{didId.substring(didId.length - 4)}
                     </div>
                   </div>
                 </div>
@@ -311,32 +318,32 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* NFT Details */}
             <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
-              <div className="relative bg-white p-6 rounded-2xl border border-purple-100 shadow-md">
-                <h3 className="font-medium mb-4 text-center text-purple-700">Your NFT Details</h3>
+              <div className="absolute -inset-2 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
+              <div className="relative bg-white p-4 rounded-2xl border border-purple-100 shadow-md">
+                <h3 className="font-medium mb-3 text-center text-sm text-purple-700">Your NFT Details</h3>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <div className="text-sm">
+                    <div className="text-xs">
                       <span className="text-muted-foreground">NFT Token ID:</span>
                     </div>
-                    <div className="font-mono text-sm bg-purple-50 px-3 py-1 rounded-lg">{nftTokenId}</div>
+                    <div className="font-mono text-xs bg-purple-50 px-2 py-0.5 rounded-lg">{nftTokenId}</div>
                   </div>
 
                   <Separator />
 
                   <div className="flex justify-between items-center">
-                    <div className="text-sm">
+                    <div className="text-xs">
                       <span className="text-muted-foreground">Transaction Hash:</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="font-mono text-sm mr-2 bg-purple-50 px-3 py-1 rounded-lg">
+                      <span className="font-mono text-xs mr-1 bg-purple-50 px-2 py-0.5 rounded-lg">
                         {transactionHash.substring(0, 10)}...{transactionHash.substring(transactionHash.length - 6)}
                       </span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 bg-purple-100 hover:bg-purple-200">
+                      <Button variant="ghost" size="icon" className="h-5 w-5 bg-purple-100 hover:bg-purple-200">
                         <ExternalLinkIcon className="h-3 w-3 text-purple-700" />
                       </Button>
                     </div>
@@ -345,10 +352,10 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
                   <Separator />
 
                   <div className="flex justify-between items-center">
-                    <div className="text-sm">
+                    <div className="text-xs">
                       <span className="text-muted-foreground">DID:</span>
                     </div>
-                    <div className="font-mono text-sm bg-purple-50 px-3 py-1 rounded-lg">
+                    <div className="font-mono text-xs bg-purple-50 px-2 py-0.5 rounded-lg">
                       {didId.substring(0, 10)}...{didId.substring(didId.length - 6)}
                     </div>
                   </div>
@@ -358,39 +365,39 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
 
             {/* What's Next Section */}
             <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
-              <div className="relative bg-white p-6 rounded-2xl border border-purple-100 shadow-md">
-                <h3 className="font-medium mb-4 text-center text-purple-700">What's Next?</h3>
-                <p className="text-sm text-muted-foreground mb-6 text-center">
+              <div className="absolute -inset-2 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
+              <div className="relative bg-white p-4 rounded-2xl border border-purple-100 shadow-md">
+                <h3 className="font-medium mb-3 text-center text-sm text-purple-700">What's Next?</h3>
+                <p className="text-xs text-muted-foreground mb-4 text-center">
                   Now that your profile is minted as an NFT, you can:
                 </p>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2">
                   {[
                     {
-                      icon: <Zap className="h-6 w-6 text-purple-500" />,
+                      icon: <Zap className="h-4 w-4 text-purple-500" />,
                       title: "Configure AI Twin",
                       description: "Set up your AI agent for personalized matchmaking",
                     },
                     {
-                      icon: <Users className="h-6 w-6 text-pink-500" />,
+                      icon: <Users className="h-4 w-4 text-pink-500" />,
                       title: "Browse Matches",
                       description: "Discover potential matches on the platform",
                     },
                     {
-                      icon: <Sparkles className="h-6 w-6 text-purple-500" />,
+                      icon: <Sparkles className="h-4 w-4 text-purple-500" />,
                       title: "Update Profile",
                       description: "Modify your profile information anytime",
                     },
                     {
-                      icon: <ShieldCheck className="h-6 w-6 text-pink-500" />,
+                      icon: <ShieldCheck className="h-4 w-4 text-pink-500" />,
                       title: "Control Data Access",
                       description: "Manage who can access your private data",
                     },
                   ].map((feature, index) => (
                     <div
                       key={index}
-                      className={`relative overflow-hidden rounded-xl transition-all duration-300 ${
+                      className={`relative overflow-hidden rounded-lg transition-all duration-300 ${
                         activeFeature === `feature-${index}` ? "scale-105 shadow-lg" : "shadow-md"
                       }`}
                       onMouseEnter={() => setActiveFeature(`feature-${index}`)}
@@ -404,12 +411,12 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
                         }`}
                       ></div>
 
-                      <div className="relative p-4 flex flex-col items-center text-center">
-                        <div className={`p-3 rounded-full mb-3 ${index % 2 === 0 ? "bg-purple-100" : "bg-pink-100"}`}>
+                      <div className="relative p-2 flex flex-col items-center text-center">
+                        <div className={`p-2 rounded-full mb-1 ${index % 2 === 0 ? "bg-purple-100" : "bg-pink-100"}`}>
                           {feature.icon}
                         </div>
-                        <h4 className="font-medium text-sm mb-1">{feature.title}</h4>
-                        <p className="text-xs text-muted-foreground">{feature.description}</p>
+                        <h4 className="font-medium text-xs mb-0.5">{feature.title}</h4>
+                        <p className="text-[10px] text-muted-foreground">{feature.description}</p>
                       </div>
                     </div>
                   ))}
@@ -419,12 +426,12 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-3">
-        <Button className="w-full relative overflow-hidden group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] rounded-xl py-5">
+      <CardFooter className="flex flex-col space-y-2 py-2">
+        <Button className="w-full relative overflow-hidden group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] rounded-xl py-3">
           <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-400/30 to-pink-600/30 opacity-50 group-hover:opacity-100 transition-opacity duration-300"></span>
-          <span className="relative flex items-center justify-center gap-2">
-            <Sparkles className="h-5 w-5 text-white" />
-            <span className="font-medium text-white">Go to Dashboard</span>
+          <span className="relative flex items-center justify-center gap-1">
+            <Sparkles className="h-4 w-4 text-white" />
+            <span className="font-medium text-sm text-white">Go to Dashboard</span>
           </span>
         </Button>
       </CardFooter>

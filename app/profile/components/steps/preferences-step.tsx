@@ -3,12 +3,12 @@
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircleIcon, PlusIcon, XIcon, HeartIcon, TagIcon } from "lucide-react"
+import { PlusIcon, XIcon, HeartIcon, TagIcon } from "lucide-react"
 import type { ProfileData } from "../profile-creation-flow"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/use-toast"
 
 interface PreferencesStepProps {
   profileData: ProfileData
@@ -38,18 +38,28 @@ const SUGGESTED_INTERESTS = [
 ]
 
 export default function PreferencesStep({ profileData, updateProfileData, onContinue }: PreferencesStepProps) {
-  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
   const [newInterest, setNewInterest] = useState("")
   const interestsRef = useRef<HTMLDivElement>(null)
 
   const handleContinue = () => {
     if (profileData.interests.length === 0) {
-      setError("Please add at least one interest")
+      toast({
+        variant: "destructive",
+        title: "Required Field Missing",
+        description: "Please add at least one interest to continue",
+        duration: 3000, // 3 seconds
+      })
       return
     }
 
     if (!profileData.relationshipGoals) {
-      setError("Please select your relationship goals")
+      toast({
+        variant: "destructive",
+        title: "Required Field Missing",
+        description: "Please select your relationship goals to continue",
+        duration: 3000, // 3 seconds
+      })
       return
     }
 
@@ -60,12 +70,22 @@ export default function PreferencesStep({ profileData, updateProfileData, onCont
     if (!interest.trim()) return
 
     if (profileData.interests.includes(interest.trim())) {
-      setError("This interest is already added")
+      toast({
+        variant: "destructive",
+        title: "Duplicate Interest",
+        description: "This interest is already added to your profile",
+        duration: 3000, // 3 seconds
+      })
       return
     }
 
     if (profileData.interests.length >= 10) {
-      setError("You can add up to 10 interests")
+      toast({
+        variant: "destructive",
+        title: "Maximum Reached",
+        description: "You can add up to 10 interests maximum",
+        duration: 3000, // 3 seconds
+      })
       return
     }
 
@@ -74,7 +94,6 @@ export default function PreferencesStep({ profileData, updateProfileData, onCont
     })
 
     setNewInterest("")
-    setError(null)
   }
 
   const removeInterest = (interest: string) => {
@@ -92,13 +111,6 @@ export default function PreferencesStep({ profileData, updateProfileData, onCont
         <CardDescription className="text-base mt-1 text-gray-600">Help us find your perfect matches</CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircleIcon className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Interests Section */}
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
@@ -208,10 +220,10 @@ export default function PreferencesStep({ profileData, updateProfileData, onCont
                 <RadioGroupItem value="long-term" id="long-term" className="sr-only peer" />
                 <Label
                   htmlFor="long-term"
-                  className="flex flex-col items-center p-4 rounded-lg border-2 border-indigo-200 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer"
+                  className="flex flex-col items-center p-4 rounded-lg border-2 border-indigo-200 peer-data-[state=checked]:border-indigo-600 peer-data-[state=checked]:bg-indigo-50 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer"
                 >
-                  <div className="h-12 w-12 rounded-full mb-2 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 peer-checked:from-indigo-500 peer-checked:to-purple-500">
-                    <HeartIcon className="h-6 w-6 text-indigo-600 peer-checked:text-white" />
+                  <div className="h-12 w-12 rounded-full mb-2 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 peer-data-[state=checked]:from-indigo-500 peer-data-[state=checked]:to-purple-500">
+                    <HeartIcon className="h-6 w-6 text-indigo-600" />
                   </div>
                   <span className="font-medium text-indigo-800">Long-term Relationship</span>
                 </Label>
@@ -221,11 +233,11 @@ export default function PreferencesStep({ profileData, updateProfileData, onCont
                 <RadioGroupItem value="casual" id="casual" className="sr-only peer" />
                 <Label
                   htmlFor="casual"
-                  className="flex flex-col items-center p-4 rounded-lg border-2 border-indigo-200 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer"
+                  className="flex flex-col items-center p-4 rounded-lg border-2 border-indigo-200 peer-data-[state=checked]:border-indigo-600 peer-data-[state=checked]:bg-indigo-50 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer"
                 >
-                  <div className="h-12 w-12 rounded-full mb-2 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 peer-checked:from-indigo-500 peer-checked:to-purple-500">
+                  <div className="h-12 w-12 rounded-full mb-2 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 peer-data-[state=checked]:from-indigo-500 peer-data-[state=checked]:to-purple-500">
                     <svg
-                      className="h-6 w-6 text-indigo-600 peer-checked:text-white"
+                      className="h-6 w-6 text-indigo-600"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -242,11 +254,11 @@ export default function PreferencesStep({ profileData, updateProfileData, onCont
                 <RadioGroupItem value="friendship" id="friendship" className="sr-only peer" />
                 <Label
                   htmlFor="friendship"
-                  className="flex flex-col items-center p-4 rounded-lg border-2 border-indigo-200 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer"
+                  className="flex flex-col items-center p-4 rounded-lg border-2 border-indigo-200 peer-data-[state=checked]:border-indigo-600 peer-data-[state=checked]:bg-indigo-50 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer"
                 >
-                  <div className="h-12 w-12 rounded-full mb-2 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 peer-checked:from-indigo-500 peer-checked:to-purple-500">
+                  <div className="h-12 w-12 rounded-full mb-2 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 peer-data-[state=checked]:from-indigo-500 peer-data-[state=checked]:to-purple-500">
                     <svg
-                      className="h-6 w-6 text-indigo-600 peer-checked:text-white"
+                      className="h-6 w-6 text-indigo-600"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -263,11 +275,11 @@ export default function PreferencesStep({ profileData, updateProfileData, onCont
                 <RadioGroupItem value="undecided" id="undecided" className="sr-only peer" />
                 <Label
                   htmlFor="undecided"
-                  className="flex flex-col items-center p-4 rounded-lg border-2 border-indigo-200 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer"
+                  className="flex flex-col items-center p-4 rounded-lg border-2 border-indigo-200 peer-data-[state=checked]:border-indigo-600 peer-data-[state=checked]:bg-indigo-50 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer"
                 >
-                  <div className="h-12 w-12 rounded-full mb-2 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 peer-checked:from-indigo-500 peer-checked:to-purple-500">
+                  <div className="h-12 w-12 rounded-full mb-2 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 peer-data-[state=checked]:from-indigo-500 peer-data-[state=checked]:to-purple-500">
                     <svg
-                      className="h-6 w-6 text-indigo-600 peer-checked:text-white"
+                      className="h-6 w-6 text-indigo-600"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"

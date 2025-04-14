@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircleIcon, LockIcon, UserIcon, MapPinIcon, CalendarIcon, MessageSquareIcon } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import type { ProfileData } from "../profile-creation-flow"
+import { useToast } from "@/components/ui/use-toast"
 
 interface BasicInfoStepProps {
   profileData: ProfileData
@@ -17,16 +18,28 @@ interface BasicInfoStepProps {
 }
 
 export default function BasicInfoStep({ profileData, updateProfileData, onContinue }: BasicInfoStepProps) {
-  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const handleContinue = () => {
     if (!profileData.displayName) {
-      setError("Display name is required")
+      toast({
+        variant: "destructive",
+        title: "Required Field Missing",
+        description: "Please enter your display name to continue",
+        duration: 3000,
+        className: "bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-sm border-purple-200/50 text-white shadow-lg hover:shadow-xl transition-all duration-200",
+      })
       return
     }
 
     if (!profileData.age) {
-      setError("Age is required")
+      toast({
+        variant: "destructive",
+        title: "Required Field Missing",
+        description: "Please enter your age to continue",
+        duration: 3000,
+        className: "bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-sm border-purple-200/50 text-white shadow-lg hover:shadow-xl transition-all duration-200",
+      })
       return
     }
 
@@ -44,13 +57,6 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircleIcon className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-100">
           <p className="text-sm text-indigo-700">
             This information will be used to create your profile. Required fields are marked with an asterisk (*).
