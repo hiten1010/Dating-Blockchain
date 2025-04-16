@@ -43,18 +43,7 @@ export default function ChatsPage() {
       </div>
 
       <div className="relative container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center mb-8">
-          <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-pink-300 to-rose-300 rounded-full blur opacity-70"></div>
-            <h1 className="relative text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-rose-600 text-center">
-              Chats & Conversations
-            </h1>
-          </div>
-          <p className="mt-4 text-lg text-center text-slate-600 max-w-2xl">
-            Stay connected, let your AI assist you. Whether you're chatting one-on-one or letting the AI handle
-            conversations, you're in full control.
-          </p>
-        </div>
+        
 
         <ChatInterface />
       </div>

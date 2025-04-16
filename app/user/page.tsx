@@ -8,18 +8,6 @@ export default function ProfilePage() {
       </div>
 
       <div className="relative container mx-auto px-4 py-12">
-        <div className="flex flex-col items-center mb-12">
-          <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-pink-300 to-rose-300 rounded-full blur opacity-70"></div>
-            <h1 className="relative text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-rose-600 text-center">
-              Decentralized Identity
-            </h1>
-          </div>
-          <p className="mt-4 text-lg text-center text-slate-600 max-w-2xl">
-            Your gateway to the decentralized dating ecosystem. Manage your on-chain identity and off-chain preferences
-            in one secure interface.
-          </p>
-        </div>
 
         <ProfileOverview />
       </div>
