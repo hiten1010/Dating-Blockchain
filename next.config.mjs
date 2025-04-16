@@ -13,7 +13,12 @@ const nextConfig = {
     };
     
     return config
-  }
+  },
+  
+  // Add image domains configuration
+  images: {
+    domains: ['i.pravatar.cc'], // Add the pravatar domain for profile images
+  },
 }
 
 

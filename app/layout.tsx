@@ -2,6 +2,8 @@ import type React from "react"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import DatingNavbar from "./components/dating-navbar"
+import MainWrapper from "./components/main-wrapper"
 
 export const metadata = {
   title: "DecentralMatch - Discover Love on the Decentralized Frontier",
@@ -19,7 +21,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-          {children}
+          <div className="min-h-screen">
+            <DatingNavbar />
+            <MainWrapper>{children}</MainWrapper>
+          </div>
           <Toaster />
         </ThemeProvider>
       </body>
