@@ -61,11 +61,11 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="flex h-full rounded-[2rem] overflow-hidden border border-pink-100 bg-white/30 backdrop-blur-sm shadow-lg">
+    <div className="flex h-[calc(100vh-200px)] min-h-[600px] overflow-hidden">
       {/* Chat List */}
       {showChatList && (
         <motion.div
-          className="w-full md:w-1/3 lg:w-1/4 md:min-w-[300px] h-full overflow-y-auto"
+          className="w-full md:w-1/3 lg:w-1/4 md:min-w-[300px] h-full"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
@@ -118,4 +118,3 @@ export default function ChatInterface() {
     </div>
   )
 }
-
