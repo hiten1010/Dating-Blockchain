@@ -4,9 +4,9 @@ import ChatInterface from "./components/chat-interface"
 
 export default function ChatsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 text-slate-800 overflow-hidden">
+    <div className="h-screen fixed w-full bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 text-slate-800 overflow-hidden">
       {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full opacity-30">
           <div className="absolute top-[10%] left-[5%] w-64 h-64 rounded-full bg-gradient-to-r from-pink-300 to-rose-300 blur-3xl animate-pulse"></div>
           <div
@@ -45,7 +45,9 @@ export default function ChatsPage() {
       <div className="relative container mx-auto px-4 py-8">
         
 
-        <ChatInterface />
+        <div className="h-[calc(100%-120px)]">
+          <ChatInterface />
+        </div>
       </div>
 
       {/* Custom CSS for animations */}
