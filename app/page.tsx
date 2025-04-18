@@ -22,6 +22,7 @@ import InteractiveDemo from "@/components/landing/InteractiveDemo"
 import DateIdeasSection from "@/components/landing/DateIdeasSection"
 import MatchmakingSection from "@/components/landing/MatchmakingSection"
 import DNACompatibility from "@/components/landing/DNACompatibility"
+import AiTwinSection from "@/components/landing/AiTwinSection"
 import { SectionRefsProvider } from "@/components/landing/AppStateSectionRefs"
 
 export default function LandingPage() {
@@ -471,6 +472,9 @@ export default function LandingPage() {
 
         {/* Matchmaking Section */}
         <MatchmakingSection />
+
+        {/* AI Twin Section */}
+        <AiTwinSection />
 
         {/* DNA Compatibility Section */}
         <DNACompatibility />
