@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Fingerprint, CheckCircle2Icon, InfoIcon } from "lucide-react"
+import { Fingerprint, CheckCircle2Icon, InfoIcon, AlertCircleIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useToast } from "@/components/ui/use-toast"
+import { veridaClient } from "@/app/lib/verida-client-wrapper"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface CreateDIDStepProps {
   onDidCreated: (did: string) => void
@@ -16,44 +18,80 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [didId, setDidId] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
+  const [error, setError] = useState<string | null>(null)
 
-  const createDID = async () => {
+  // Check if user already has a DID with Verida
+  useEffect(() => {
+    const checkExistingDid = async () => {
+      try {
+        if (veridaClient.isConnected()) {
+          const did = veridaClient.getDid();
+          if (did) {
+            setDidId(did);
+            setProgress(100);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking existing DID:", error);
+      }
+    };
+
+    checkExistingDid();
+  }, []);
+
+  const createVeridaDID = async () => {
     setIsCreating(true)
     setProgress(0)
+    setError(null)
 
     try {
-      // Simulate DID creation with progress updates
-      const interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(interval)
-            return 90
-          }
-          return prev + 10
-        })
-      }, 300)
+      // Step 1: Initialize Verida client if not already initialized
+      setProgress(20);
+      if (!veridaClient.getClient()) {
+        await veridaClient.init();
+      }
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      // Step 2: Connect to Verida network if not already connected
+      setProgress(50);
+      if (!veridaClient.isConnected()) {
+        const success = await veridaClient.connect();
+        if (!success) {
+          throw new Error("Failed to connect to Verida network");
+        }
+      }
 
-      // Generate a random DID for demo purposes
-      const randomDid = `did:verida:${[...Array(16)].map(() => Math.floor(Math.random() * 16).toString(16)).join("")}`
-      setDidId(randomDid)
-      setProgress(100)
+      // Step 3: Get the DID from Verida account
+      setProgress(80);
+      const did = veridaClient.getDid();
+      if (!did) {
+        throw new Error("Failed to retrieve DID from Verida account");
+      }
+
+      // Success!
+      setDidId(did);
+      setProgress(100);
 
       // Wait a moment before proceeding to next step
       setTimeout(() => {
-        onDidCreated(randomDid)
-      }, 1000)
+        onDidCreated(did);
+      }, 1000);
+      
+      toast({
+        title: "DID Created Successfully",
+        description: "Your decentralized identity has been created on the Verida network.",
+        duration: 3000,
+      });
     } catch (err) {
+      console.error("DID creation error:", err);
+      setError(err instanceof Error ? err.message : "Failed to create DID. Please try again.");
       toast({
         variant: "destructive",
         title: "DID Creation Failed",
         description: "Failed to create DID. Please try again.",
-        duration: 3000, // 3 seconds
-      })
+        duration: 3000,
+      });
     } finally {
-      setIsCreating(false)
+      setIsCreating(false);
     }
   }
 
@@ -61,7 +99,7 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
     <>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Create Your Decentralized Identity (DID)</CardTitle>
-        <CardDescription>A secure foundation for your dating profile</CardDescription>
+        <CardDescription>A secure foundation for your dating profile using Verida</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="bg-purple-50 p-6 rounded-lg flex items-start space-x-3">
@@ -70,10 +108,17 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
             <p className="font-medium mb-1">What is a DID?</p>
             <p className="text-sm text-muted-foreground">
               A DID ensures you fully own and control your identity. It allows you to manage your personal data
-              securely, off-chain, through Verida. This gives you complete control over who can access your information.
+              securely through Verida's decentralized database. Your data is encrypted and only you control who can access it.
             </p>
           </div>
         </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircleIcon className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex flex-col items-center justify-center space-y-4">
           <div className="h-20 w-20 rounded-full bg-purple-100 flex items-center justify-center">
@@ -101,11 +146,11 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
                   </div>
                   <div className="text-xs text-muted-foreground mt-2">
                     {progress < 30
-                      ? "Initializing..."
+                      ? "Initializing Verida client..."
                       : progress < 60
-                        ? "Generating cryptographic keys..."
+                        ? "Connecting to Verida network..."
                         : progress < 90
-                          ? "Registering on Verida network..."
+                          ? "Retrieving your DID..."
                           : "Finalizing your DID..."}
                   </div>
                 </>
@@ -116,12 +161,12 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
 
         {didId && (
           <div className="bg-green-50 p-4 rounded-lg">
-            <p className="font-medium mb-1">Your DID:</p>
+            <p className="font-medium mb-1">Your Verida DID:</p>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <p className="text-sm font-mono bg-white p-2 rounded border overflow-hidden text-ellipsis">
-                    {didId.substring(0, 15)}...{didId.substring(didId.length - 10)}
+                    {didId.substring(0, 20)}...{didId.substring(didId.length - 15)}
                   </p>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -130,7 +175,7 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
               </Tooltip>
             </TooltipProvider>
             <p className="text-sm text-muted-foreground mt-2">
-              Your DID has been successfully created. Next, let's set up your dating profile details!
+              Your Verida DID has been successfully created. This will be used to securely store your dating profile data in a decentralized database.
             </p>
           </div>
         )}
@@ -138,7 +183,7 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
       <CardFooter>
         {!didId ? (
           <Button
-            onClick={createDID}
+            onClick={createVeridaDID}
             className="w-full relative overflow-hidden group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] rounded-xl py-5"
             disabled={isCreating}
           >
@@ -149,7 +194,7 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
                 <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : (
-              <span className="relative">Set Up My DID</span>
+              <span className="relative">Set Up My Verida DID</span>
             )}
           </Button>
         ) : (

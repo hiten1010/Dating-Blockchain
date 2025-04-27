@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/toaster"
 import DatingNavbar from "./components/dating-navbar"
 import MainWrapper from "./components/main-wrapper"
 
+// Import the Verida fonts CSS
+import './styles/verida-fonts.css';
+
 export const metadata = {
   title: "DecentralMatch - Discover Love on the Decentralized Frontier",
   description:

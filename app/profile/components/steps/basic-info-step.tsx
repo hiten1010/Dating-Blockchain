@@ -6,10 +6,12 @@ import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from 
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircleIcon, LockIcon, UserIcon, MapPinIcon, CalendarIcon, MessageSquareIcon } from "lucide-react"
+import { AlertCircleIcon, LockIcon, UserIcon, MapPinIcon, CalendarIcon, MessageSquareIcon, LoaderIcon } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import type { ProfileData } from "../profile-creation-flow"
 import { useToast } from "@/components/ui/use-toast"
+import { ProfileService } from "@/app/lib/profile-service"
+import { veridaClient } from "@/app/lib/verida-client-wrapper"
 
 interface BasicInfoStepProps {
   profileData: ProfileData
@@ -19,8 +21,40 @@ interface BasicInfoStepProps {
 
 export default function BasicInfoStep({ profileData, updateProfileData, onContinue }: BasicInfoStepProps) {
   const { toast } = useToast()
+  const [isSaving, setIsSaving] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  // Check if there's existing profile data in Verida
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        if (veridaClient.isConnected()) {
+          const profile = await ProfileService.getProfile();
+          if (profile) {
+            // Update the form with data from Verida
+            updateProfileData({
+              displayName: profile.displayName || profileData.displayName,
+              age: profile.age || profileData.age,
+              location: profile.location || profileData.location,
+              bio: profile.bio || profileData.bio,
+            });
+            
+            toast({
+              title: "Profile Data Retrieved",
+              description: "Loaded your existing profile data from your Verida storage.",
+              duration: 3000,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error loading profile data from Verida:", error);
+      }
+    };
+    
+    fetchProfileData();
+  }, [updateProfileData]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!profileData.displayName) {
       toast({
         variant: "destructive",
@@ -42,8 +76,46 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
       })
       return
     }
-
-    onContinue()
+    
+    // Save profile data to Verida
+    setIsSaving(true);
+    setError(null);
+    
+    try {
+      // Ensure we're connected to Verida
+      if (!veridaClient.isConnected()) {
+        await veridaClient.connect();
+      }
+      
+      // Save profile data
+      await ProfileService.saveProfile({
+        displayName: profileData.displayName,
+        age: profileData.age,
+        location: profileData.location,
+        bio: profileData.bio,
+      });
+      
+      toast({
+        title: "Profile Saved",
+        description: "Your profile has been securely stored in your Verida database.",
+        duration: 3000,
+      });
+      
+      // Continue to next step
+      onContinue();
+    } catch (err) {
+      console.error("Error saving profile to Verida:", err);
+      setError("Failed to save profile. Please try again.");
+      
+      toast({
+        variant: "destructive",
+        title: "Profile Save Failed",
+        description: "There was an error saving your profile to Verida. Please try again.",
+        duration: 3000,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -58,10 +130,21 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-100">
-          <p className="text-sm text-indigo-700">
-            This information will be used to create your profile. Required fields are marked with an asterisk (*).
+          <p className="text-sm text-indigo-700 flex items-start">
+            <LockIcon className="h-4 w-4 text-indigo-600 mr-2 mt-0.5" />
+            <span>
+              Your profile data will be stored in your personal encrypted Verida database that only you control.
+              Required fields are marked with an asterisk (*).
+            </span>
           </p>
         </div>
+        
+        {error && (
+          <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
+            <AlertCircleIcon className="h-4 w-4 text-red-600" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid grid-cols-2 gap-6">
           {/* Left Column */}
@@ -95,7 +178,7 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
                 </Label>
                 <span className="flex items-center text-xs text-indigo-600">
                   <LockIcon className="h-3 w-3 mr-1" />
-                  Stored securely off-chain
+                  Stored securely in Verida
                 </span>
               </div>
               <div className="flex items-center space-x-4">
@@ -192,8 +275,16 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
         <Button
           onClick={handleContinue}
           className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+          disabled={isSaving}
         >
-          Continue to Photos
+          {isSaving ? (
+            <div className="flex items-center justify-center">
+              <LoaderIcon className="h-4 w-4 animate-spin mr-2" />
+              <span>Saving to Verida...</span>
+            </div>
+          ) : (
+            "Continue to Photos"
+          )}
         </Button>
       </CardFooter>
     </>

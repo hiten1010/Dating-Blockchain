@@ -6,6 +6,7 @@ import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from 
 import { InfoIcon, UploadIcon, XIcon, StarIcon } from "lucide-react"
 import type { ProfileData } from "../profile-creation-flow"
 import { useToast } from "@/components/ui/use-toast"
+import { HeartLoader } from "@/components/ui/heart-loader"
 
 interface PhotosStepProps {
   profileData: ProfileData
@@ -134,7 +135,7 @@ export default function PhotosStep({ profileData, updateProfileData, onContinue 
                   onClick={simulatePhotoUpload}
                 >
                   {uploading ? (
-                    <div className="h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                    <HeartLoader size="sm" />
                   ) : (
                     <>
                       <UploadIcon className="h-8 w-8 text-gray-400 mb-2" />

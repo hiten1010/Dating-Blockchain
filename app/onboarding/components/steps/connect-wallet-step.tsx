@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { WalletIcon, AlertCircleIcon, CheckCircle2Icon, InfoIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useVeridaClient } from "@/app/lib/clientside-verida"
+import { HeartLoader } from "@/components/ui/heart-loader"
 
 interface ConnectWalletStepProps {
   onWalletConnected: (address: string) => void
@@ -15,47 +17,80 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const { client, isLoading, error: clientError } = useVeridaClient();
 
-  const connectWallet = async () => {
+  useEffect(() => {
+    if (clientError) {
+      setError("Failed to initialize Verida client. Please try again.");
+    }
+  }, [clientError]);
+
+  useEffect(() => {
+    // Check if already connected
+    if (client && client.isConnected()) {
+      const did = client.getDid();
+      if (did) {
+        setWalletAddress(did);
+      }
+    }
+  }, [client]);
+
+  const connectVeridaWallet = async () => {
+    if (!client) {
+      setError("Verida client not available. Please reload the page.");
+      return;
+    }
+
     setIsConnecting(true)
     setError(null)
 
     try {
-      // Simulate wallet connection
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Generate a random wallet address for demo purposes
-      const randomAddress = "0x" + [...Array(40)].map(() => Math.floor(Math.random() * 16).toString(16)).join("")
-      setWalletAddress(randomAddress)
-
-      // Wait a moment before proceeding to next step
-      setTimeout(() => {
-        onWalletConnected(randomAddress)
-      }, 1000)
+      // Connect to Verida network
+      const success = await client.connect();
+      
+      if (success) {
+        const did = client.getDid();
+        if (did) {
+          setWalletAddress(did);
+          
+          // Wait a moment before proceeding to next step
+          setTimeout(() => {
+            onWalletConnected(did);
+          }, 1000);
+        } else {
+          setError("Connected to Verida but couldn't retrieve DID");
+        }
+      } else {
+        setError("Failed to connect to Verida network");
+      }
     } catch (err) {
-      setError("Failed to connect wallet. Please try again.")
+      console.error("Verida connection error:", err);
+      setError("Failed to connect wallet. Please try again.");
     } finally {
       setIsConnecting(false)
     }
   }
 
   const disconnectWallet = () => {
-    setWalletAddress(null)
+    if (client) {
+      client.disconnect();
+      setWalletAddress(null);
+    }
   }
 
   return (
     <>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Connect Your Wallet</CardTitle>
-        <CardDescription>Connect your wallet to proceed to profile setup</CardDescription>
+        <CardDescription>Connect your Verida wallet to create your decentralized profile</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="bg-purple-50 p-6 rounded-lg flex items-start space-x-3">
           <InfoIcon className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm text-muted-foreground">
-              Your wallet will allow you to sign transactions and eventually mint your NFT profile on the Cheqd
-              protocol.
+              Your Verida wallet allows you to securely store your profile data in an encrypted, decentralized database 
+              that only you control. You'll be asked to scan a QR code with the Verida mobile app.
             </p>
           </div>
         </div>
@@ -67,14 +102,20 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
           </Alert>
         )}
 
-        {walletAddress ? (
+        {isLoading && (
+          <div className="flex flex-col items-center space-y-4">
+            <HeartLoader size="lg" showText text="Loading Verida client..." />
+          </div>
+        )}
+
+        {!isLoading && walletAddress ? (
           <div className="flex flex-col items-center space-y-4">
             <div className="flex items-center justify-center space-x-2 bg-green-50 p-4 rounded-lg w-full">
               <CheckCircle2Icon className="h-5 w-5 text-green-600" />
               <div>
-                <p className="font-medium">Wallet Connected</p>
+                <p className="font-medium">Verida Wallet Connected</p>
                 <p className="text-sm text-muted-foreground">
-                  {walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}
+                  {walletAddress.substring(0, 12)}...{walletAddress.substring(walletAddress.length - 8)}
                 </p>
               </div>
             </div>
@@ -82,76 +123,48 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
               Disconnect Wallet
             </Button>
           </div>
-        ) : (
+        ) : !isLoading && (
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className="h-20 w-20 rounded-full bg-purple-100 flex items-center justify-center">
               <WalletIcon className="h-10 w-10 text-purple-600" />
             </div>
-            <p className="text-center text-muted-foreground">Select a compatible wallet to connect with our platform</p>
+            <p className="text-center text-muted-foreground">Connect your Verida wallet to securely manage your data</p>
           </div>
         )}
 
-        {!walletAddress && (
-          <div className="grid grid-cols-2 gap-4">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="flex items-center justify-center space-x-2 h-16"
-                    onClick={connectWallet}
-                    disabled={isConnecting}
-                  >
-                    <img src="/placeholder.svg?height=24&width=24" alt="MetaMask" className="h-6 w-6" />
-                    <span>MetaMask</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Connect with MetaMask wallet</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="flex items-center justify-center space-x-2 h-16"
-                    onClick={connectWallet}
-                    disabled={isConnecting}
-                  >
-                    <img src="/placeholder.svg?height=24&width=24" alt="WalletConnect" className="h-6 w-6" />
-                    <span>WalletConnect</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Connect with WalletConnect</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+        {!isLoading && !walletAddress && (
+          <div className="grid grid-cols-1 gap-4">
+            <Button
+              variant="outline"
+              className="flex items-center justify-center space-x-2 h-16"
+              onClick={connectVeridaWallet}
+              disabled={isConnecting || !client}
+            >
+              <img src="/placeholder.svg?height=24&width=24" alt="Verida" className="h-6 w-6" />
+              <span>Verida Wallet</span>
+            </Button>
           </div>
         )}
       </CardContent>
       <CardFooter>
-        {!walletAddress && (
+        {!isLoading && !walletAddress && (
           <Button
-            onClick={connectWallet}
+            onClick={connectVeridaWallet}
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-            disabled={isConnecting}
+            disabled={isConnecting || !client}
           >
             {isConnecting ? (
-              <div className="flex items-center">
-                <span className="mr-2">Connecting...</span>
-                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div className="flex items-center justify-center">
+                <HeartLoader size="sm" />
+                <span className="ml-2">Connecting...</span>
               </div>
             ) : (
-              "Connect Wallet"
+              "Connect Verida Wallet"
             )}
           </Button>
         )}
 
-        {walletAddress && (
+        {!isLoading && walletAddress && (
           <Button
             onClick={() => onWalletConnected(walletAddress)}
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
