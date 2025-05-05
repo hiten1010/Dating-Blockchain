@@ -39,7 +39,21 @@ export class VeridaClient {
     // This avoids issues with mismatched types in the Verida SDK
     const clientConfig: any = {
       didClientConfig: {
-        network: VERIDA_NETWORK
+        network: VERIDA_NETWORK,
+        // Configuring RPC according to Verida docs at https://developers.verida.network/protocol/client-sdk/configuration
+        rpcConfig: {
+          // For testnet
+          testnet: {
+            // Use the user's private Infura endpoint for Polygon Amoy
+            matticNetwork: "https://polygon-amoy.infura.io/v3/ba150cd6064d40b597979b2592ad08a4",
+            web3Provider: "https://polygon-amoy.infura.io/v3/ba150cd6064d40b597979b2592ad08a4"
+          },
+          // For mainnet
+          mainnet: {
+            matticNetwork: "https://polygon-rpc.com",
+            web3Provider: "https://polygon-mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161" // Public Infura endpoint
+          }
+        }
       }
     };
 
@@ -49,7 +63,25 @@ export class VeridaClient {
     // Initialize account with any type to bypass type checking
     const accountConfig: any = {
       request: {
-        logoUrl: LOGO_URL
+        logoUrl: LOGO_URL,
+        // Specify the required database permissions
+        permissions: {
+          // For profile database
+          'db/dating_profile': {
+            read: true,
+            write: true
+          },
+          // For preferences database
+          'db/dating_preferences': {
+            read: true,
+            write: true
+          },
+          // For photos database
+          'db/dating_photos': {
+            read: true,
+            write: true
+          }
+        }
       }
     };
     
@@ -69,8 +101,8 @@ export class VeridaClient {
       // Connect the account to the client
       await this.client!.connect(this.account!);
       
-      // Open application context
-      this.context = await this.client!.openContext(CONTEXT_NAME);
+      // Open application context with forceCreate set to true
+      this.context = await this.client!.openContext(CONTEXT_NAME, true);
       
       // Get user DID
       this.did = await this.account!.did();
@@ -118,7 +150,33 @@ export class VeridaClient {
       throw new Error('Not connected to Verida network');
     }
     
-    return await this.context.openDatabase(dbName);
+    try {
+      // Try to open the database
+      return await this.context.openDatabase(dbName);
+    } catch (error) {
+      console.error(`Error opening database ${dbName}:`, error);
+      
+      // If the error indicates context doesn't exist, try reconnecting with force create
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      if (errorMsg.includes("Storage context doesn't exist")) {
+        console.log("Storage context doesn't exist. Reconnecting with force create.");
+        
+        // Disconnect and reconnect
+        this.disconnect();
+        await this.init();
+        await this.client!.connect(this.account!);
+        
+        // Force create the context
+        this.context = await this.client!.openContext(CONTEXT_NAME, true);
+        this.did = await this.account!.did();
+        
+        // Try opening database again
+        return await this.context.openDatabase(dbName);
+      }
+      
+      // If it's not a context issue, rethrow the error
+      throw error;
+    }
   }
 
   /**

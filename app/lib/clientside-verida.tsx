@@ -81,6 +81,34 @@ export const useProfileService = () => {
   return { profileService, isLoading, error };
 };
 
+// Wrapper for the ProfileRestService
+export const useProfileRestService = () => {
+  const [profileRestService, setProfileRestService] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const loadProfileRestService = async () => {
+      try {
+        setIsLoading(true);
+        // Dynamically import the REST profile service
+        const { ProfileRestService } = await import('./profile-rest-service');
+        // Use the object directly, don't try to instantiate with 'new'
+        setProfileRestService(ProfileRestService);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to load ProfileRestService:', err);
+        setError(err instanceof Error ? err : new Error('Failed to load ProfileRestService'));
+        setIsLoading(false);
+      }
+    };
+
+    loadProfileRestService();
+  }, []);
+
+  return { profileRestService, isLoading, error };
+};
+
 // No-op component for SSR
 export const NoSSR = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;

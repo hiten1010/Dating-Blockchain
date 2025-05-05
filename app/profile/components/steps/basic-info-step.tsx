@@ -12,6 +12,7 @@ import type { ProfileData } from "../profile-creation-flow"
 import { useToast } from "@/components/ui/use-toast"
 import { ProfileService } from "@/app/lib/profile-service"
 import { veridaClient } from "@/app/lib/verida-client-wrapper"
+import { useVeridaClient, useProfileRestService } from "@/app/lib/clientside-verida"
 
 interface BasicInfoStepProps {
   profileData: ProfileData
@@ -23,15 +24,88 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [clientInitialized, setClientInitialized] = useState<boolean>(false)
+  const { client, isLoading, error: clientError } = useVeridaClient();
+  const { profileRestService, isLoading: isRestLoading, error: restError } = useProfileRestService();
+  
+  // Initialize Verida client if needed
+  useEffect(() => {
+    const initializeVeridaClient = async () => {
+      try {
+        if (!veridaClient.getClient()) {
+          console.log("Initializing Verida client...");
+          await veridaClient.init();
+          setClientInitialized(true);
+          console.log("Verida client initialized.");
+        } else {
+          setClientInitialized(true);
+          console.log("Verida client already initialized.");
+        }
+      } catch (err) {
+        console.error("Error initializing Verida client:", err);
+        setError("Failed to initialize Verida client. Please try again.");
+      }
+    };
+    
+    initializeVeridaClient();
+  }, []);
   
   // Check if there's existing profile data in Verida
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        if (veridaClient.isConnected()) {
-          const profile = await ProfileService.getProfile();
+        // Try to get the DID
+        let did = null;
+        try {
+          if (veridaClient.isConnected()) {
+            did = veridaClient.getDid();
+          } else {
+            const connected = await veridaClient.connect();
+            if (connected) {
+              did = veridaClient.getDid();
+            }
+          }
+        } catch (didError) {
+          console.error("Error getting DID:", didError);
+        }
+        
+        console.log("Fetching profile data using REST API...");
+        if (profileRestService) {
+          // Use the REST API service to get profile data
+          const profile = await profileRestService.getProfile(did);
+          console.log("Profile data retrieved:", profile);
+          
           if (profile) {
             // Update the form with data from Verida
+            updateProfileData({
+              displayName: profile.displayName || profileData.displayName,
+              age: profile.age || profileData.age,
+              location: profile.location || profileData.location,
+              bio: profile.bio || profileData.bio,
+            });
+            
+            toast({
+              title: "Profile Data Retrieved",
+              description: "Loaded your existing profile data from Verida.",
+              duration: 3000,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error loading profile data from Verida REST API:", error);
+        
+        // Fall back to SDK approach if REST API fails
+        try {
+          console.log("Falling back to SDK approach...");
+          if (!veridaClient.isConnected()) {
+            const connected = await veridaClient.connect();
+            if (!connected) {
+              throw new Error("Failed to connect to Verida");
+            }
+          }
+          
+          const profile = await ProfileService.getProfile();
+          if (profile) {
             updateProfileData({
               displayName: profile.displayName || profileData.displayName,
               age: profile.age || profileData.age,
@@ -45,14 +119,16 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
               duration: 3000,
             });
           }
+        } catch (fallbackError) {
+          console.error("Fallback to SDK also failed:", fallbackError);
         }
-      } catch (error) {
-        console.error("Error loading profile data from Verida:", error);
       }
     };
     
-    fetchProfileData();
-  }, [updateProfileData]);
+    if (clientInitialized && profileRestService) {
+      fetchProfileData();
+    }
+  }, [clientInitialized, profileRestService, updateProfileData, profileData]);
 
   const handleContinue = async () => {
     if (!profileData.displayName) {
@@ -61,7 +137,6 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
         title: "Required Field Missing",
         description: "Please enter your display name to continue",
         duration: 3000,
-        className: "bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-sm border-purple-200/50 text-white shadow-lg hover:shadow-xl transition-all duration-200",
       })
       return
     }
@@ -72,7 +147,6 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
         title: "Required Field Missing",
         description: "Please enter your age to continue",
         duration: 3000,
-        className: "bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-sm border-purple-200/50 text-white shadow-lg hover:shadow-xl transition-all duration-200",
       })
       return
     }
@@ -82,18 +156,53 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
     setError(null);
     
     try {
-      // Ensure we're connected to Verida
-      if (!veridaClient.isConnected()) {
-        await veridaClient.connect();
+      console.log("Starting profile save process...");
+      
+      // Get DID if possible
+      let did = "unknown";
+      try {
+        // Make sure client is initialized
+        if (!veridaClient.getClient()) {
+          console.log("Initializing Verida client before save...");
+          await veridaClient.init();
+        }
+        
+        // Ensure we're connected to Verida to get DID
+        if (!veridaClient.isConnected()) {
+          console.log("Connecting to Verida before save...");
+          const connected = await veridaClient.connect();
+          if (connected) {
+            did = veridaClient.getDid() || "unknown";
+          }
+        } else {
+          did = veridaClient.getDid() || "unknown";
+        }
+      } catch (didError) {
+        console.error("Error getting DID, will use 'unknown':", didError);
       }
       
-      // Save profile data
-      await ProfileService.saveProfile({
+      // Prepare profile data
+      const profileDataToSave = {
+        did: did,
         displayName: profileData.displayName,
         age: profileData.age,
-        location: profileData.location,
-        bio: profileData.bio,
-      });
+        location: profileData.location || "",
+        bio: profileData.bio || "",
+      };
+      
+      console.log("Saving profile data:", profileDataToSave);
+      
+      // Try to save using the REST service first
+      if (profileRestService) {
+        console.log("Using REST API to save profile");
+        const savedProfile = await profileRestService.saveProfile(profileDataToSave);
+        console.log("Profile saved successfully via REST API:", savedProfile);
+      } else {
+        // Fall back to SDK approach
+        console.log("Falling back to SDK to save profile");
+        const savedProfile = await ProfileService.saveProfile(profileDataToSave);
+        console.log("Profile saved successfully via SDK:", savedProfile);
+      }
       
       toast({
         title: "Profile Saved",
@@ -105,12 +214,13 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
       onContinue();
     } catch (err) {
       console.error("Error saving profile to Verida:", err);
-      setError("Failed to save profile. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to save profile. Please try again.";
+      setError(errorMessage);
       
       toast({
         variant: "destructive",
         title: "Profile Save Failed",
-        description: "There was an error saving your profile to Verida. Please try again.",
+        description: errorMessage,
         duration: 3000,
       });
     } finally {
@@ -139,10 +249,31 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
           </p>
         </div>
         
+        {(clientError || restError) && (
+          <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
+            <AlertCircleIcon className="h-4 w-4 text-red-600" />
+            <AlertDescription>
+              {clientError && `Verida client error: ${clientError.message}. `}
+              {restError && `REST API error: ${restError.message}. `}
+              Please refresh and try again.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {error && (
           <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
             <AlertCircleIcon className="h-4 w-4 text-red-600" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription className="flex justify-between items-center">
+              <span>{error}</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-4 text-xs border-red-300 hover:bg-red-100"
+                onClick={() => onContinue()}
+              >
+                Continue anyway
+              </Button>
+            </AlertDescription>
           </Alert>
         )}
 
@@ -275,12 +406,17 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
         <Button
           onClick={handleContinue}
           className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-          disabled={isSaving}
+          disabled={isSaving || isLoading || isRestLoading}
         >
           {isSaving ? (
             <div className="flex items-center justify-center">
               <LoaderIcon className="h-4 w-4 animate-spin mr-2" />
               <span>Saving to Verida...</span>
+            </div>
+          ) : isLoading || isRestLoading ? (
+            <div className="flex items-center justify-center">
+              <LoaderIcon className="h-4 w-4 animate-spin mr-2" />
+              <span>Loading services...</span>
             </div>
           ) : (
             "Continue to Photos"

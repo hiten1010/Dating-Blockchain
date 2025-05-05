@@ -58,7 +58,12 @@ export class ProfileService {
     try {
       // Ensure connected to Verida
       if (!veridaClient.isConnected()) {
-        await veridaClient.connect();
+        console.log("Not connected to Verida, attempting to connect...");
+        const connected = await veridaClient.connect();
+        if (!connected) {
+          throw new Error('Failed to connect to Verida network');
+        }
+        console.log("Connected to Verida successfully");
       }
 
       const did = veridaClient.getDid();
@@ -66,8 +71,20 @@ export class ProfileService {
         throw new Error('User not authenticated with Verida');
       }
 
-      // Open profile database
-      const profileDb = await veridaClient.openDatabase(PROFILE_DB);
+      let profileDb;
+      try {
+        // Open profile database
+        profileDb = await veridaClient.openDatabase(PROFILE_DB);
+      } catch (dbError) {
+        console.error("Initial database open failed, reconnecting...", dbError);
+        
+        // If opening the database fails, try reconnecting
+        await veridaClient.disconnect();
+        await veridaClient.connect();
+        
+        // Try opening the database again
+        profileDb = await veridaClient.openDatabase(PROFILE_DB);
+      }
 
       // Check if profile already exists
       const existingProfiles = await profileDb.getMany({
