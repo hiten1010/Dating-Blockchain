@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Brain, Bot, User, RefreshCw, Sparkles } from "lucide-react"
+import { Brain, Bot, User, RefreshCw, Sparkles, Database } from "lucide-react"
 
 interface AiTwinPreviewProps {
   formData: any
@@ -16,6 +16,14 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
   const [isTyping, setIsTyping] = useState(false)
   const [messages, setMessages] = useState<{ content: string; isAi: boolean }[]>([])
   const [insightVisible, setInsightVisible] = useState(false)
+  const [veridaStatus, setVeridaStatus] = useState<'loading' | 'loaded' | 'none'>('none')
+
+  // Check for Verida data
+  useEffect(() => {
+    if (formData.name && formData.favouriteType) {
+      setVeridaStatus('loaded');
+    }
+  }, [formData]);
 
   // Generate a preview message based on form data
   useEffect(() => {
@@ -93,11 +101,35 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
 
   return (
     <div className="backdrop-blur-xl bg-white/60 rounded-[2rem] border border-pink-200 p-6 shadow-xl h-full flex flex-col">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-2 rounded-xl">
-          <Brain className="h-5 w-5 text-white" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-2 rounded-xl">
+            <Brain className="h-5 w-5 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800">AI Twin Preview</h2>
         </div>
-        <h2 className="text-xl font-bold text-slate-800">AI Twin Preview</h2>
+        
+        {/* Add Verida Badge if data exists */}
+        {veridaStatus === 'loaded' && (
+          <Badge 
+            variant="outline" 
+            className="bg-green-50 text-green-700 border-green-200 px-3 py-1 flex items-center gap-1"
+          >
+            <Database className="h-3 w-3 mr-1" />
+            Verida Data Loaded
+          </Badge>
+        )}
+        
+        {/* Add Record Status Badge */}
+        {formData._id && (
+          <Badge 
+            variant="outline" 
+            className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1 flex items-center gap-1 ml-2"
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Existing Record
+          </Badge>
+        )}
       </div>
 
       <div className="flex items-center gap-4 mb-4">
@@ -216,6 +248,31 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
               </div>
             </motion.div>
           )}
+
+          {/* Add Verida Storage Information */}
+          {formData.name && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100"
+            >
+              <div className="flex items-start gap-2">
+                <Database className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="text-xs font-medium text-purple-700 mb-1">Verida Storage</h4>
+                  <p className="text-xs text-purple-600">
+                    Your AI twin will be stored securely using the Verida Favourite schema with 
+                    type: <span className="font-medium">{formData.favouriteType || "recommendation"}</span>,
+                    content: <span className="font-medium">{formData.contentType || "document"}</span>
+                    {formData.uri && (
+                      <>, uri: <span className="font-medium">{formData.uri}</span></>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
 
@@ -237,6 +294,23 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
           Test Message
         </Button>
       </div>
+
+      {/* Add Document ID info at the bottom if it exists */}
+      {formData._id && (
+        <div className="mt-3 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl p-3 border border-slate-100">
+          <div className="flex items-start gap-2">
+            <Database className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="text-xs font-medium text-slate-700 mb-1">Record Information</h4>
+              <p className="text-xs text-slate-600">
+                ID: <span className="font-mono text-[10px]">{formData._id}</span>
+                {formData._rev && <> • Rev: {formData._rev.split('-')[0]}</>}
+                {formData.uri && <> • URI: {formData.uri.substring(0, 20)}...</>}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

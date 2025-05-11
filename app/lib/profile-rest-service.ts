@@ -1,19 +1,51 @@
 'use client';
 
+import { 
+  APP_SCHEMA_MAPPING, 
+  SCHEMA_SHORTHAND, 
+  SCHEMA_URLS,
+  formatDataToSchema, 
+  formatSchemaToData,
+  encodeSchemaUrl,
+  prepareSchemaForEndpoint
+} from './verida-schema-mapping';
+
 // Constants
 const API_BASE_URL = 'https://api.verida.ai';
-// Note: This token requires proper scopes: db:rw:dating_profile, db:rw:dating_preferences, db:rw:dating_photos
-const AUTH_TOKEN = '0a420b30-28fe-11f0-b8ca-5b198f1a59d76cjG57RUD1AH_H9zO6ljaRDrZemdQs3O9OUYA47o1pNadrQG';
-const PROFILE_DB = 'dating_profile';
-const PREFERENCES_DB = 'dating_preferences';
-const PHOTOS_DB = 'dating_photos';
+// Updated token with all necessary scopes
+const AUTH_TOKEN = '58d16670-2dee-11f0-b8ca-5b198f1a59d7pduhzxgYXXdVHL5liF0coKxSTCZMXAUidn63_UnddHHLwm+I';
 
-// Required scopes for each database
+// Using standard Verida schemas
+const PROFILE_SCHEMA_URL = SCHEMA_URLS.SOCIAL_POST; // For profile information
+const PREFERENCES_SCHEMA_URL = SCHEMA_URLS.SOCIAL_FOLLOWING; // For preferences
+const PHOTOS_SCHEMA_URL = SCHEMA_URLS.FILE; // For photos
+
+// Encoded schema parameters for API endpoints - always use full URL encoding, not shortcuts
+const PROFILE_SCHEMA_PARAM = encodeSchemaUrl(PROFILE_SCHEMA_URL);
+const PREFERENCES_SCHEMA_PARAM = encodeSchemaUrl(PREFERENCES_SCHEMA_URL);
+const PHOTOS_SCHEMA_PARAM = encodeSchemaUrl(PHOTOS_SCHEMA_URL);
+
+// Required scopes for each schema
 const REQUIRED_SCOPES = {
-  [PROFILE_DB]: 'db:rw:dating_profile',
-  [PREFERENCES_DB]: 'db:rw:dating_preferences',
-  [PHOTOS_DB]: 'db:rw:dating_photos'
+  [SCHEMA_SHORTHAND.SOCIAL_POST]: APP_SCHEMA_MAPPING.DATING_PROFILE.requiredScope,
+  [SCHEMA_SHORTHAND.SOCIAL_FOLLOWING]: APP_SCHEMA_MAPPING.DATING_PREFERENCES.requiredScope,
+  [SCHEMA_SHORTHAND.FILE]: APP_SCHEMA_MAPPING.PROFILE_PHOTOS.requiredScope
 };
+
+// API scopes required for operations
+const API_SCOPES = {
+  QUERY: 'api:ds-query',
+  CREATE: 'api:ds-create',
+  UPDATE: 'api:ds-update',
+  GET_BY_ID: 'api:ds-get-by-id',
+  DELETE: 'api:ds-delete'
+};
+
+// Function to properly encode schema URLs for API endpoints
+function encodeSchemaForEndpoint(schemaUrl: string): string {
+  // Use the encodeSchemaUrl function from our mapping file
+  return encodeSchemaUrl(schemaUrl);
+}
 
 // Same interfaces as in profile-service.ts
 export interface DatingProfile {
@@ -50,16 +82,12 @@ export interface DatingPreferences {
 }
 
 /**
- * ProfileRestService object to handle storing and retrieving profile data from Verida using REST APIs
- * This bypasses the SDK issues with RPC and context creation
+ * ProfileRestService
+ * Handles API communication with Verida REST API for profile operations
  */
 export const ProfileRestService = {
   /**
-   * Make an authenticated API call to Verida REST API
-   * @param endpoint - API endpoint path
-   * @param method - HTTP method (GET, POST, PUT, DELETE)
-   * @param body - Request body for POST/PUT requests
-   * @returns API response
+   * Generic API call method
    */
   async apiCall(endpoint: string, method: string = 'GET', body?: any): Promise<any> {
     try {
@@ -71,355 +99,308 @@ export const ProfileRestService = {
       const url = `${API_BASE_URL}${endpoint}`;
       console.log(`Making ${method} request to ${url}`);
       
+      // Add detailed debugging info
+      console.log(`FULL REQUEST DETAILS:
+Raw URL: ${url}
+Method: ${method}
+Headers: Bearer token (hidden for security)
+Body: ${body ? JSON.stringify(body, null, 2) : 'none'}`);
+      
       if (body) {
         console.log(`Request body:`, body);
       }
       
-      // Determine which database is being accessed for logging purposes
-      let dbName = null;
-      if (endpoint.includes(PROFILE_DB)) {
-        dbName = PROFILE_DB;
-      } else if (endpoint.includes(PREFERENCES_DB)) {
-        dbName = PREFERENCES_DB;
-      } else if (endpoint.includes(PHOTOS_DB)) {
-        dbName = PHOTOS_DB;
-      }
-      
-      // Log required scope info if this is a database operation
-      if (dbName && (method === 'POST' || method === 'PUT')) {
-        console.log(`This operation requires the scope: ${REQUIRED_SCOPES[dbName as keyof typeof REQUIRED_SCOPES]}`);
-      }
-      
-      const headers = {
-        'Authorization': `Bearer ${AUTH_TOKEN}`,
-        'Content-Type': 'application/json'
-      };
-      
-      const options: RequestInit = {
+      const response = await fetch(url, {
         method,
-        headers,
-        cache: 'no-store',
-      };
+        headers: {
+          'Authorization': `Bearer ${AUTH_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: body ? JSON.stringify(body) : undefined
+      });
       
-      if (body && (method === 'POST' || method === 'PUT')) {
-        options.body = JSON.stringify(body);
-      }
-      
-      // Add timeout to fetch to avoid hanging requests
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      options.signal = controller.signal;
-      
-      try {
-        const response = await fetch(url, options);
-        clearTimeout(timeoutId); // Clear timeout if fetch completes
-        
-        // Log response status for debugging
-        console.log(`Response status: ${response.status} ${response.statusText}`);
-        
-        // If response is not ok, try to parse the error message
-        if (!response.ok) {
-          // Try to get the content type header
-          const contentType = response.headers.get('content-type');
-          let errorMessage = '';
-          
-          // Handle different response types appropriately
-          if (contentType && contentType.includes('application/json')) {
-            // Parse as JSON if possible
-            const errorJson = await response.json();
-            errorMessage = JSON.stringify(errorJson);
-            console.error(`API error JSON (${response.status}):`, errorJson);
-            
-            // Check specifically for scope/permission errors
-            if (errorJson.error && errorJson.error.includes('Missing scope')) {
-              console.error('PERMISSION ERROR: Your auth token is missing the required scope.');
-              console.error(`To fix this, you need to request a new token with the scope: ${errorJson.error.split(':')[1].trim()}`);
-            }
-          } else {
-            // Read as text if not JSON
-            const errorText = await response.text();
-            errorMessage = errorText;
-            console.error(`API error text (${response.status}): ${errorText}`);
-          }
-          
-          // Enhanced error with more details
-          throw new Error(`API error (${response.status} ${response.statusText}) on ${method} ${url}: ${errorMessage}`);
-        }
-        
-        // For successful responses, try to parse as JSON
+      if (!response.ok) {
+        // Try to get error details from response
+        let errorDetails: string;
         try {
-          const data = await response.json();
-          console.log(`API response data:`, data);
-          return data;
-        } catch (jsonError) {
-          console.warn('Response couldn\'t be parsed as JSON, returning raw response');
-          const text = await response.text();
-          return { rawResponse: text };
-        }
-      } catch (fetchError: any) {
-        if (fetchError.name === 'AbortError') {
-          console.error(`Request timeout after 30 seconds when connecting to: ${url}`);
-          throw new Error(`Request timeout (30s) when connecting to Verida API: ${url}. Please try again later.`);
-        } else if (fetchError instanceof TypeError && fetchError.message === 'Failed to fetch') {
-          console.error(`Network error when connecting to: ${url}. This could be due to:
-            1. No internet connection
-            2. CORS issues
-            3. Invalid endpoint URL
-            4. Server is not responding`);
-          throw new Error(`Network error when connecting to Verida API: ${url}. Please check your internet connection or try again later.`);
+          const errorJson = await response.json();
+          errorDetails = JSON.stringify(errorJson);
+        } catch {
+          errorDetails = await response.text();
         }
         
-        // Re-throw with additional context
-        console.error(`Fetch error for ${method} ${url}:`, fetchError);
-        throw fetchError;
+        // Log and throw the error
+        console.error(`API Error (${response.status}): ${errorDetails}`);
+        throw new Error(`API Error (${response.status}): ${errorDetails}`);
       }
+      
+      return await response.json();
     } catch (error) {
-      console.error('API call error:', error);
+      console.error('API call failed', error);
       throw error;
     }
   },
   
   /**
-   * Save or update user profile using REST API
-   * @param {Partial<DatingProfile>} profileData - Profile data to save
-   * @returns {Promise<DatingProfile>} - Saved profile
+   * Save a profile to the Verida network
    */
   async saveProfile(profileData: Partial<DatingProfile>): Promise<DatingProfile> {
     try {
-      console.log("Saving profile data via REST API:", profileData);
+      console.log("Saving profile data via REST API using social-post schema:", profileData);
+      
+      // Use our mapping utility to format data according to the schema
+      const socialPostData = formatDataToSchema('DATING_PROFILE', profileData);
+      console.log("Formatted data for Verida schema:", JSON.stringify(socialPostData, null, 2));
+      
+      // Ensure that these required fields are set (most common causes of 500 errors)
+      if (!socialPostData.schema) {
+        console.error("ERROR: Schema URL missing from formatted data");
+        socialPostData.schema = SCHEMA_URLS.SOCIAL_POST;
+      }
+      
+      if (!socialPostData.name) {
+        console.error("ERROR: 'name' field missing (required by schema)");
+        socialPostData.name = profileData.displayName || "User Profile";
+      }
+      
+      if (!socialPostData.uri) {
+        console.error("ERROR: 'uri' field missing (required by schema)");
+        socialPostData.uri = `dating:profile:${profileData.did || Date.now()}`;
+      }
+      
+      console.log("Final data after validation checks:", JSON.stringify(socialPostData, null, 2));
       
       // Check if profile already exists by querying
       let existingProfiles;
       try {
-        existingProfiles = await this.apiCall(`/api/rest/v1/db/query/${PROFILE_DB}`, 'POST', {
-          filters: { did: profileData.did }
-        });
+        // Query using DID to see if profile exists
+        const queryEndpoint = `/api/rest/v1/ds/query/${PROFILE_SCHEMA_PARAM}`;
+        // Use the correct format expected by the API for queries
+        const queryBody = {
+          recordFilter: {
+            did: profileData.did,
+            "metadata.profileType": "dating" 
+          },
+          options: {
+            limit: 1
+          }
+        };
+        
+        existingProfiles = await this.apiCall(queryEndpoint, 'POST', queryBody);
+        console.log("Query result:", JSON.stringify(existingProfiles, null, 2));
       } catch (error) {
-        console.log("Error fetching existing profiles, assuming none exist:", error);
+        console.warn("Error querying for existing profile", error);
         existingProfiles = { data: [] };
       }
       
-      const now = new Date().toISOString();
-      let savedProfile;
-      
-      if (existingProfiles.data && existingProfiles.data.length > 0) {
+      let result;
+      if (existingProfiles?.data?.length > 0) {
         // Update existing profile
-        const existingProfile = existingProfiles.data[0];
-        console.log("Updating existing profile:", existingProfile._id);
+        const recordId = existingProfiles.data[0]._id;
+        const updateEndpoint = `/api/rest/v1/ds/${PROFILE_SCHEMA_PARAM}/${recordId}`;
         
-        const updatedData = {
-          ...existingProfile,
-          ...profileData,
-          updatedAt: now
-        };
-        
-        // Use the PUT endpoint to update
-        savedProfile = await this.apiCall(`/api/rest/v1/db/${PROFILE_DB}/${existingProfile._id}`, 'PUT', updatedData);
+        // Update instead of creating new record - Wrap in 'record' object as required by the API
+        result = await this.apiCall(updateEndpoint, 'PUT', { record: socialPostData });
+        console.log("Updated profile:", result);
       } else {
         // Create new profile
-        console.log("Creating new profile");
-        const newProfile: DatingProfile = {
-          did: profileData.did || 'unknown',
-          displayName: profileData.displayName || '',
-          age: profileData.age || '',
-          location: profileData.location || '',
-          bio: profileData.bio || '',
-          interests: profileData.interests || [],
-          relationshipGoals: profileData.relationshipGoals || '',
-          primaryPhotoIndex: profileData.primaryPhotoIndex || 0,
-          createdAt: now,
-          updatedAt: now
-        };
+        const createEndpoint = `/api/rest/v1/ds/${PROFILE_SCHEMA_PARAM}`;
+        console.log("Creating new profile at endpoint:", createEndpoint);
         
-        // Use the POST endpoint to create
-        savedProfile = await this.apiCall(`/api/rest/v1/db/${PROFILE_DB}`, 'POST', newProfile);
+        // IMPORTANT FIX: Wrap the data in a 'record' object as required by the Verida API
+        const requestBody = {
+          record: socialPostData
+        };
+        console.log("With data:", JSON.stringify(requestBody, null, 2));
+        
+        // Make the API call to create the profile
+        result = await this.apiCall(createEndpoint, 'POST', requestBody);
+        console.log("Created new profile:", result);
       }
       
-      console.log("Profile saved successfully:", savedProfile);
-      return savedProfile.data || savedProfile;
+      // Convert back to our app's format (result.record contains the created/updated data)
+      return formatSchemaToData('DATING_PROFILE', result.record) as DatingProfile;
     } catch (error) {
-      console.error('Error saving profile:', error);
+      console.error('Error saving profile', error);
       throw error;
     }
   },
   
   /**
-   * Get user profile using REST API
-   * @param {string} did - DID of the user
-   * @returns {Promise<DatingProfile | null>} - User profile or null if not found
+   * Get a profile from the Verida network
    */
-  async getProfile(did?: string): Promise<DatingProfile | null> {
+  async getProfile(did: string): Promise<DatingProfile | null> {
     try {
-      console.log("Getting profile for DID:", did);
+      console.log(`Getting profile for DID: ${did}`);
       
-      // Query for profiles with the matching DID
-      const result = await this.apiCall(`/api/rest/v1/db/query/${PROFILE_DB}`, 'POST', {
-        filters: { did: did }
-      });
-      
-      if (result.data && result.data.length > 0) {
-        return result.data[0];
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error getting profile:', error);
-      throw error;
-    }
-  },
-  
-  /**
-   * Save profile photo using REST API
-   * @param {string} photoUrl - URL or base64 data of the photo
-   * @param {string} description - Description of the photo
-   * @param {boolean} isPrivate - Whether the photo is private
-   * @param {number} order - Display order of the photo
-   * @returns {Promise<ProfilePhoto>} - Saved photo data
-   */
-  async saveProfilePhoto(
-    did: string,
-    photoUrl: string,
-    description: string = '',
-    isPrivate: boolean = false,
-    order: number = 0
-  ): Promise<ProfilePhoto> {
-    try {
-      console.log("Saving profile photo via REST API");
-      
-      const now = new Date().toISOString();
-      
-      // Create photo object
-      const photo: ProfilePhoto = {
-        did,
-        photoUrl,
-        description,
-        isPrivate,
-        order,
-        createdAt: now
+      // Query for profile with the given DID
+      const queryEndpoint = `/api/rest/v1/ds/query/${PROFILE_SCHEMA_PARAM}`;
+      const queryBody = {
+        recordFilter: {
+          did: did,
+          "metadata.profileType": "dating"
+        },
+        options: {
+          limit: 1
+        }
       };
       
-      // Use the POST endpoint to create
-      const result = await this.apiCall(`/api/rest/v1/db/${PHOTOS_DB}`, 'POST', photo);
+      const result = await this.apiCall(queryEndpoint, 'POST', queryBody);
+      console.log(`Query result:`, result);
       
-      console.log("Photo saved successfully:", result);
-      return result.data || result;
-    } catch (error) {
-      console.error('Error saving photo:', error);
-      throw error;
-    }
-  },
-  
-  /**
-   * Get all profile photos using REST API
-   * @param {string} did - DID of the user
-   * @returns {Promise<ProfilePhoto[]>} - Array of user photos
-   */
-  async getProfilePhotos(did?: string): Promise<ProfilePhoto[]> {
-    try {
-      console.log("Getting profile photos for DID:", did);
-      
-      // Query for photos with the matching DID
-      const result = await this.apiCall(`/api/rest/v1/db/query/${PHOTOS_DB}`, 'POST', {
-        filters: { did: did }
-      });
-      
-      if (result.data && result.data.length > 0) {
-        // Sort by order field
-        return result.data.sort((a: ProfilePhoto, b: ProfilePhoto) => a.order - b.order);
-      }
-      
-      return [];
-    } catch (error) {
-      console.error('Error getting photos:', error);
-      throw error;
-    }
-  },
-  
-  /**
-   * Save user preferences using REST API
-   * @param {Partial<DatingPreferences>} preferencesData - Preferences data to save
-   * @returns {Promise<DatingPreferences>} - Saved preferences
-   */
-  async savePreferences(did: string, preferencesData: Partial<DatingPreferences>): Promise<DatingPreferences> {
-    try {
-      console.log("Saving preferences via REST API:", preferencesData);
-      
-      // Check if preferences already exist by querying
-      let existingPreferences;
-      try {
-        existingPreferences = await this.apiCall(`/api/rest/v1/db/query/${PREFERENCES_DB}`, 'POST', {
-          filters: { did: did }
-        });
-      } catch (error) {
-        console.log("Error fetching existing preferences, assuming none exist:", error);
-        existingPreferences = { data: [] };
-      }
-      
-      const now = new Date().toISOString();
-      let savedPreferences;
-      
-      if (existingPreferences.data && existingPreferences.data.length > 0) {
-        // Update existing preferences
-        const existingPreference = existingPreferences.data[0];
-        console.log("Updating existing preferences:", existingPreference._id);
-        
-        const updatedData = {
-          ...existingPreference,
-          ...preferencesData,
-          did,
-          updatedAt: now
-        };
-        
-        // Use the PUT endpoint to update
-        savedPreferences = await this.apiCall(`/api/rest/v1/db/${PREFERENCES_DB}/${existingPreference._id}`, 'PUT', updatedData);
+      if (result?.data?.length > 0) {
+        // Convert to our app format and return
+        return formatSchemaToData('DATING_PROFILE', result.data[0]) as DatingProfile;
       } else {
-        // Create new preferences
-        console.log("Creating new preferences");
-        const newPreferences: DatingPreferences = {
-          did,
-          ageRange: preferencesData.ageRange || { min: 18, max: 50 },
-          locationPreference: preferencesData.locationPreference || 'worldwide',
-          distanceRange: preferencesData.distanceRange || 50,
-          lookingFor: preferencesData.lookingFor || [],
-          dealBreakers: preferencesData.dealBreakers || [],
-          createdAt: now,
-          updatedAt: now
-        };
-        
-        // Use the POST endpoint to create
-        savedPreferences = await this.apiCall(`/api/rest/v1/db/${PREFERENCES_DB}`, 'POST', newPreferences);
+        console.log(`No profile found for DID: ${did}`);
+        return null;
       }
-      
-      console.log("Preferences saved successfully:", savedPreferences);
-      return savedPreferences.data || savedPreferences;
     } catch (error) {
-      console.error('Error saving preferences:', error);
+      console.error('Error getting profile', error);
       throw error;
     }
   },
   
   /**
-   * Get user preferences using REST API
-   * @param {string} did - DID of the user
-   * @returns {Promise<DatingPreferences | null>} - User preferences or null if not found
+   * Delete a profile from the Verida network
    */
-  async getPreferences(did?: string): Promise<DatingPreferences | null> {
+  async deleteProfile(did: string): Promise<boolean> {
     try {
-      console.log("Getting preferences for DID:", did);
+      console.log(`Deleting profile for DID: ${did}`);
       
-      // Query for preferences with the matching DID
-      const result = await this.apiCall(`/api/rest/v1/db/query/${PREFERENCES_DB}`, 'POST', {
-        filters: { did: did }
-      });
+      // First find the profile ID
+      const queryEndpoint = `/api/rest/v1/ds/query/${PROFILE_SCHEMA_PARAM}`;
+      const queryBody = {
+        recordFilter: {
+          did: did,
+          "metadata.profileType": "dating"
+        },
+        options: {
+          limit: 1
+        }
+      };
       
-      if (result.data && result.data.length > 0) {
-        return result.data[0];
+      const result = await this.apiCall(queryEndpoint, 'POST', queryBody);
+      
+      if (result?.data?.length > 0) {
+        const recordId = result.data[0]._id;
+        // Delete the record
+        const deleteEndpoint = `/api/rest/v1/ds/${PROFILE_SCHEMA_PARAM}/${recordId}`;
+        await this.apiCall(deleteEndpoint, 'DELETE');
+        console.log(`Profile deleted successfully`);
+        return true;
+      } else {
+        console.log(`No profile found to delete for DID: ${did}`);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting profile', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Search for profiles with given criteria
+   */
+  async searchProfiles(criteria: {
+    ageMin?: number;
+    ageMax?: number;
+    location?: string;
+    interests?: string[];
+    limit?: number;
+    offset?: number;
+  }): Promise<DatingProfile[]> {
+    try {
+      console.log(`Searching profiles with criteria:`, criteria);
+      
+      // Build query object based on criteria
+      const filter: any = {
+        "metadata.profileType": "dating" // Always filter to our app's profiles
+      };
+      
+      // Add age filtering if provided
+      if (criteria.ageMin !== undefined || criteria.ageMax !== undefined) {
+        filter["metadata.age"] = {};
+        if (criteria.ageMin !== undefined) {
+          filter["metadata.age"]["$gte"] = criteria.ageMin.toString();
+        }
+        if (criteria.ageMax !== undefined) {
+          filter["metadata.age"]["$lte"] = criteria.ageMax.toString();
+        }
       }
       
-      return null;
+      // Add location filtering if provided
+      if (criteria.location) {
+        filter["metadata.location"] = criteria.location;
+      }
+      
+      // Add interests filtering if provided
+      if (criteria.interests && criteria.interests.length > 0) {
+        filter["metadata.interests"] = { "$in": criteria.interests };
+      }
+      
+      const queryEndpoint = `/api/rest/v1/ds/query/${PROFILE_SCHEMA_PARAM}`;
+      const queryBody = {
+        recordFilter: filter,
+        options: {
+          limit: criteria.limit || 20,
+          skip: criteria.offset || 0
+        }
+      };
+      
+      const result = await this.apiCall(queryEndpoint, 'POST', queryBody);
+      
+      if (result?.data?.length > 0) {
+        // Convert each profile to our app format
+        return result.data.map((item: any) => 
+          formatSchemaToData('DATING_PROFILE', item)
+        ) as DatingProfile[];
+      } else {
+        console.log(`No profiles found matching criteria`);
+        return [];
+      }
     } catch (error) {
-      console.error('Error getting preferences:', error);
+      console.error('Error searching profiles', error);
+      throw error;
+    }
+  },
+
+  // Add a new method for handling photo uploads
+  async saveProfilePhoto(photoData: Partial<ProfilePhoto>): Promise<ProfilePhoto> {
+    try {
+      console.log("Saving profile photo via REST API:", photoData);
+      
+      // Format data for the file schema
+      const fileSchemaData = formatDataToSchema('PROFILE_PHOTOS', photoData);
+      console.log("Formatted photo data for Verida schema:", JSON.stringify(fileSchemaData, null, 2));
+      
+      // Ensure required fields
+      if (!fileSchemaData.schema) {
+        console.error("ERROR: Schema URL missing from formatted data");
+        fileSchemaData.schema = SCHEMA_URLS.FILE;
+      }
+      
+      // Create photo record
+      const createEndpoint = `/api/rest/v1/ds/${PHOTOS_SCHEMA_PARAM}`;
+      console.log("Creating new photo record at endpoint:", createEndpoint);
+      
+      // Wrap the data in a 'record' object as required by the API
+      const requestBody = {
+        record: fileSchemaData
+      };
+      console.log("With data:", JSON.stringify(requestBody, null, 2));
+      
+      // Make the API call
+      const result = await this.apiCall(createEndpoint, 'POST', requestBody);
+      console.log("Created new photo record:", result);
+      
+      // Convert back to our app's format
+      return formatSchemaToData('PROFILE_PHOTOS', result.record) as ProfilePhoto;
+    } catch (error) {
+      console.error('Error saving photo', error);
       throw error;
     }
   }
-} 
+}
+
+export default ProfileRestService; 

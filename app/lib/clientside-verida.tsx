@@ -51,7 +51,51 @@ export const useVeridaClient = () => {
     loadVeridaClient();
   }, []);
 
-  return { client, isLoading, error };
+  // Enhanced utility functions for the hook
+  
+  // Get authentication status
+  const getAuthStatus = async (): Promise<boolean> => {
+    if (isLoading || !client) return false;
+    try {
+      return client.isConnected();
+    } catch (error) {
+      console.error('Failed to check auth status:', error);
+      return false;
+    }
+  };
+  
+  // Get user's DID
+  const getDidId = async (): Promise<string | null> => {
+    if (isLoading || !client) return null;
+    try {
+      return client.getDid();
+    } catch (error) {
+      console.error('Failed to get DID:', error);
+      return null;
+    }
+  };
+  
+  // Get authentication token for API calls
+  const getAuthToken = async (): Promise<string | null> => {
+    // This is a placeholder - using the app's hard-coded AUTH_TOKEN from profile-rest-service
+    // In a real app, you would get this from the Verida account
+    try {
+      // For development purposes only
+      return '58d16670-2dee-11f0-b8ca-5b198f1a59d7pduhzxgYXXdVHL5liF0coKxSTCZMXAUidn63_UnddHHLwm+I';
+    } catch (error) {
+      console.error('Failed to get auth token:', error);
+      return null;
+    }
+  };
+
+  return { 
+    client, 
+    isLoading, 
+    error,
+    getAuthStatus,
+    getDidId,
+    getAuthToken
+  };
 };
 
 // Wrapper for the ProfileService
@@ -81,20 +125,18 @@ export const useProfileService = () => {
   return { profileService, isLoading, error };
 };
 
-// Wrapper for the ProfileRestService
+// Create a hook that uses ProfileRestService
 export const useProfileRestService = () => {
-  const [profileRestService, setProfileRestService] = useState<any>(null);
+  const [service, setService] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const loadProfileRestService = async () => {
+    const loadService = async () => {
       try {
         setIsLoading(true);
-        // Dynamically import the REST profile service
         const { ProfileRestService } = await import('./profile-rest-service');
-        // Use the object directly, don't try to instantiate with 'new'
-        setProfileRestService(ProfileRestService);
+        setService(ProfileRestService);
         setIsLoading(false);
       } catch (err) {
         console.error('Failed to load ProfileRestService:', err);
@@ -103,10 +145,10 @@ export const useProfileRestService = () => {
       }
     };
 
-    loadProfileRestService();
+    loadService();
   }, []);
 
-  return { profileRestService, isLoading, error };
+  return { service, isLoading, error };
 };
 
 // No-op component for SSR

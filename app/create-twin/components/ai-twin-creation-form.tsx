@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useVeridaClient } from "../../lib/clientside-verida"
+import { formatAiTwinData, saveAiTwin } from "../../lib/verida-ai-twin-service"
 import {
   User,
   Brain,
@@ -28,6 +30,7 @@ import {
   BookOpen,
   Shield,
   Lock,
+  Loader2,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -51,6 +54,8 @@ export default function AiTwinCreationForm({
   const [newTag, setNewTag] = useState("")
   const [newSituation, setNewSituation] = useState("")
   const [newResponse, setNewResponse] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { client, getAuthStatus, getDidId } = useVeridaClient()
 
   const handleAddTag = (field: string, e?: React.FormEvent) => {
     e?.preventDefault()
@@ -90,12 +95,62 @@ export default function AiTwinCreationForm({
     updateFormData({ emotionalResponses: newResponses })
   }
 
-  const handleSubmit = () => {
-    toast({
-      title: "AI Twin Created!",
-      description: "Your AI twin has been successfully created and is ready to chat on your behalf.",
-      variant: "default",
-    })
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true)
+      
+      // Check if we're connected to Verida
+      const isAuthenticated = await getAuthStatus()
+      if (!isAuthenticated) {
+        // Connect if not already connected
+        if (client) {
+          await client.connect()
+        } else {
+          throw new Error('Verida client not available')
+        }
+      }
+      
+      // Get current DID
+      const did = await getDidId()
+      
+      // Format AI twin data according to Verida favorite schema
+      const veridaData = formatAiTwinData(formData)
+      
+      // Add the DID if available
+      if (did) {
+        veridaData.did = did
+      }
+      
+      // Check if this is an update of an existing twin (if URI and _id exist)
+      const isUpdate = !!(formData.uri && formData._id)
+      
+      // Log the formatted data for debugging
+      console.log(`${isUpdate ? "Updating" : "Creating"} Verida Data:`, veridaData)
+      
+      // Save the data to Verida
+      const savedData = await saveAiTwin(veridaData)
+      
+      // Display success toast
+      toast({
+        title: isUpdate ? "AI Twin Updated!" : "AI Twin Created!",
+        description: isUpdate 
+          ? "Your AI twin has been successfully updated in your Verida wallet." 
+          : "Your AI twin has been successfully created and saved to your Verida wallet.",
+        variant: "default",
+      })
+      
+      console.log("Saved AI Twin data:", savedData)
+    } catch (error) {
+      console.error("Failed to create AI twin:", error)
+      // Display error toast
+      toast({
+        title: "Error Saving AI Twin",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const steps = [
@@ -235,6 +290,74 @@ export default function AiTwinCreationForm({
                     <p className="text-xs text-pink-600">
                       This will help your AI twin understand who you are and how to represent you.
                     </p>
+                  </div>
+                </div>
+
+                {/* Verida Schema Required Fields */}
+                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-4 border border-indigo-100 mt-6">
+                  <div className="flex gap-3 mb-4">
+                    <Shield className="h-5 w-5 text-indigo-500 flex-shrink-0 mt-0.5" />
+                    <h3 className="font-medium text-indigo-700">Verida Storage Configuration</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="favouriteType" className="text-slate-700">
+                        AI Twin Type
+                      </Label>
+                      <Select
+                        value={formData.favouriteType}
+                        onValueChange={(value) => updateFormData({ favouriteType: value })}
+                      >
+                        <SelectTrigger id="favouriteType" className="bg-white/80 border-pink-100">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-pink-100">
+                          <SelectItem value="recommendation">Recommendation</SelectItem>
+                          <SelectItem value="favourite">Favourite</SelectItem>
+                          <SelectItem value="like">Like</SelectItem>
+                          <SelectItem value="share">Share</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-slate-500">Required for Verida storage</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="contentType" className="text-slate-700">
+                        Content Type
+                      </Label>
+                      <Select
+                        value={formData.contentType}
+                        onValueChange={(value) => updateFormData({ contentType: value })}
+                      >
+                        <SelectTrigger id="contentType" className="bg-white/80 border-pink-100">
+                          <SelectValue placeholder="Select content type" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-pink-100">
+                          <SelectItem value="document">Document</SelectItem>
+                          <SelectItem value="video">Video</SelectItem>
+                          <SelectItem value="audio">Audio</SelectItem>
+                          <SelectItem value="webpage">Webpage</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-slate-500">Required for Verida storage</p>
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="uri" className="text-slate-700">
+                        URI (Optional)
+                      </Label>
+                      <Input
+                        id="uri"
+                        placeholder="Custom URI identifier"
+                        className="bg-white/80 border-pink-100 focus:border-pink-300"
+                        value={formData.uri}
+                        onChange={(e) => updateFormData({ uri: e.target.value })}
+                      />
+                      <p className="text-xs text-slate-500">
+                        An optional identifier for this AI twin. Will be auto-generated if left blank.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1479,7 +1602,7 @@ export default function AiTwinCreationForm({
         <Button
           variant="outline"
           onClick={prevStep}
-          disabled={currentStep === 1}
+          disabled={currentStep === 1 || isSubmitting}
           className="bg-white border-pink-200 hover:bg-pink-50 text-pink-700"
         >
           <ChevronLeft className="h-4 w-4 mr-2" />
@@ -1489,6 +1612,7 @@ export default function AiTwinCreationForm({
         {currentStep < 8 ? (
           <Button
             onClick={nextStep}
+            disabled={isSubmitting}
             className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
           >
             Next
@@ -1497,10 +1621,20 @@ export default function AiTwinCreationForm({
         ) : (
           <Button
             onClick={handleSubmit}
+            disabled={isSubmitting}
             className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
           >
-            <Sparkles className="h-4 w-4 mr-2" />
-            Create AI Twin
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                {formData._id ? "Update AI Twin" : "Create AI Twin"}
+              </>
+            )}
           </Button>
         )}
       </div>

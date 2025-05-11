@@ -64,20 +64,20 @@ export class VeridaClient {
     const accountConfig: any = {
       request: {
         logoUrl: LOGO_URL,
-        // Specify the required database permissions
+        // Specify the required datastore permissions for standard schemas
         permissions: {
-          // For profile database
-          'db/dating_profile': {
+          // For profile data using social-post schema
+          'datastore/social-post': {
             read: true,
             write: true
           },
-          // For preferences database
-          'db/dating_preferences': {
+          // For photos using file schema
+          'datastore/file': {
             read: true,
             write: true
           },
-          // For photos database
-          'db/dating_photos': {
+          // For preferences using social-following schema
+          'datastore/social-following': {
             read: true,
             write: true
           }
