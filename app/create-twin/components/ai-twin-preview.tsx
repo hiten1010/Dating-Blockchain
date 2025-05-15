@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Brain, Bot, User, RefreshCw, Sparkles, Database } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Brain, Bot, User, Database, Sparkles, Send } from "lucide-react"
 
 interface AiTwinPreviewProps {
   formData: any
@@ -15,8 +16,16 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
   const [previewMessage, setPreviewMessage] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [messages, setMessages] = useState<{ content: string; isAi: boolean }[]>([])
-  const [insightVisible, setInsightVisible] = useState(false)
+  const [userInput, setUserInput] = useState("")
   const [veridaStatus, setVeridaStatus] = useState<'loading' | 'loaded' | 'none'>('none')
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages, isTyping]);
 
   // Check for Verida data
   useEffect(() => {
@@ -25,79 +34,174 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
     }
   }, [formData]);
 
-  // Generate a preview message based on form data
+  // Generate chat messages based on form data
   useEffect(() => {
-    generatePreviewMessage()
-  }, [formData])
+    // Only generate if we have basic data
+    if (!formData.name) return;
+    
+    // Clear existing messages
+    setMessages([]);
+    
+    // Add a user greeting message
+    setTimeout(() => {
+      setMessages([{ content: "Hi there! Tell me about yourself.", isAi: false }]);
+      
+      // Start AI twin response
+      setTimeout(() => {
+        simulateTyping(generateIntroduction());
+      }, 1000);
+    }, 500);
+  }, [formData.name, formData.bio]);
 
-  const generatePreviewMessage = () => {
-    // Only generate if we have some basic data
-    if (!formData.name) return
+  // Generate a personalized introduction based on form data
+  const generateIntroduction = () => {
+    let intro = `Hi! I'm ${formData.name}'s AI twin.`;
+    
+    if (formData.age) {
+      intro += ` I'm ${formData.age} years old`;
+      if (formData.location) {
+        intro += ` and I'm from ${formData.location}.`;
+      } else {
+        intro += '.';
+      }
+    } else if (formData.location) {
+      intro += ` I'm from ${formData.location}.`;
+    }
+    
+    if (formData.occupation) {
+      intro += ` I work as a ${formData.occupation}.`;
+    }
+    
+    if (formData.bio) {
+      intro += ` ${formData.bio}`;
+    }
+    
+    return intro;
+  }
+  
+  // Generate information about interests and personality
+  const generateAboutMessage = () => {
+    let message = '';
+    
+    if (formData.personalityTraits && formData.personalityTraits.length > 0) {
+      message += `I would describe myself as ${formData.personalityTraits.slice(0, 3).join(", ")}.`;
+    }
+    
+    if (formData.interests && formData.interests.length > 0) {
+      if (message) message += ' ';
+      message += `I'm interested in ${formData.interests.slice(0, 3).join(", ")}.`;
+    }
+    
+    if (formData.hobbies && formData.hobbies.length > 0) {
+      if (message) message += ' ';
+      message += `In my free time, I enjoy ${formData.hobbies.slice(0, 2).join(" and ")}.`;
+    }
+    
+    return message || "I'd love to chat and get to know each other better!";
+  }
 
-    const messages = [
-      `Hi there! I'm ${formData.name}'s AI twin.`,
-      `I'm here to represent ${formData.name} in conversations when they're busy.`,
-      formData.interests.length > 0
-        ? `I share ${formData.name}'s interests like ${formData.interests.join(", ")}.`
-        : `I share ${formData.name}'s various interests and passions.`,
-      formData.communicationStyle
-        ? `My communication style is ${formData.communicationStyle} and I have a ${formData.humorStyle || "balanced"} sense of humor.`
-        : `I communicate just like ${formData.name} would.`,
-      formData.relationshipGoals
-        ? `I'm looking for ${formData.relationshipGoals}.`
-        : `I'm looking for meaningful connections.`,
-      formData.personalityTraits.length > 0
-        ? `My personality is ${formData.personalityTraits.slice(0, 3).join(", ")}.`
-        : `I have ${formData.name}'s unique personality.`,
-      `Let's chat and see if we connect!`,
-    ]
+  // Generate message about relationship preferences
+  const generateRelationshipMessage = () => {
+    let message = '';
+    
+    if (formData.relationshipGoals) {
+      message += `I'm looking for ${formData.relationshipGoals}.`;
+    }
+    
+    if (formData.lookingFor && formData.lookingFor.length > 0) {
+      if (message) message += ' ';
+      message += `I'm attracted to people who are ${formData.lookingFor.slice(0, 3).join(", ")}.`;
+    }
+    
+    if (formData.dealBreakers && formData.dealBreakers.length > 0) {
+      if (message) message += ' ';
+      message += `My dealbreakers include ${formData.dealBreakers.slice(0, 2).join(" and ")}.`;
+    }
+    
+    return message || "I'm open to all kinds of connections!";
+  }
 
-    // Pick a random message for the preview
-    const randomMessage = messages[Math.floor(Math.random() * messages.length)]
-    simulateTyping(randomMessage)
+  // Generate message about values
+  const generateValuesMessage = () => {
+    let message = '';
+    
+    if (formData.coreValues && formData.coreValues.length > 0) {
+      message += `My core values are ${formData.coreValues.slice(0, 3).join(", ")}.`;
+    }
+    
+    if (formData.spirituality) {
+      if (message) message += ' ';
+      message += `In terms of spirituality, I identify as ${formData.spirituality}.`;
+    }
+    
+    return message || "I value authentic connections and honesty.";
   }
 
   const simulateTyping = (message: string) => {
-    setIsTyping(true)
+    setIsTyping(true);
 
     // Clear previous message
-    setPreviewMessage("")
+    setPreviewMessage("");
 
     // Simulate typing delay
     setTimeout(() => {
-      setIsTyping(false)
-      setPreviewMessage(message)
+      setIsTyping(false);
+      setPreviewMessage(message);
 
       // Add to message history
-      setMessages((prev) => [...prev, { content: message, isAi: true }])
-
-      // Show insight after a delay
-      setTimeout(() => {
-        setInsightVisible(true)
-      }, 1000)
-    }, 1500)
+      setMessages((prev) => [...prev, { content: message, isAi: true }]);
+    }, 1500);
   }
 
-  const handleSendTestMessage = () => {
-    const testMessages = [
-      "Hi there! What are your interests?",
-      "Tell me more about yourself.",
-      "What kind of relationship are you looking for?",
-      "What do you like to do for fun?",
-      "What's your ideal first date?",
-    ]
-
-    const randomMessage = testMessages[Math.floor(Math.random() * testMessages.length)]
-
-    // Add user message
-    setMessages((prev) => [...prev, { content: randomMessage, isAi: false }])
-
-    // Hide insight
-    setInsightVisible(false)
-
-    // Generate AI response
-    generatePreviewMessage()
-  }
+  // Handle user input submission
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!userInput.trim()) return;
+    
+    // Add user message to chat
+    const userMessage = userInput.trim();
+    setMessages(prev => [...prev, { content: userMessage, isAi: false }]);
+    setUserInput('');
+    
+    // Generate AI response based on user input
+    setTimeout(() => {
+      let response = '';
+      
+      // Check for keywords in user message and respond with appropriate information
+      const normalizedInput = userMessage.toLowerCase();
+      
+      if (normalizedInput.includes('about') || normalizedInput.includes('who are you') || normalizedInput.includes('yourself')) {
+        response = generateAboutMessage();
+      } 
+      else if (normalizedInput.includes('relationship') || normalizedInput.includes('looking for') || normalizedInput.includes('dating')) {
+        response = generateRelationshipMessage();
+      }
+      else if (normalizedInput.includes('value') || normalizedInput.includes('believe') || normalizedInput.includes('important')) {
+        response = generateValuesMessage();
+      }
+      else if (normalizedInput.includes('hobby') || normalizedInput.includes('interest') || normalizedInput.includes('like to do')) {
+        response = `My interests include ${formData.interests.length > 0 ? formData.interests.slice(0, 3).join(", ") : "various activities"} and I enjoy ${formData.hobbies.length > 0 ? formData.hobbies.slice(0, 2).join(" and ") : "spending time with interesting people"}.`;
+      }
+      else if (normalizedInput.includes('age') || normalizedInput.includes('old')) {
+        response = formData.age ? `I'm ${formData.age} years old.` : "I prefer not to share my exact age.";
+      }
+      else if (normalizedInput.includes('location') || normalizedInput.includes('live') || normalizedInput.includes('from')) {
+        response = formData.location ? `I'm from ${formData.location}.` : "I prefer not to share my exact location for privacy reasons.";
+      }
+      else if (normalizedInput.includes('job') || normalizedInput.includes('work') || normalizedInput.includes('occupation')) {
+        response = formData.occupation ? `I work as a ${formData.occupation}.` : "I prefer not to discuss my exact occupation.";
+      }
+      else if (normalizedInput.includes('hello') || normalizedInput.includes('hi') || normalizedInput.includes('hey')) {
+        response = `Hi there! It's nice to meet you. I'm ${formData.name}'s AI twin. How can I help you today?`;
+      }
+      else {
+        response = `Thanks for your message! As ${formData.name}'s AI twin, I'm still learning. Could you ask me about my interests, values, or relationship preferences?`;
+      }
+      
+      simulateTyping(response);
+    }, 1000);
+  };
 
   return (
     <div className="backdrop-blur-xl bg-white/60 rounded-[2rem] border border-pink-200 p-6 shadow-xl h-full flex flex-col">
@@ -126,7 +230,7 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
             variant="outline" 
             className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1 flex items-center gap-1 ml-2"
           >
-            <RefreshCw className="h-3 w-3 mr-1" />
+            <Database className="h-3 w-3 mr-1" />
             Existing Record
           </Badge>
         )}
@@ -157,10 +261,19 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
 
       {/* Chat container with fixed height and scrolling */}
       <div
-        className="flex-1 bg-white/80 rounded-xl border border-pink-100 p-4 mb-4 overflow-hidden flex flex-col"
-        style={{ maxHeight: "350px", height: "350px" }}
+        className="flex-1 bg-white/80 rounded-xl border border-pink-100 p-4 mb-4 flex flex-col overflow-hidden"
+        style={{ minHeight: "350px", maxHeight: "350px" }}
       >
-        <div className="overflow-y-auto flex-1 space-y-4 pr-1">
+        <div 
+          className="overflow-y-auto flex-1 space-y-4 pr-1"
+          style={{ 
+            scrollBehavior: "smooth",
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(236, 72, 153, 0.3) transparent",
+            msOverflowStyle: "none"
+          }}
+          ref={chatContainerRef}
+        >
           {messages.map((msg, index) => (
             <div key={index} className={`flex items-end gap-2 ${!msg.isAi ? "justify-end" : ""}`}>
               {msg.isAi && (
@@ -223,94 +336,26 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
               </div>
             </div>
           )}
-
-          {insightVisible && messages.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-3 border border-indigo-100"
-            >
-              <div className="flex items-start gap-2">
-                <Sparkles className="h-4 w-4 text-indigo-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="text-xs font-medium text-indigo-700 mb-1">AI Twin Insight</h4>
-                  <p className="text-xs text-indigo-600">
-                    {formData.name
-                      ? `This AI twin will represent ${formData.name} based on`
-                      : "This AI twin will represent you based on"}{" "}
-                    the detailed personal information provided.
-                    {formData.personalityTraits.length > 0 &&
-                      ` It will reflect ${formData.name || "your"} ${formData.personalityTraits.slice(0, 2).join(", ")} personality.`}
-                    {formData.communicationStyle && ` Communication will be ${formData.communicationStyle}.`}
-                    {formData.aiConfidentiality.length > 0 && ` Confidential information will be protected.`}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Add Verida Storage Information */}
-          {formData.name && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100"
-            >
-              <div className="flex items-start gap-2">
-                <Database className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="text-xs font-medium text-purple-700 mb-1">Verida Storage</h4>
-                  <p className="text-xs text-purple-600">
-                    Your AI twin will be stored securely using the Verida Favourite schema with 
-                    type: <span className="font-medium">{formData.favouriteType || "recommendation"}</span>,
-                    content: <span className="font-medium">{formData.contentType || "document"}</span>
-                    {formData.uri && (
-                      <>, uri: <span className="font-medium">{formData.uri}</span></>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
         </div>
       </div>
-
-      <div className="flex gap-2 mt-auto">
-        <Button
-          variant="outline"
-          className="flex-1 bg-white border-pink-200 hover:bg-pink-50 text-pink-700"
-          onClick={generatePreviewMessage}
+        
+      {/* Chat input section */}
+      <form onSubmit={handleSendMessage} className="flex items-center gap-2 mt-auto">
+        <Input
+          placeholder="Type a message..."
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
+          className="flex-1 bg-white border-pink-100 focus:border-pink-300"
+          disabled={!formData.name}
+        />
+        <Button 
+          type="submit" 
+          disabled={!formData.name || !userInput.trim()}
+          className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
         >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh Preview
+          <Send className="h-4 w-4" />
         </Button>
-
-        <Button
-          className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white"
-          onClick={handleSendTestMessage}
-        >
-          <User className="h-4 w-4 mr-2" />
-          Test Message
-        </Button>
-      </div>
-
-      {/* Add Document ID info at the bottom if it exists */}
-      {formData._id && (
-        <div className="mt-3 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl p-3 border border-slate-100">
-          <div className="flex items-start gap-2">
-            <Database className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <h4 className="text-xs font-medium text-slate-700 mb-1">Record Information</h4>
-              <p className="text-xs text-slate-600">
-                ID: <span className="font-mono text-[10px]">{formData._id}</span>
-                {formData._rev && <> • Rev: {formData._rev.split('-')[0]}</>}
-                {formData.uri && <> • URI: {formData.uri.substring(0, 20)}...</>}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      </form>
     </div>
   )
 }

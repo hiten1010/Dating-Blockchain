@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AiTwinCreationForm from "./components/ai-twin-creation-form"
 import AiTwinPreview from "./components/ai-twin-preview"
-import { Shield, Lock, Sparkles } from "lucide-react"
+import { Shield, Lock, Sparkles, Database } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { getUserAiTwin } from "../lib/verida-ai-twin-service"
 
@@ -210,19 +210,29 @@ export default function CreateAiTwinPage() {
 
             {/* Security Information */}
             <div className="mt-6 backdrop-blur-sm bg-white/60 rounded-xl border border-indigo-100 p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-indigo-100">
-                  <Lock className="h-5 w-5 text-indigo-600" />
-                </div>
+            {formData.name && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100"
+            >
+              <div className="flex items-start gap-2">
+                <Database className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-slate-800 mb-1">Your Data is Secure</h3>
-                  <p className="text-sm text-slate-600">
-                    All your personal information is encrypted and stored in your Verida wallet. Your AI twin accesses
-                    this data securely without exposing it to third parties. You maintain complete control over your
-                    information.
+                  <h4 className="text-xs font-medium text-purple-700 mb-1">Verida Storage</h4>
+                  <p className="text-xs text-purple-600">
+                    Your AI twin will be stored securely using the Verida Favourite schema with 
+                    type: <span className="font-medium">{formData.favouriteType || "recommendation"}</span>,
+                    content: <span className="font-medium">{formData.contentType || "document"}</span>
+                    {formData.uri && (
+                      <>, uri: <span className="font-medium">{formData.uri}</span></>
+                    )}
                   </p>
                 </div>
               </div>
+            </motion.div>
+          )}
             </div>
           </motion.div>
         </div>
