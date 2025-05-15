@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { X, Plus, MapPin, Calendar, Search, SlidersHorizontal } from "lucide-react"
+import { DialogTitle, DialogHeader } from "@/components/ui/dialog"
 
 // Mock data - would be fetched from your API
 const allInterests = [
@@ -84,33 +84,20 @@ export default function MatchFilters({ filters, onFilterChange, onClose }: Match
     : allInterests
 
   return (
-    <motion.div
-      className="backdrop-blur-xl bg-white/60 rounded-[2rem] border border-pink-200 p-6 shadow-xl mb-8 overflow-hidden"
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="p-6 bg-white/60 backdrop-blur-xl rounded-lg overflow-hidden border border-pink-200 shadow-xl">
       <div className="relative">
         <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-gradient-to-br from-pink-200 to-rose-200 opacity-30"></div>
         <div className="absolute -bottom-16 -left-16 w-32 h-32 rounded-full bg-gradient-to-br from-purple-200 to-pink-200 opacity-30"></div>
 
         <div className="relative z-10">
-          <div className="flex justify-between items-center mb-6">
+          <DialogHeader className="mb-6">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-2 rounded-xl">
                 <SlidersHorizontal className="h-5 w-5 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-slate-800">Refine Your Search</h3>
+              <DialogTitle className="text-xl font-bold text-slate-800">Refine Your Search</DialogTitle>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="rounded-full hover:bg-pink-100 text-slate-500 hover:text-slate-700"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+          </DialogHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
@@ -213,7 +200,7 @@ export default function MatchFilters({ filters, onFilterChange, onClose }: Match
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
