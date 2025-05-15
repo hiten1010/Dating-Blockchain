@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -43,11 +43,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { Conversation, Message } from "@/types/chat"
+import type { Conversation, Message } from "@/app/types/chat"
 import { aiSuggestions } from "@/data/ai-suggestions"
+import { useVeridaClient } from "@/app/lib/clientside-verida"
+import { saveMessage, convertToVeridaMessage } from "@/app/lib/chat-message-service"
+
+// Extended Conversation type to include name property
+interface ExtendedConversation extends Conversation {
+  name?: string;
+}
 
 interface ConversationPanelProps {
-  conversation: Conversation
+  conversation: ExtendedConversation
   onSendMessage: (message: string) => void
 }
 
@@ -60,11 +67,53 @@ export default function ConversationPanel({ conversation, onSendMessage }: Conve
   const [aiInsight, setAiInsight] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const { client, isLoading, getDidId } = useVeridaClient()
+  const [userDid, setUserDid] = useState<string | null>(null)
+  const [userName, setUserName] = useState("Me")
 
-  // Scroll to bottom when messages change
+  // Safety check in case conversation is undefined
+  if (!conversation) {
+    return (
+      <div className="h-full backdrop-blur-xl bg-white/60 rounded-[2rem] border border-pink-200 flex flex-col items-center justify-center">
+        <div className="text-center p-8">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h3 className="text-2xl font-bold text-slate-800 mb-2">Conversation not found</h3>
+          <p className="text-slate-600">
+            The conversation you're looking for could not be loaded.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Get user DID when Verida client is loaded
   useEffect(() => {
-    scrollToBottom()
-  }, [conversation.messages])
+    if (!isLoading && client && client.isConnected()) {
+      getDidId().then(did => {
+        if (did) {
+          setUserDid(did);
+          
+          // Try to get stored username from localStorage
+          const storedName = localStorage.getItem("testUserName");
+          if (storedName) {
+            setUserName(storedName);
+          }
+        }
+      });
+    }
+  }, [isLoading, client, getDidId]);
+
+  // Scroll to bottom when messages change - with protection against undefined messages
+  useEffect(() => {
+    if (conversation?.messages?.length) {
+      scrollToBottom()
+    }
+  }, [conversation?.messages])
+
+  // Use memo to keep messages stable between renders
+  const messages = useMemo(() => {
+    return conversation?.messages || [];
+  }, [conversation?.messages]);
 
   // Generate AI suggestion on mount
   useEffect(() => {
@@ -84,18 +133,69 @@ export default function ConversationPanel({ conversation, onSendMessage }: Conve
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (message.trim()) {
-      onSendMessage(message)
-      setMessage("")
-
-      // Simulate AI response if AI mode is on
-      if (aiMode) {
-        simulateAiResponse()
+      try {
+        // Create message object for storing
+        const messageObj = {
+          id: `msg-${Date.now()}`,
+          content: message,
+          sender: "user",
+          timestamp: new Date().toISOString(),
+          isAI: false,
+        };
+        
+        // Call the onSendMessage callback to update UI immediately
+        onSendMessage(message);
+        
+        // Save to Verida if authenticated
+        if (userDid && client && client.isConnected()) {
+          try {
+            // Convert to Verida format
+            const veridaMessage = convertToVeridaMessage(
+              messageObj,
+              conversation.id,
+              userDid,
+              userName
+            );
+            
+            // CRITICAL: Use the exact conversation name as the group name
+            veridaMessage.groupName = conversation.name || `Chat with ${conversation.user.name}`;
+            console.log(`Sending message to group: ${conversation.id} with name: ${veridaMessage.groupName}`);
+            
+            // Save to Verida
+            await saveMessage(veridaMessage);
+            console.log("Message saved to Verida:", veridaMessage);
+          } catch (error) {
+            console.error("Failed to save message to Verida:", error);
+            toast({
+              title: "Message Sent",
+              description: "Message delivered but failed to save to blockchain.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          console.warn("Cannot save to Verida: Not authenticated");
+        }
+        
+        // Clear the input
+        setMessage("");
+        
+        // Simulate AI response if AI mode is on
+        if (aiMode) {
+          simulateAiResponse();
+        }
+        
+        // Generate new AI suggestion
+        generateAiSuggestion();
+      } catch (error) {
+        console.error("Error sending message:", error);
+        toast({
+          title: "Failed to Send",
+          description: "Could not send your message. Please try again.",
+          variant: "destructive",
+        });
       }
-
-      // Generate new AI suggestion
-      generateAiSuggestion()
     }
   }
 
@@ -110,15 +210,46 @@ export default function ConversationPanel({ conversation, onSendMessage }: Conve
     setIsTyping(true)
 
     // Simulate typing delay
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsTyping(false)
 
       // Get random AI response
       const responses = aiSuggestions.responses
       const randomResponse = responses[Math.floor(Math.random() * responses.length)]
 
-      // Add AI response to conversation
+      // Call the onSendMessage callback to update UI immediately
       onSendMessage(randomResponse)
+      
+      // Create and save AI message to Verida if user is authenticated
+      if (userDid && client && client.isConnected()) {
+        const aiMessage = {
+          id: `ai-msg-${Date.now()}`,
+          content: randomResponse,
+          sender: "ai",
+          timestamp: new Date().toISOString(),
+          isAI: true,
+        };
+        
+        try {
+          // Convert to Verida format and save
+          const veridaMessage = convertToVeridaMessage(
+            aiMessage,
+            conversation.id,
+            `ai-twin-${userDid}`, // AI twin DID
+            "AI Twin" // AI name
+          );
+          
+          // CRITICAL: Use the exact conversation name as the group name
+          veridaMessage.groupName = conversation.name || `Chat with ${conversation.user.name}`;
+          console.log(`Sending AI message to group: ${conversation.id} with name: ${veridaMessage.groupName}`);
+          
+          // Save the message to Verida
+          await saveMessage(veridaMessage);
+          console.log("AI message saved to Verida:", veridaMessage);
+        } catch (error) {
+          console.error("Failed to save AI message to Verida:", error);
+        }
+      }
     }, 2000)
   }
 
@@ -239,12 +370,12 @@ export default function ConversationPanel({ conversation, onSendMessage }: Conve
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
-          {conversation.messages.map((msg, index) => (
+          {messages.map((msg, index) => (
             <MessageBubble
               key={msg.id}
               message={msg}
               isUser={msg.sender === "user"}
-              showAvatar={index === 0 || conversation.messages[index - 1].sender !== msg.sender}
+              showAvatar={index === 0 || messages[index - 1].sender !== msg.sender}
               userAvatar={conversation.user.avatar}
               userName={conversation.user.name}
             />
@@ -278,7 +409,7 @@ export default function ConversationPanel({ conversation, onSendMessage }: Conve
           )}
 
           {/* AI Insight */}
-          <AnimatePresence>
+          {/* <AnimatePresence>
             {showAiInsight && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -304,7 +435,7 @@ export default function ConversationPanel({ conversation, onSendMessage }: Conve
                 </div>
               </motion.div>
             )}
-          </AnimatePresence>
+          </AnimatePresence> */}
 
           <div ref={messagesEndRef} />
         </div>
