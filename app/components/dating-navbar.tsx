@@ -14,14 +14,7 @@ export default function DatingNavbar() {
   const [notifications, setNotifications] = useState(3) // Dummy notification count
   const [imageError, setImageError] = useState(false)
 
-  // Pages where navbar should not appear
-  const excludedPages = ["/", "/profile", "/onboarding", "/ai-twin"]
-  
-  // If current path is in excluded pages, don't render the navbar
-  if (excludedPages.some(page => pathname === page || pathname.startsWith(`${page}/`))) {
-    return null
-  }
-
+  // Moving the useEffect hook before the early return to avoid the hooks error
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
@@ -30,6 +23,14 @@ export default function DatingNavbar() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Pages where navbar should not appear
+  const excludedPages = ["/", "/profile", "/onboarding", "/ai-twin"]
+  
+  // If current path is in excluded pages, don't render the navbar
+  if (excludedPages.some(page => pathname === page || pathname.startsWith(`${page}/`))) {
+    return null
+  }
 
   const isActive = (path: string) => pathname === path
 

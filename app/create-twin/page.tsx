@@ -1,13 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AiTwinCreationForm from "./components/ai-twin-creation-form"
 import AiTwinPreview from "./components/ai-twin-preview"
-import { Shield, Lock, Sparkles } from "lucide-react"
+import { Shield, Lock, Sparkles, Database } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
+import { getUserAiTwin } from "../lib/verida-ai-twin-service"
 
 export default function CreateAiTwinPage() {
   const [currentStep, setCurrentStep] = useState(1)
+  const [isLoading, setIsLoading] = useState(true)
   const [formData, setFormData] = useState({
     // Personal details
     name: "",
@@ -16,6 +19,11 @@ export default function CreateAiTwinPage() {
     occupation: "",
     bio: "",
 
+    // Verida favorite schema required fields
+    favouriteType: "recommendation",
+    contentType: "document",
+    uri: "",
+    
     // Life story
     childhood: "",
     significantEvents: [] as string[],
@@ -63,6 +71,48 @@ export default function CreateAiTwinPage() {
     aiConfidentiality: [] as string[],
   })
 
+  // Fetch Twin data when component mounts
+  useEffect(() => {
+    const fetchTwinData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Get AI twin data using the service function
+        const twinData = await getUserAiTwin();
+        
+        if (twinData) {
+          console.log('Successfully loaded AI twin data:', twinData.name);
+          setFormData(prevState => ({
+            ...prevState,
+            ...twinData
+          }));
+          
+          toast({
+            title: "Data Loaded",
+            description: "Your previous AI twin data has been loaded from Verida.",
+          });
+        } else {
+          console.log("No AI twin data found in Verida");
+          toast({
+            title: "No Existing Data",
+            description: "No previous AI twin data found. Starting with a new form.",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch twin data:", error);
+        toast({
+          title: "Error Loading Data",
+          description: error instanceof Error ? error.message : "Could not load your existing data from Verida.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTwinData();
+  }, []);
+
   const updateFormData = (newData: Partial<typeof formData>) => {
     setFormData((prev) => ({ ...prev, ...newData }))
   }
@@ -77,6 +127,21 @@ export default function CreateAiTwinPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 text-slate-800 overflow-hidden">
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl">
+            <div className="flex items-center space-x-4">
+              <div className="animate-spin h-8 w-8 border-4 border-pink-500 rounded-full border-t-transparent"></div>
+              <div>
+                <h3 className="font-medium">Loading Your Twin Data</h3>
+                <p className="text-sm text-gray-500">Retrieving your saved data from Verida...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full opacity-30">
@@ -115,41 +180,6 @@ export default function CreateAiTwinPage() {
       </div>
 
       <div className="relative container mx-auto px-4 py-12">
-        {/* Replace the current header section (lines 76-96) with this improved design */}
-        <div className="relative mb-12">
-          {/* Decorative background elements */}
-          <div className="absolute -top-10 -left-10 w-64 h-64 rounded-full bg-gradient-to-r from-pink-200/30 to-rose-200/30 blur-3xl"></div>
-          <div className="absolute -top-10 -right-10 w-64 h-64 rounded-full bg-gradient-to-r from-purple-200/30 to-pink-200/30 blur-3xl"></div>
-
-          {/* Header content */}
-          <div className="relative backdrop-blur-xl bg-white/40 rounded-[2rem] border border-pink-200 p-8 shadow-xl text-center">
-            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-              <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-3 rounded-xl shadow-lg">
-                <Sparkles className="h-6 w-6 text-white" />
-              </div>
-            </div>
-
-            <h1 className="mt-4 text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-rose-600">
-              Create Your AI Twin
-            </h1>
-
-            <div className="mt-4 max-w-2xl mx-auto">
-              <p className="text-lg text-slate-600">
-                Share your personal story and details so your AI twin can truly understand and represent you. The more
-                you share, the more authentic your AI twin will be.
-              </p>
-            </div>
-
-            {/* Security Notice */}
-            <div className="mt-6 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-full px-6 py-3 border border-indigo-100 max-w-xl mx-auto">
-              <Shield className="h-5 w-5 text-indigo-500 flex-shrink-0" />
-              <p className="text-sm text-indigo-700">
-                All your personal data is securely stored in your Verida wallet and never shared without your consent
-              </p>
-            </div>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Section */}
           <motion.div
@@ -180,19 +210,29 @@ export default function CreateAiTwinPage() {
 
             {/* Security Information */}
             <div className="mt-6 backdrop-blur-sm bg-white/60 rounded-xl border border-indigo-100 p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-indigo-100">
-                  <Lock className="h-5 w-5 text-indigo-600" />
-                </div>
+            {formData.name && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100"
+            >
+              <div className="flex items-start gap-2">
+                <Database className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-slate-800 mb-1">Your Data is Secure</h3>
-                  <p className="text-sm text-slate-600">
-                    All your personal information is encrypted and stored in your Verida wallet. Your AI twin accesses
-                    this data securely without exposing it to third parties. You maintain complete control over your
-                    information.
+                  <h4 className="text-xs font-medium text-purple-700 mb-1">Verida Storage</h4>
+                  <p className="text-xs text-purple-600">
+                    Your AI twin will be stored securely using the Verida Favourite schema with 
+                    type: <span className="font-medium">{formData.favouriteType || "recommendation"}</span>,
+                    content: <span className="font-medium">{formData.contentType || "document"}</span>
+                    {formData.uri && (
+                      <>, uri: <span className="font-medium">{formData.uri}</span></>
+                    )}
                   </p>
                 </div>
               </div>
+            </motion.div>
+          )}
             </div>
           </motion.div>
         </div>

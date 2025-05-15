@@ -1,11 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { InfoIcon, UploadIcon, XIcon, StarIcon } from "lucide-react"
+import { InfoIcon, UploadIcon, XIcon, StarIcon, AlertTriangleIcon } from "lucide-react"
 import type { ProfileData } from "../profile-creation-flow"
 import { useToast } from "@/components/ui/use-toast"
+import { HeartLoader } from "@/components/ui/heart-loader"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useVeridaClient, useProfileRestService } from "@/app/lib/clientside-verida"
+import { formatDataToSchema, SCHEMA_URLS, encodeSchemaUrl } from "@/app/lib/verida-schema-mapping"
 
 interface PhotosStepProps {
   profileData: ProfileData
@@ -16,6 +20,49 @@ interface PhotosStepProps {
 export default function PhotosStep({ profileData, updateProfileData, onContinue }: PhotosStepProps) {
   const { toast } = useToast()
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const { getAuthStatus, getDidId } = useVeridaClient()
+  const { service: profileRestService, isLoading: serviceLoading } = useProfileRestService()
+
+  const savePhotoToVerida = async (photoUrl: string, order: number, description: string = "") => {
+    try {
+      // Get authentication status and DID
+      const isAuthenticated = await getAuthStatus()
+      if (!isAuthenticated) {
+        throw new Error("Not authenticated with Verida")
+      }
+      
+      const did = await getDidId() 
+      
+      if (!did) {
+        throw new Error("Missing DID")
+      }
+      
+      if (serviceLoading || !profileRestService) {
+        console.warn("ProfileRestService not ready yet")
+        return false
+      }
+      
+      // Create photo data object
+      const photoData = {
+        did: did,
+        description: description || `Profile Photo ${order + 1}`,
+        photoUrl: photoUrl,
+        size: 1024 * 100, // Estimated size (100KB)
+        order: order,
+        isPrivate: false
+      }
+      
+      // Use the service to save the photo
+      const result = await profileRestService.saveProfilePhoto(photoData)
+      console.log("Photo saved to Verida:", result)
+      
+      return true
+    } catch (error) {
+      console.error("Error saving photo to Verida:", error)
+      return false
+    }
+  }
 
   const handleContinue = () => {
     if (profileData.photos.length === 0) {
@@ -31,20 +78,37 @@ export default function PhotosStep({ profileData, updateProfileData, onContinue 
     onContinue()
   }
 
-  const simulatePhotoUpload = () => {
+  const simulatePhotoUpload = async () => {
     setUploading(true)
+    setUploadError(null)
 
-    // Simulate upload delay
-    setTimeout(() => {
+    try {
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       const randomId = Math.random().toString(36).substring(2, 15)
       const newPhoto = `/placeholder.svg?height=300&width=300&text=Photo+${profileData.photos.length + 1}`
+      
+      // Try to save to Verida
+      const savedToVerida = await savePhotoToVerida(
+        newPhoto, 
+        profileData.photos.length,
+        `Profile Photo ${profileData.photos.length + 1}`
+      )
+      
+      if (!savedToVerida) {
+        console.warn("Photo wasn't saved to Verida, but will continue with local update")
+      }
 
       updateProfileData({
         photos: [...profileData.photos, newPhoto],
       })
-
+    } catch (error) {
+      console.error("Error during photo upload:", error)
+      setUploadError("Failed to upload photo. Please try again.")
+    } finally {
       setUploading(false)
-    }, 1500)
+    }
   }
 
   const removePhoto = (index: number) => {
@@ -76,11 +140,19 @@ export default function PhotosStep({ profileData, updateProfileData, onContinue 
         <CardDescription>Upload photos to showcase your personality</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {uploadError && (
+          <Alert variant="destructive">
+            <AlertTriangleIcon className="h-4 w-4" />
+            <AlertTitle>Upload Error</AlertTitle>
+            <AlertDescription>{uploadError}</AlertDescription>
+          </Alert>
+        )}
+      
         <div className="bg-purple-50 p-4 rounded-lg flex items-start space-x-3">
           <InfoIcon className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm text-muted-foreground">
-              All images are stored securely off-chain. Your NFT profile will link to these photos via a hashed
+              All images are stored securely off-chain using the Verida network. Your NFT profile will link to these photos via a hashed
               reference for authenticity.
             </p>
           </div>
@@ -134,7 +206,7 @@ export default function PhotosStep({ profileData, updateProfileData, onContinue 
                   onClick={simulatePhotoUpload}
                 >
                   {uploading ? (
-                    <div className="h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                    <HeartLoader size="sm" />
                   ) : (
                     <>
                       <UploadIcon className="h-8 w-8 text-gray-400 mb-2" />

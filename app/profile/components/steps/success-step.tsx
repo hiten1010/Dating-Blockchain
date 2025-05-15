@@ -9,7 +9,7 @@ import { CheckCircle2Icon, ExternalLinkIcon, Sparkles, ShieldCheck, Zap, Users, 
 import { Separator } from "@/components/ui/separator"
 import type { ProfileData } from "../profile-creation-flow"
 import { cn } from "@/lib/utils"
-import { ToastTitle, ToastDescription } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
 
 interface SuccessStepProps {
   profileData: ProfileData
@@ -27,6 +27,7 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
   const [cardAnimationFrame, setCardAnimationFrame] = useState(0)
+  const router = useRouter()
 
   // Handle mouse movement for 3D card effect
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -144,6 +145,29 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
       clearTimeout(timer)
     }
   }, [showConfetti])
+
+  // Function to handle navigation to dashboard
+  const handleNavigateToDashboard = () => {
+    router.push('/user')
+  }
+  
+  // Navigation functions for different features
+  const navigateToCreateTwin = () => {
+    router.push('/create-twin')
+  }
+  
+  const navigateToExplore = () => {
+    router.push('/explore')
+  }
+  
+  const navigateToProfile = () => {
+    router.push('/user')
+  }
+  
+  const navigateToSettings = () => {
+    // Assuming there's a settings page or section for data access control
+    router.push('/user') // Redirect to profile page for now
+  }
 
   return (
     <>
@@ -378,30 +402,35 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
                       icon: <Zap className="h-4 w-4 text-purple-500" />,
                       title: "Configure AI Twin",
                       description: "Set up your AI agent for personalized matchmaking",
+                      onClick: navigateToCreateTwin
                     },
                     {
                       icon: <Users className="h-4 w-4 text-pink-500" />,
                       title: "Browse Matches",
                       description: "Discover potential matches on the platform",
+                      onClick: navigateToExplore
                     },
                     {
                       icon: <Sparkles className="h-4 w-4 text-purple-500" />,
                       title: "Update Profile",
                       description: "Modify your profile information anytime",
+                      onClick: navigateToProfile
                     },
                     {
                       icon: <ShieldCheck className="h-4 w-4 text-pink-500" />,
                       title: "Control Data Access",
                       description: "Manage who can access your private data",
+                      onClick: navigateToSettings
                     },
                   ].map((feature, index) => (
                     <div
                       key={index}
                       className={`relative overflow-hidden rounded-lg transition-all duration-300 ${
                         activeFeature === `feature-${index}` ? "scale-105 shadow-lg" : "shadow-md"
-                      }`}
+                      } cursor-pointer`}
                       onMouseEnter={() => setActiveFeature(`feature-${index}`)}
                       onMouseLeave={() => setActiveFeature(null)}
+                      onClick={feature.onClick}
                     >
                       <div
                         className={`absolute inset-0 bg-gradient-to-br ${
@@ -427,7 +456,10 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
         </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2 py-2">
-        <Button className="w-full relative overflow-hidden group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] rounded-xl py-3">
+        <Button 
+          className="w-full relative overflow-hidden group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] rounded-xl py-3"
+          onClick={handleNavigateToDashboard}
+        >
           <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-400/30 to-pink-600/30 opacity-50 group-hover:opacity-100 transition-opacity duration-300"></span>
           <span className="relative flex items-center justify-center gap-1">
             <Sparkles className="h-4 w-4 text-white" />
