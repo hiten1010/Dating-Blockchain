@@ -150,6 +150,137 @@ export const useProfileRestService = () => {
   return { service, isLoading, error };
 };
 
+// Hook for listening to profile changes
+export const useProfileChanges = () => {
+  const [profileData, setProfileData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { client } = useVeridaClient();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!client) return;
+      
+      try {
+        setIsLoading(true);
+        // Open the profile database
+        const profileDb = await client.openDatabase('profile');
+        
+        // Get initial profile data
+        const profile = await profileDb.get('profile');
+        setProfileData(profile);
+
+        // Set up change listener
+        profileDb.onChange((changes: any) => {
+          if (changes.type === 'profile') {
+            setProfileData(changes.data);
+          }
+        });
+
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [client]);
+
+  return { profileData, isLoading, error };
+};
+
+// Hook for listening to photo changes
+export const usePhotoChanges = () => {
+  const [photos, setPhotos] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { client } = useVeridaClient();
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      if (!client) return;
+      
+      try {
+        setIsLoading(true);
+        // Open the photos database
+        const photosDb = await client.openDatabase('photos');
+        
+        // Get initial photos
+        const photosList = await photosDb.getMany('photos');
+        setPhotos(photosList);
+
+        // Set up change listener
+        photosDb.onChange((changes: any) => {
+          if (changes.type === 'photos') {
+            setPhotos(changes.data);
+          }
+        });
+
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch photos:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch photos'));
+        setIsLoading(false);
+      }
+    };
+
+    fetchPhotos();
+  }, [client]);
+
+  return { photos, isLoading, error };
+};
+
+// Hook for handling message notifications
+export const useMessageNotifications = () => {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { client } = useVeridaClient();
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!client) return;
+      
+      try {
+        setIsLoading(true);
+        // Open the messages database
+        const messagesDb = await client.openDatabase('messages');
+        
+        // Get initial messages
+        const messagesList = await messagesDb.getMany('messages', {
+          sort: [{ sentAt: 'desc' }]
+        });
+        setMessages(messagesList);
+
+        // Set up change listener
+        messagesDb.onChange((changes: any) => {
+          if (changes.type === 'messages') {
+            setMessages(changes.data);
+            setHasNewMessages(true);
+          }
+        });
+
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch messages:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch messages'));
+        setIsLoading(false);
+      }
+    };
+
+    fetchMessages();
+  }, [client]);
+
+  const markAsRead = () => {
+    setHasNewMessages(false);
+  };
+
+  return { messages, hasNewMessages, isLoading, error, markAsRead };
+};
+
 // No-op component for SSR
 export const NoSSR = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
