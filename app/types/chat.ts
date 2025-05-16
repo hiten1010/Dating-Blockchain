@@ -7,6 +7,7 @@ export interface Message {
   id: string;
   content: string;
   sender: string; // 'user', 'other', 'ai'
+  senderName?: string; // Display name of the sender
   timestamp: string;
   isAI?: boolean;
   read?: boolean;

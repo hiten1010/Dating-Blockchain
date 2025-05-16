@@ -963,6 +963,7 @@ export function convertFromVeridaMessage(
   id: string;
   content: string;
   sender: string;
+  senderName?: string;
   timestamp: string;
   isAI?: boolean;
 } {
@@ -973,6 +974,7 @@ export function convertFromVeridaMessage(
       id: entry.id,
       content: entry.text,
       sender: entry.fromId === currentUserDid ? 'user' : 'other',
+      senderName: entry.fromName || (entry.fromId === currentUserDid ? 'Me' : undefined),
       timestamp: entry.timestamp,
       isAI: entry.fromId.startsWith('ai-') || false
     };
@@ -984,6 +986,7 @@ export function convertFromVeridaMessage(
     id: chatMessage._id || chatMessage.sourceId || `msg-${Date.now()}`,
     content: typeof chatMessage.messageText === 'string' ? chatMessage.messageText : 'Message',
     sender: chatMessage.fromId === currentUserDid ? 'user' : 'other',
+    senderName: chatMessage.fromName || (chatMessage.fromId === currentUserDid ? 'Me' : undefined),
     timestamp: chatMessage.sentAt,
     isAI: chatMessage.fromId.startsWith('ai-') || false
   };

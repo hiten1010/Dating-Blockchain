@@ -183,7 +183,11 @@ export default function ChatList({
                         <div className="flex justify-between items-center mt-1">
                           <p className="text-sm text-slate-600 truncate max-w-[150px]">
                             {lastMessage && lastMessage.isAI && <Bot className="h-3 w-3 inline mr-1 text-pink-500" />}
-                            {lastMessage ? lastMessage.content : "Start a conversation"}
+                            {lastMessage ? 
+                              (lastMessage.senderName && lastMessage.senderName !== "Me" ? 
+                                <span className="font-medium text-pink-600 mr-1">{lastMessage.senderName}:</span> : "") + 
+                                lastMessage.content 
+                              : "Start a conversation"}
                           </p>
 
                           {conversation.unreadCount > 0 && (

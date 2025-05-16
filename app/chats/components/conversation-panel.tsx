@@ -606,13 +606,16 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message, isUser, showAvatar, userAvatar, userName }: MessageBubbleProps) {
+  // Get the actual sender name from the message or fall back to the conversation user name
+  const displayName = isUser ? "Me" : (message.senderName || userName);
+  
   return (
     <div className={`flex items-end gap-2 ${isUser ? "justify-end" : ""}`}>
       {!isUser && showAvatar ? (
         <Avatar className="h-8 w-8 border-2 border-white">
-          <AvatarImage src={userAvatar} alt={userName} />
+          <AvatarImage src={userAvatar} alt={displayName} />
           <AvatarFallback className="bg-gradient-to-br from-pink-400 to-rose-400 text-white text-xs">
-            {userName.substring(0, 2)}
+            {displayName.substring(0, 2)}
           </AvatarFallback>
         </Avatar>
       ) : !isUser ? (
@@ -632,6 +635,11 @@ function MessageBubble({ message, isUser, showAvatar, userAvatar, userName }: Me
             <span className="text-xs text-pink-200">AI Response</span>
           </div>
         )}
+        {!isUser && showAvatar && message.senderName && (
+          <div className="text-xs font-semibold text-pink-500 mb-1">
+            {message.senderName}
+          </div>
+        )}
         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
         <div className={`text-xs mt-1 ${isUser ? "text-pink-200" : "text-slate-400"}`}>
           {formatTimestamp(message.timestamp)}
@@ -642,7 +650,7 @@ function MessageBubble({ message, isUser, showAvatar, userAvatar, userName }: Me
         <Avatar className="h-8 w-8 border-2 border-white">
           <AvatarImage src="/placeholder.svg?height=32&width=32" alt="You" />
           <AvatarFallback className="bg-gradient-to-br from-blue-400 to-indigo-400 text-white text-xs">
-            You
+            Me
           </AvatarFallback>
         </Avatar>
       ) : isUser ? (

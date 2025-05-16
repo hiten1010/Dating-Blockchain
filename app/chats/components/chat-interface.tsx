@@ -90,23 +90,48 @@ export default function ChatInterface() {
           // Find other participant (not the current user)
           const otherParticipant = group.participants.find(p => p.did !== userDid);
           
-          // Use the name from the group or participant
-          const participantName = otherParticipant?.name || "Unknown User";
+          // Get the actual group name from the data
+          const displayName = group.name || (otherParticipant?.name !== "Me" ? otherParticipant?.name : "Unknown User");
           
           // Store that we've loaded this group
           loadedGroupsRef.current.add(group.id);
           
+          // For the last message, extract the fromName if available
+          let lastMessage = null;
+          if (group.lastMessage) {
+            lastMessage = convertFromVeridaMessage(group.lastMessage, userDid || "");
+            
+            // If we have message dictionary, try to extract the sender name
+            if (typeof group.lastMessage.messageText === 'string' && group.lastMessage.isMessageDict) {
+              try {
+                const messageDict = JSON.parse(group.lastMessage.messageText);
+                const lastMessageKey = Object.keys(messageDict).sort().pop();
+                if (lastMessageKey && messageDict[lastMessageKey] && messageDict[lastMessageKey].fromName) {
+                  lastMessage.senderName = messageDict[lastMessageKey].fromName;
+                }
+              } catch (e) {
+                console.warn("Failed to parse message dictionary", e);
+              }
+            }
+          }
+          
+          // Extract the name by removing "Chat with " prefix if it exists
+          let chatName = displayName || "Unknown User";
+          if (chatName.startsWith("Chat with ")) {
+            chatName = chatName.substring(10);
+          }
+          
           return {
             id: group.id,
-            name: group.name || `Chat with ${participantName}`,
+            name: group.name,  // Store the full group name for reference
             user: {
               id: otherParticipant?.did || "unknown",
-              name: participantName,
+              name: chatName, // Use the extracted name, ensuring it's not undefined
               avatar: otherParticipant?.avatar || "/placeholders/avatar.png",
               isOnline: false,
               verified: false
             },
-            messages: group.lastMessage ? [convertFromVeridaMessage(group.lastMessage, userDid || "")] : [],
+            messages: lastMessage ? [lastMessage] : [],
             unreadCount: group.unreadCount || 0
           };
         });
