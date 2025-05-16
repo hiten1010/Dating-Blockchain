@@ -5,6 +5,8 @@
  * Contains common constants used across multiple services.
  */
 
+import { EnvironmentType, NetworkName } from '@verida/types';
+
 // Environment-based Verida network configuration
 export const VERIDA_NETWORK = process.env.NEXT_PUBLIC_VERIDA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet';
 export const CONTEXT_NAME = process.env.NEXT_PUBLIC_CONTEXT_NAME || "VeraLove Dating Application";
@@ -45,4 +47,31 @@ export const APP_INFO = {
   name: "VeraLove",
   version: "1.0.0",
   sourceApplication: "VeraLove Dating App"
+};
+
+export const NETWORK_CONFIG = {
+  name: NetworkName.TESTNET,
+  nodes: ['https://node.testnet.verida.tech:443/did/'],
+  environment: EnvironmentType.TESTNET
+};
+
+export const SCHEMA_BASE_URL = 'https://schemas.verida.io/';
+
+// Permissions required for the application
+export const DATASTORE_PERMISSIONS = {
+  // For profile data using social-post schema
+  'datastore/social-post': {
+    read: true,
+    write: true
+  },
+  // For photos using file schema
+  'datastore/file': {
+    read: true,
+    write: true
+  },
+  // For preferences using social-following schema
+  'datastore/social-following': {
+    read: true,
+    write: true
+  }
 }; 

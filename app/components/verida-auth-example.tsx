@@ -1,65 +1,54 @@
 'use client';
 
 import { useState } from 'react';
-import { VeridaAuthButton, useVeridaClient } from '@/app/lib/clientside-verida';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader, CheckCircle, AlertCircle } from 'lucide-react';
+import { VeridaAuthButton, veridaClient, useVeridaAuth } from '../lib/verida-client-wrapper';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function VeridaAuthExample() {
-  const [authStatus, setAuthStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { client } = useVeridaClient();
+  const [message, setMessage] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const { isAuthenticated, isLoading, did } = useVeridaAuth();
 
-  const handleSuccess = () => {
-    setAuthStatus('success');
-    setErrorMessage(null);
+  const handleSuccess = (did: string) => {
+    setMessage(`Successfully connected with DID: ${did}`);
+    setAuthError(null);
   };
 
-  const handleError = (error: Error) => {
-    setAuthStatus('error');
-    setErrorMessage(error.message);
+  const handleError = (error: string) => {
+    setAuthError(`Error: ${error}`);
+    setMessage(null);
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Connect with Verida</CardTitle>
+        <CardTitle>Verida Authentication</CardTitle>
         <CardDescription>
-          Use this component instead of direct Verida authentication to avoid font issues
+          Connect to your Verida account to use this application
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex justify-center">
-          <VeridaAuthButton 
-            context="dating-blockchain" 
-            onSuccess={handleSuccess}
-            onError={handleError}
-          />
+        <div>
+          <p className="text-sm mb-2">
+            Client status: {isAuthenticated ? 'Connected' : 'Disconnected'}
+          </p>
+          {isLoading && <p className="text-sm text-gray-500">Loading...</p>}
+          {message && <p className="text-sm text-green-600">{message}</p>}
+          {authError && <p className="text-sm text-red-600">{authError}</p>}
         </div>
-        
-        {authStatus === 'success' && (
-          <div className="flex items-center p-3 bg-green-50 rounded-md text-green-700">
-            <CheckCircle className="mr-2 h-5 w-5" />
-            <span>Successfully connected to Verida</span>
-          </div>
-        )}
-        
-        {authStatus === 'error' && (
-          <div className="flex items-center p-3 bg-red-50 rounded-md text-red-700">
-            <AlertCircle className="mr-2 h-5 w-5" />
-            <span>{errorMessage || 'An error occurred during authentication'}</span>
-          </div>
-        )}
-        
-        {client && (
-          <div className="p-3 bg-blue-50 rounded-md">
-            <p className="text-sm font-medium">Client Information:</p>
-            <p className="text-xs truncate">
-              {client.isConnected() ? 'Connected' : 'Not connected'}
-            </p>
-          </div>
-        )}
+
+        <VeridaAuthButton
+          onSuccess={handleSuccess}
+          onError={handleError}
+        >
+          {isAuthenticated ? 'Disconnect' : 'Connect with Verida'}
+        </VeridaAuthButton>
       </CardContent>
+      <CardFooter>
+        <p className="text-xs text-gray-500">
+          {did ? `Connected with DID: ${did}` : 'Not connected'}
+        </p>
+      </CardFooter>
     </Card>
   );
 } 

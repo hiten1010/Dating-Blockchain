@@ -5,7 +5,7 @@
  * Uses the schema at https://common.schemas.verida.io/social/chat/message/v0.1.0/schema.json
  */
 
-import { veridaClient } from './verida-client';
+import { veridaClient } from './verida-client-wrapper';
 import { ProfileRestService } from './profile-rest-service';
 import { API_BASE_URL, AUTH_TOKEN, DB_NAMES, APP_INFO } from './verida-config';
 
