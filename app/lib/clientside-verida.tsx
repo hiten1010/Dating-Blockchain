@@ -291,4 +291,120 @@ export const withNoSSR = (Component: React.ComponentType<any>) => {
   return dynamic(() => Promise.resolve(Component), {
     ssr: false,
   });
-}; 
+};
+
+// Add a custom VeridaAuthWrapper to fix font issues
+export const useVeridaAuth = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { client, getAuthStatus } = useVeridaClient();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!client) return;
+      try {
+        const authenticated = await getAuthStatus();
+        setIsAuthenticated(authenticated);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to check auth status:', err);
+        setError(err instanceof Error ? err : new Error('Failed to check auth status'));
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [client, getAuthStatus]);
+
+  const login = async (contextName: string) => {
+    if (!client) return false;
+    try {
+      // Direct implementation instead of using the problematic module
+      // This simulates what the Verida auth flow does but without the font import
+      const didLogin = await client.connect();
+      if (didLogin) {
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Failed to login:', err);
+      setError(err instanceof Error ? err : new Error('Failed to login'));
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    if (!client) return false;
+    try {
+      client.disconnect();
+      setIsAuthenticated(false);
+      return true;
+    } catch (err) {
+      console.error('Failed to logout:', err);
+      setError(err instanceof Error ? err : new Error('Failed to logout'));
+      return false;
+    }
+  };
+
+  return {
+    isAuthenticated,
+    isLoading,
+    error,
+    login,
+    logout
+  };
+};
+
+// Custom component that doesn't rely on the problematic font import
+export const VeridaAuthButton = withNoSSR(({ context, onSuccess, onError }: { 
+  context: string, 
+  onSuccess?: () => void, 
+  onError?: (error: Error) => void 
+}) => {
+  const { login, isAuthenticated, isLoading, error } = useVeridaAuth();
+  const [isAttemptingLogin, setIsAttemptingLogin] = useState(false);
+
+  useEffect(() => {
+    if (error && onError) {
+      onError(error);
+    }
+  }, [error, onError]);
+
+  useEffect(() => {
+    if (isAuthenticated && onSuccess) {
+      onSuccess();
+    }
+  }, [isAuthenticated, onSuccess]);
+
+  const handleLogin = async () => {
+    setIsAttemptingLogin(true);
+    try {
+      await login(context);
+    } catch (e) {
+      console.error('Login error:', e);
+      if (onError) onError(e instanceof Error ? e : new Error('Login failed'));
+    } finally {
+      setIsAttemptingLogin(false);
+    }
+  };
+
+  if (isLoading) {
+    return <button className="btn-loading" disabled>Loading...</button>;
+  }
+
+  if (isAuthenticated) {
+    return <button className="btn-success" disabled>Connected</button>;
+  }
+
+  return (
+    <button 
+      onClick={handleLogin} 
+      disabled={isAttemptingLogin}
+      className={`btn-auth ${isAttemptingLogin ? 'btn-loading' : ''}`}
+    >
+      {isAttemptingLogin ? 'Connecting...' : 'Connect with Verida'}
+    </button>
+  );
+}); 
