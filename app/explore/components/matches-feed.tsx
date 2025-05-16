@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import type { PanInfo } from "framer-motion"
 
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -94,7 +95,7 @@ export default function MatchesFeed({ profiles, onProfileSelect, aiModeEnabled }
     }, 300)
   }
 
-  const handleDragEnd = (_, info) => {
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const threshold = 100
     if (info.offset.x > threshold) {
       handleLike(currentProfile.id)

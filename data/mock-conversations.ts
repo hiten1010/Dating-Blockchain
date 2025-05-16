@@ -1,4 +1,4 @@
-import type { Conversation } from "@/types/chat"
+import type { Conversation } from "@/app/types/chat"
 
 export const mockConversations: Conversation[] = [
   {
