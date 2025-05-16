@@ -7,14 +7,14 @@
 
 import { veridaClient } from './verida-client';
 import { ProfileRestService } from './profile-rest-service';
+import { API_BASE_URL, AUTH_TOKEN, DB_NAMES, APP_INFO } from './verida-config';
 
 // Constants
-const API_BASE_URL = 'https://api.verida.ai';
-const AUTH_TOKEN = '58d16670-2dee-11f0-b8ca-5b198f1a59d7pduhzxgYXXdVHL5liF0coKxSTCZMXAUidn63_UnddHHLwm+I';
+// Using centralized configuration instead of hardcoding values
 
 // Schema and database names
 const CHAT_MESSAGE_SCHEMA = 'https://common.schemas.verida.io/social/chat/message/v0.1.0/schema.json';
-const CHAT_DB_NAME = 'social_chat_message';
+const CHAT_DB_NAME = DB_NAMES.CHAT_MESSAGES;
 
 /**
  * Encode schema URL for API endpoint

@@ -1,4 +1,4 @@
-# DecentralMatch - Decentralized Dating Platform
+# VeraLove - Decentralized Dating Platform
 
 A modern dating application built with decentralized identity and encrypted data storage using Verida protocol.
 
@@ -33,8 +33,8 @@ A modern dating application built with decentralized identity and encrypted data
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/dating-blockchain.git
-   cd dating-blockchain
+   git clone https://github.com/hiten1010/Dating-Blockchain.git
+   cd Dating-Blockchain
    ```
 
 2. Install dependencies:
@@ -45,7 +45,7 @@ A modern dating application built with decentralized identity and encrypted data
 3. Create a `.env.local` file in the root directory with the following content:
    ```
    NEXT_PUBLIC_VERIDA_NETWORK=testnet
-   NEXT_PUBLIC_CONTEXT_NAME="DecentralMatch Dating Application"
+   NEXT_PUBLIC_CONTEXT_NAME="VeraLove Dating Application"
    NEXT_PUBLIC_LOGO_URL="https://your-logo-url.com/logo.png"
    ```
 
@@ -231,8 +231,8 @@ The NFT minting process:
 
 ```javascript
 {
-  name: "DecentralMatch Profile - {DisplayName}",
-  description: "Verified dating profile on DecentralMatch",
+  name: "VeraLove Profile - {DisplayName}",
+  description: "Verified dating profile on VeraLove",
   image: "ipfs://hash-of-profile-image",
   attributes: [
     { trait_type: "Display Name", value: "User's display name" },
@@ -241,7 +241,7 @@ The NFT minting process:
     { trait_type: "Photo Count", value: 3 },
     { trait_type: "Creation Date", value: "2023-05-01" }
   ],
-  external_url: "https://app.decentralmatch.com/profile/{DID}"
+  external_url: "https://app.veralove.com/profile/{DID}"
 }
 ```
 
@@ -574,6 +574,7 @@ Key files for the AI Twin system:
 ```
 app/
 ├── lib/
+│   ├── verida-config.ts          # Centralized Verida configuration and tokens
 │   ├── verida-client.ts          # Verida client configuration
 │   ├── verida-client-wrapper.tsx  # Client-side wrapper for Verida client
 │   ├── clientside-verida.tsx     # React hooks for Verida integration
@@ -608,6 +609,36 @@ app/
         ├── ai-twin-creation-form.tsx  # Multi-step form for AI Twin creation
         └── ai-twin-preview.tsx        # Interactive AI Twin preview
 ```
+
+### Centralized Configuration System
+
+The application uses a centralized configuration system to manage Verida-related settings:
+
+1. **Configuration File**: `app/lib/verida-config.ts` contains all shared constants:
+   - Authentication tokens for API access
+   - API endpoints and base URLs
+   - Environment settings (network, context name)
+   - Database collection names
+   - RPC configuration for blockchain connectivity
+   - Application information
+
+2. **Benefits**:
+   - Single source of truth for configuration values
+   - Easy updates across the entire application
+   - Clear overview of all configuration parameters
+   - Simplified token rotation for security maintenance
+
+3. **Usage in Services**:
+   - All service files import values from this central configuration
+   - Authentication tokens are never hardcoded in individual files
+   - Database names are standardized throughout the application
+
+4. **Key Configuration Parameters**:
+   - `AUTH_TOKEN`: Authentication token for Verida REST API access
+   - `API_BASE_URL`: Base URL for Verida API endpoints
+   - `VERIDA_NETWORK`: Network setting ('testnet' or 'mainnet')
+   - `DB_NAMES`: Object containing all database collection names
+   - `APP_INFO`: Application metadata and versioning
 
 ### Adding New Features
 

@@ -1,9 +1,9 @@
 'use client';
 
 import { REQUIRED_APP_SCOPES } from './verida-schema-mapping';
+import { API_BASE_URL } from './verida-config';
 
 // Constants
-const API_BASE_URL = 'https://api.verida.ai';
 
 /**
  * Verify if the auth token is valid and has the necessary scopes

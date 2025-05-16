@@ -2,11 +2,9 @@
 // Do not use this file directly in components, use verida-client-wrapper.tsx instead
 import { Client } from '@verida/client-ts';
 import { VaultAccount } from '@verida/account-web-vault';
+import { VERIDA_NETWORK, CONTEXT_NAME, LOGO_URL, RPC_CONFIG } from './verida-config';
 
-// Constants - using environment variables with fallbacks
-export const VERIDA_NETWORK = process.env.NEXT_PUBLIC_VERIDA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet';
-export const CONTEXT_NAME = process.env.NEXT_PUBLIC_CONTEXT_NAME || 'DecentralMatch Dating Application';
-export const LOGO_URL = process.env.NEXT_PUBLIC_LOGO_URL || "https://assets.verida.io/verida_login_request_logo_170x170.png"; 
+// Constants - using values from the central config
 
 /**
  * VeridaClient class to handle Verida authentication and context management
@@ -41,19 +39,7 @@ export class VeridaClient {
       didClientConfig: {
         network: VERIDA_NETWORK,
         // Configuring RPC according to Verida docs at https://developers.verida.network/protocol/client-sdk/configuration
-        rpcConfig: {
-          // For testnet
-          testnet: {
-            // Use the user's private Infura endpoint for Polygon Amoy
-            matticNetwork: "https://polygon-amoy.infura.io/v3/ba150cd6064d40b597979b2592ad08a4",
-            web3Provider: "https://polygon-amoy.infura.io/v3/ba150cd6064d40b597979b2592ad08a4"
-          },
-          // For mainnet
-          mainnet: {
-            matticNetwork: "https://polygon-rpc.com",
-            web3Provider: "https://polygon-mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161" // Public Infura endpoint
-          }
-        }
+        rpcConfig: RPC_CONFIG
       }
     };
 

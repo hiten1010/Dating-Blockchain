@@ -8,16 +8,16 @@
 import { veridaClient } from './verida-client';
 import { SCHEMA_URLS, encodeSchemaUrl, prepareSchemaForEndpoint } from './verida-schema-mapping';
 import { ProfileRestService } from './profile-rest-service';
+import { API_BASE_URL, AUTH_TOKEN, DB_NAMES, APP_INFO } from './verida-config';
 
 // Database name for AI twins in Verida
-const AI_TWIN_DB_NAME = 'favourite';
+const AI_TWIN_DB_NAME = DB_NAMES.AI_TWIN;
 
 // Favourite Schema URL
 const FAVOURITE_SCHEMA = SCHEMA_URLS.FAVOURITE;
 
 // API constants for direct REST calls if needed
-const API_BASE_URL = 'https://api.verida.ai';
-const AUTH_TOKEN = '58d16670-2dee-11f0-b8ca-5b198f1a59d7pduhzxgYXXdVHL5liF0coKxSTCZMXAUidn63_UnddHHLwm+I';
+// Using the centralized config instead of hardcoded values
 
 /**
  * Save AI twin data to Verida

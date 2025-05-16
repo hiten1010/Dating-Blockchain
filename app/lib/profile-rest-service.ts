@@ -9,11 +9,10 @@ import {
   encodeSchemaUrl,
   prepareSchemaForEndpoint
 } from './verida-schema-mapping';
+import { API_BASE_URL, AUTH_TOKEN, DB_NAMES, APP_INFO } from './verida-config';
 
 // Constants
-const API_BASE_URL = 'https://api.verida.ai';
-// Updated token with all necessary scopes
-const AUTH_TOKEN = '58d16670-2dee-11f0-b8ca-5b198f1a59d7pduhzxgYXXdVHL5liF0coKxSTCZMXAUidn63_UnddHHLwm+I';
+// Using centralized config values instead of hardcoding values
 
 // Using standard Verida schemas
 const PROFILE_SCHEMA_URL = SCHEMA_URLS.SOCIAL_POST; // For profile information

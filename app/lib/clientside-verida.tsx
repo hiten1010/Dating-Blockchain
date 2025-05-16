@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { AUTH_TOKEN } from './verida-config';
 
 // Define a type for the Verida client
 interface VeridaClient {
@@ -77,11 +78,9 @@ export const useVeridaClient = () => {
   
   // Get authentication token for API calls
   const getAuthToken = async (): Promise<string | null> => {
-    // This is a placeholder - using the app's hard-coded AUTH_TOKEN from profile-rest-service
-    // In a real app, you would get this from the Verida account
+    // Using the centralized auth token from config
     try {
-      // For development purposes only
-      return '58d16670-2dee-11f0-b8ca-5b198f1a59d7pduhzxgYXXdVHL5liF0coKxSTCZMXAUidn63_UnddHHLwm+I';
+      return AUTH_TOKEN;
     } catch (error) {
       console.error('Failed to get auth token:', error);
       return null;
