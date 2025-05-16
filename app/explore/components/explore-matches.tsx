@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Sparkles, Filter, Users, BotIcon as Robot, Heart } from "lucide-react"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 
 // Mock data - would be fetched from your API
 import { profiles } from "@/data/mock-profiles"
@@ -95,19 +96,12 @@ export default function ExploreMatches() {
         </div>
       </motion.div>
 
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <MatchFilters filters={filters} onFilterChange={handleFilterChange} onClose={toggleFilters} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Dialog for filters */}
+      <Dialog open={showFilters} onOpenChange={setShowFilters}>
+        <DialogContent className="p-0 border-0 bg-transparent max-w-4xl">
+          <MatchFilters filters={filters} onFilterChange={handleFilterChange} onClose={toggleFilters} />
+        </DialogContent>
+      </Dialog>
 
       {/* Custom tab selector */}
       <div className="flex justify-center mb-8">

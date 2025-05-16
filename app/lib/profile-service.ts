@@ -1,13 +1,14 @@
 'use client';
 
 import { veridaClient } from './verida-client-wrapper';
+import { DB_NAMES } from './verida-config';
 
 // Database names for different profile data types
-const PROFILE_DB = 'dating_profile';
-const PREFERENCES_DB = 'dating_preferences';
-const PHOTOS_DB = 'dating_photos';
-const MATCHES_DB = 'dating_matches';
-const MESSAGES_DB = 'dating_messages';
+const PROFILE_DB = DB_NAMES.PROFILE;
+const PREFERENCES_DB = DB_NAMES.PREFERENCES;
+const PHOTOS_DB = DB_NAMES.PHOTOS;
+const MATCHES_DB = DB_NAMES.MATCHES;
+const MESSAGES_DB = DB_NAMES.MESSAGES;
 
 // Interface for dating profile
 export interface DatingProfile {
