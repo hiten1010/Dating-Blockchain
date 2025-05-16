@@ -81,14 +81,17 @@ export default function DatingNavbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <div className="relative h-10 w-10 mr-2">
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full blur opacity-70"></div>
-                <div className="relative h-10 w-10 bg-white rounded-full flex items-center justify-center">
-                  <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
-                </div>
+                <Image
+                  src="/logo2.svg"
+                  alt="VeraLove Logo"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10"
+                />
               </div>
               <span className={`text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-rose-600 
                 ${isScrolled ? 'opacity-100' : 'opacity-100'}`}>
-                DecentralMatch
+                VeraLove
               </span>
             </Link>
 

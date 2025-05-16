@@ -88,10 +88,10 @@ export default function SecurityPrivacy() {
                 <Shield className="h-5 w-5 text-pink-600" />
               </div>
               <div>
-                <h4 className="text-lg font-semibold text-slate-800 mb-2">Sprite+ Protocol</h4>
-                <p className="text-slate-700 mb-4">
-                  All AI transactions (updates, logs) are verified using Sprite+ for added security, ensuring the
-                  integrity of your AI twin's operations.
+                <h4 className="text-lg font-semibold text-slate-800 mb-2">Blockchain Protocol</h4>
+                <p className="text-slate-600">
+                  All AI transactions (updates, logs) are verified using blockchain technology for added security, ensuring the
+                  authenticity of every interaction with your AI Twin.
                 </p>
                 <div className="flex items-center gap-2 text-sm text-green-600">
                   <CheckCircle className="h-4 w-4" />

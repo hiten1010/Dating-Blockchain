@@ -1,7 +1,7 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { Shield, ArrowRight, Wallet, Heart, UserCircle, Lock, Fingerprint, HeartPulse, Flame, SparklesIcon, Wine, Camera, Plane, Coffee, Bike, Music } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Shield, ArrowRight, Heart, UserCircle, Lock, Fingerprint, HeartPulse, Flame, Zap, Sparkles, Star, CheckCircle, Stars, Database, Server, Brain } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
@@ -13,21 +13,21 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
   const sponsors = [
     {
       name: "Cheqd",
-      logo: "/placeholder.svg?height=60&width=120",
-      tagline: "Ensuring blockchain integrity.",
-      letter: "C",
+      logo: "/placeholder.svg",
+      color: "from-purple-600 to-indigo-700",
+      description: "Ensuring blockchain integrity and security with next-generation identity solutions.",
+      website: "https://cheqd.io",
+      role: "Verifiable AI",
+      icon: Brain
     },
     {
       name: "Verida",
-      logo: "/placeholder.svg?height=60&width=120",
-      tagline: "Empowering decentralized identities.",
-      letter: "V",
-    },
-    {
-      name: "Sprite",
-      logo: "/placeholder.svg?height=60&width=120",
-      tagline: "Securing your every transaction.",
-      letter: "S",
+      logo: "/placeholder.svg",
+      color: "from-pink-600 to-purple-700",
+      description: "Empowering decentralized identities through innovative blockchain technology.",
+      website: "https://verida.io",
+      role: "Secure Data Storage",
+      icon: Database
     },
   ]
 
@@ -35,8 +35,15 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
     <section
       id="home"
       ref={sectionRef}
-      className="relative min-h-screen pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden"
+      className="relative min-h-screen pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden bg-gradient-to-b from-white to-purple-50/30"
     >
+      {/* Enhanced background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute w-full h-full bg-grid-pattern opacity-[0.025]"></div>
+        <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-gradient-to-b from-purple-200/20 to-transparent rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-t from-pink-200/20 to-transparent rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3"></div>
+      </div>
+
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
@@ -57,21 +64,23 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                 </span>
               </h1>
 
-              <p className="text-xl text-[#4B5563] mb-8 max-w-xl">
-                Powered by the security of Cheqd, the trust of Verida, and the innovation of Sprite.
+              <p className="text-lg md:text-xl text-[#4B5563] max-w-3xl mx-auto mb-10">
+                Powered by the security of Cheqd and the trust of Verida.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 group relative overflow-hidden rounded-xl"
-                >
-                  <span className="absolute inset-0 bg-pattern opacity-20"></span>
-                  <span className="relative flex items-center">
-                    Join the Revolution
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </span>
-                </Button>
+                <Link href="/onboarding">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 group relative overflow-hidden rounded-xl"
+                  >
+                    <span className="absolute inset-0 bg-pattern opacity-20"></span>
+                    <span className="relative flex items-center">
+                      Join the Revolution
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </Button>
+                </Link>
 
                 <Button
                   size="lg"
@@ -80,9 +89,9 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                 >
                   Learn More
                 </Button>
-              </div>
+               </div>
 
-              <div className="flex items-center gap-4 text-sm text-[#6B7280]">
+              {/* <div className="flex items-center gap-4 text-sm text-[#6B7280]">
                 <div className="flex -space-x-2">
                   {[...Array(4)].map((_, i) => (
                     <div
@@ -93,10 +102,8 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                     </div>
                   ))}
                 </div>
-                <span>
-                  Join <span className="text-[#EC4899] font-medium">2,500+</span> early adopters
-                </span>
-              </div>
+                
+              </div>  */}
             </motion.div>
           </div>
 
@@ -116,7 +123,7 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                   {/* 3D floating elements */}
                   <div className="relative h-[350px] w-full">
                     {/* Floating profile cards */}
-                    <div className="absolute top-[10%] left-[10%] w-48 transform rotate-[-5deg] animate-float-slow">
+                    <div className="absolute top-[25%] left-[5%] w-48 transform rotate-[-5deg] animate-float-slow">
                       <div className="bg-white rounded-xl shadow-lg p-4 border border-[#E5E7EB]">
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] flex items-center justify-center">
@@ -131,20 +138,16 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {[
-                            <Coffee key="coffee" className="h-3 w-3" />,
-                            <Music key="music" className="h-3 w-3" />,
-                            <Bike key="bike" className="h-3 w-3" />,
-                          ].map((icon, i) => (
+                          {[1, 2, 3].map((i) => (
                             <div key={i} className="bg-[#F9F5FF] p-1 rounded-full">
-                              {icon}
+                              <div className="h-3 w-3" />
                             </div>
                           ))}
                         </div>
                       </div>
                     </div>
 
-                    <div className="absolute top-[30%] right-[5%] w-56 transform rotate-[5deg] animate-float">
+                    <div className="absolute top-[10%] right-[2%] w-56 transform rotate-[5deg] animate-float">
                       <div className="bg-white rounded-xl shadow-lg p-4 border border-[#E5E7EB]">
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] flex items-center justify-center">
@@ -180,13 +183,9 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1">
-                          {[
-                            <Wine key="wine" className="h-3 w-3" />,
-                            <Camera key="camera" className="h-3 w-3" />,
-                            <Plane key="plane" className="h-3 w-3" />,
-                          ].map((icon, i) => (
+                          {[1, 2, 3].map((i) => (
                             <div key={i} className="bg-[#F9F5FF] p-1 rounded-full">
-                              {icon}
+                              <div className="h-3 w-3" />
                             </div>
                           ))}
                         </div>
@@ -201,7 +200,7 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                       </div>
                     </div>
 
-                    <div className="absolute bottom-[30%] right-[15%] animate-float-slow">
+                    <div className="absolute bottom-[5%] right-[25%] animate-float-slow">
                       <div className="flex items-center gap-2 bg-white rounded-full shadow-lg px-4 py-2 border border-[#E5E7EB]">
                         <Fingerprint className="h-4 w-4 text-[#EC4899]" />
                         <span className="text-xs font-medium">Verified Identity</span>
@@ -209,14 +208,14 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                     </div>
 
                     {/* New dating-themed floating elements */}
-                    <div className="absolute top-[15%] right-[25%] animate-float-medium">
+                    <div className="absolute top-[15%] right-[40%] animate-float-medium">
                       <div className="flex items-center gap-2 bg-white rounded-full shadow-lg px-4 py-2 border border-[#E5E7EB]">
                         <HeartPulse className="h-4 w-4 text-[#EC4899]" />
                         <span className="text-xs font-medium">95% Match</span>
                       </div>
                     </div>
 
-                    <div className="absolute bottom-[45%] left-[35%] animate-float">
+                    <div className="absolute bottom-[25%] left-[60%] animate-float">
                       <div className="flex items-center gap-2 bg-white rounded-full shadow-lg px-4 py-2 border border-[#E5E7EB]">
                         <Flame className="h-4 w-4 text-[#F97316]" />
                         <span className="text-xs font-medium">Popular Profile</span>
@@ -224,21 +223,150 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                     </div>
 
                     {/* Central element */}
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24">
-                      <div className="relative w-full h-full">
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] rounded-full opacity-20 animate-pulse"></div>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-28 h-28">
+                      <motion.div 
+                        className="relative w-full h-full"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.8 }}
+                      >
+                        {/* Simple, minimalist ring */}
+                        <motion.div 
+                          className="absolute inset-0 rounded-full border-2 border-[#EC4899]/30"
+                          animate={{ 
+                            scale: [1, 1.15, 1],
+                            opacity: [0.3, 0.7, 0.3],
+                          }}
+                          transition={{ 
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        />
+
+                        {/* Inner clean circle */}
+                        <motion.div 
+                          className="absolute inset-2 bg-white rounded-full shadow-sm"
+                          animate={{ 
+                            boxShadow: [
+                              "0 4px 12px rgba(236, 72, 153, 0.1)",
+                              "0 6px 16px rgba(236, 72, 153, 0.2)",
+                              "0 4px 12px rgba(236, 72, 153, 0.1)"
+                            ]
+                          }}
+                          transition={{ 
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        />
+
+                        {/* Heart with clean animation */}
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="relative">
-                            <Heart className="h-10 w-10 text-[#EC4899]" />
-                            <div className="absolute -top-1 -right-1">
-                              <div className="relative">
-                                <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-75"></div>
-                                <SparklesIcon className="h-4 w-4 text-[#F59E0B] relative" />
-                              </div>
-                            </div>
-                          </div>
+                          <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ 
+                              scale: [0.9, 1, 0.9],
+                            }}
+                            transition={{ 
+                              duration: 3,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                            className="relative"
+                          >
+                            <Heart className="h-10 w-10 text-[#EC4899]" strokeWidth={1.5} />
+                            
+                            {/* Sparkle effect that shows periodically at the center */}
+                            <motion.div 
+                              className="absolute inset-0 flex items-center justify-center"
+                              initial={{ opacity: 0, scale: 0 }}
+                              animate={{ 
+                                opacity: [0, 1, 0],
+                                scale: [0.5, 1.2, 0.5]
+                              }}
+                              transition={{
+                                duration: 1.2,
+                                repeat: Infinity,
+                                repeatDelay: 5, // First sparkle happens after 5 seconds
+                                ease: "easeOut"
+                              }}
+                            >
+                              <Sparkles className="h-6 w-6 text-[#F59E0B]" />
+                            </motion.div>
+
+                            {/* Second sparkle effect with different timing */}
+                            <motion.div 
+                              className="absolute inset-0 flex items-center justify-center"
+                              initial={{ opacity: 0, scale: 0 }}
+                              animate={{ 
+                                opacity: [0, 1, 0],
+                                scale: [0.5, 1.3, 0.5]
+                              }}
+                              transition={{
+                                duration: 1,
+                                repeat: Infinity,
+                                repeatDelay: 8, // Second sparkle happens after 8 seconds (different time than first)
+                                ease: "easeOut"
+                              }}
+                            >
+                              <Sparkles className="h-5 w-5 text-[#6D28D9]" />
+                            </motion.div>
+                          </motion.div>
                         </div>
-                      </div>
+
+                        {/* Minimalist curved path for particle */}
+                        <motion.div
+                          className="absolute inset-0"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.8, delay: 0.2 }}
+                        >
+                          <motion.div 
+                            className="absolute w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899]"
+                            animate={{
+                              pathOffset: [0, 1]
+                            }}
+                            transition={{
+                              duration: 6,
+                              repeat: Infinity,
+                              ease: "linear"
+                            }}
+                            style={{
+                              offsetPath: "path('M 14,14 a 14,14 0 1,0 28,0 a 14,14 0 1,0 -28,0')",
+                              offsetDistance: "0%"
+                            }}
+                            onAnimationComplete={() => {
+                              // This would trigger the sparkle if we had state control
+                              // We'll use timed animations instead since this is a static component
+                            }}
+                          />
+                        </motion.div>
+
+                        {/* Second particle on the opposite direction */}
+                        <motion.div
+                          className="absolute inset-0"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.8, delay: 0.5 }}
+                        >
+                          <motion.div 
+                            className="absolute w-1.5 h-1.5 rounded-full bg-[#6D28D9]"
+                            animate={{
+                              pathOffset: [0, 1]
+                            }}
+                            transition={{
+                              duration: 8,
+                              repeat: Infinity,
+                              ease: "linear"
+                            }}
+                            style={{
+                              offsetPath: "path('M 14,14 a 14,14 0 1,1 28,0 a 14,14 0 1,1 -28,0')",
+                              offsetDistance: "0%"
+                            }}
+                          />
+                        </motion.div>
+                      </motion.div>
                     </div>
 
                     {/* Connection lines */}
@@ -290,69 +418,246 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
         </div>
       </div>
 
-      {/* Sponsors Section */}
-      <div className="container mx-auto px-4 md:px-6 mt-20">
+      {/* Custom Sponsors Banner - Added directly below the hero content for tighter integration */}
+      <div className="container mx-auto px-4 md:px-6 relative z-10 mt-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
         >
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-2 text-[#1F2937]">Powered By Industry Leaders</h2>
-            <p className="text-[#6B7280]">
-              Our platform is built on the foundations of trusted blockchain technology partners, ensuring security,
-              privacy, and innovation.
-            </p>
-          </div>
-
-          <div className="relative p-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-[#E5E7EB] shadow-lg">
-            <div className="absolute inset-0 bg-pattern opacity-5 rounded-2xl"></div>
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6D28D9]/10 to-[#EC4899]/10 rounded-2xl blur-sm"></div>
-
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-              {sponsors.map((sponsor, index) => (
-                <div key={index} className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6D28D9]/20 to-[#EC4899]/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
-                  <div className="relative bg-white rounded-xl shadow-sm border border-[#E5E7EB] p-6 h-full hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-[#6D28D9]/10 to-[#EC4899]/10 flex items-center justify-center text-3xl font-bold text-[#6D28D9] relative overflow-hidden">
-                        <div className="absolute inset-0 bg-pattern opacity-10"></div>
-                        <span className="relative z-10">{sponsor.letter}</span>
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-[#1F2937]">{sponsor.name}</h3>
-                      </div>
-                    </div>
-                    <p className="text-[#6B7280]">{sponsor.tagline}</p>
-
-                    <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-[#6B7280]">Trusted Partner</span>
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <div
-                              key={i}
-                              className="w-1.5 h-6 bg-gradient-to-t from-[#6D28D9] to-[#EC4899] rounded-full mx-0.5"
-                            ></div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <div className="relative p-4 md:p-6 rounded-xl bg-white/80 backdrop-blur-sm border border-[#E5E7EB] shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300 hover:bg-white/90">
+            <div className="absolute inset-0 bg-pattern opacity-5 rounded-xl"></div>
+            <motion.div 
+              className="absolute -inset-0.5 bg-gradient-to-r from-[#6D28D9]/10 to-[#EC4899]/10 rounded-xl blur-sm"
+              animate={{ 
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+              }}
+              transition={{ 
+                duration: 10,
+                repeat: Infinity
+              }}
+              style={{ backgroundSize: "200% 200%" }}
+            ></motion.div>
+            
+            {/* Animated particles */}
+            {[...Array(6)].map((_, i) => (
+              <motion.div 
+                key={i}
+                className="absolute w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#6D28D9]/40 to-[#EC4899]/40"
+                style={{ 
+                  left: `${Math.random() * 100}%`, 
+                  top: `${Math.random() * 100}%`,
+                  opacity: 0
+                }}
+                animate={{ 
+                  y: [0, -15, 0],
+                  x: [0, Math.random() > 0.5 ? 10 : -10, 0],
+                  opacity: [0, 0.8, 0]
+                }}
+                transition={{ 
+                  duration: 3 + Math.random() * 3,
+                  repeat: Infinity,
+                  delay: Math.random() * 5,
+                  ease: "easeInOut"
+                }}
+              />
+            ))}
+            
+            {/* Connection line between sponsors */}
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-8 pointer-events-none opacity-0 group-hover:opacity-40 transition-opacity duration-500 hidden md:block">
+              <svg width="100%" height="100%" viewBox="0 0 500 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  d="M150 25 C 200 -10, 300 60, 350 25" 
+                  stroke="url(#gradient-line)" 
+                  strokeWidth="1.5" 
+                  strokeDasharray="4 3" 
+                  strokeLinecap="round"
+                />
+                <defs>
+                  <linearGradient id="gradient-line" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#6D28D9" />
+                    <stop offset="50%" stopColor="#EC4899" />
+                    <stop offset="100%" stopColor="#6D28D9" />
+                  </linearGradient>
+                </defs>
+                {/* Animated dot along the path */}
+                <circle r="3" fill="#EC4899" opacity="0.7">
+                  <animateMotion 
+                    path="M150 25 C 200 -10, 300 60, 350 25" 
+                    dur="3s" 
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              </svg>
             </div>
 
-            <div className="mt-8 text-center">
-              <Button
-                variant="outline"
-                className="border-[#6D28D9]/30 text-[#6D28D9] hover:bg-[#6D28D9]/10 rounded-xl"
-              >
-                <span className="flex items-center">
-                  Learn About Our Partners
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </span>
-              </Button>
+            <div className="relative z-10">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <motion.div 
+                    className="w-10 h-10 rounded-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] flex items-center justify-center text-white relative overflow-hidden"
+                    animate={{ 
+                      scale: [1, 1.05, 1]
+                    }}
+                    transition={{ 
+                      duration: 3,
+                      repeat: Infinity
+                    }}
+                    whileHover={{
+                      rotate: [0, 5, -5, 0],
+                      transition: { duration: 0.5 }
+                    }}
+                  >
+                    {/* Animated ring */}
+                    <motion.div 
+                      className="absolute inset-0 border-2 border-white/30 rounded-full"
+                      animate={{
+                        scale: [1, 1.15, 1],
+                        opacity: [0.3, 0.8, 0.3]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+                    <Stars className="h-5 w-5 relative z-10" />
+                  </motion.div>
+                  <div>
+                    <motion.p 
+                      className="text-sm font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#6D28D9] to-[#EC4899]"
+                      animate={{
+                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                      }}
+                      transition={{
+                        duration: 8,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                      style={{ backgroundSize: "200% auto" }}
+                    >
+                      Technology Partners
+                    </motion.p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6 md:gap-10">
+                  {sponsors.map((sponsor, index) => (
+                    <motion.a 
+                      key={index}
+                      href={sponsor.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 hover:no-underline"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.2 + 0.7 }}
+                      whileHover={{ 
+                        scale: 1.05,
+                        transition: { type: "spring", stiffness: 300, damping: 10 }
+                      }}
+                    >
+                      <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${sponsor.color} flex items-center justify-center text-white font-bold relative overflow-hidden p-0.5 shadow-md`}>
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+                        <motion.div 
+                          className="absolute inset-0 bg-pattern opacity-10"
+                          animate={{
+                            backgroundPosition: ["0% 0%", "100% 100%"],
+                          }}
+                          transition={{
+                            duration: 20,
+                            repeat: Infinity,
+                            repeatType: "reverse"
+                          }}
+                        ></motion.div>
+                        
+                        <div className="w-full h-full rounded-md bg-gradient-to-br from-black/10 to-black/0 flex items-center justify-center backdrop-blur-[1px]">
+                          <motion.div
+                            className="text-white"
+                            animate={{ 
+                              scale: [1, 1.1, 1],
+                            }} 
+                            transition={{
+                              duration: 4,
+                              repeat: Infinity,
+                              delay: index
+                            }}
+                          >
+                            {index === 0 ? (
+                              <Brain className="h-6 w-6" />
+                            ) : (
+                              <Database className="h-6 w-6" />
+                            )}
+                          </motion.div>
+                        </div>
+                        
+                        {/* Corner sparkle */}
+                        <motion.div 
+                          className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-white rounded-full"
+                          animate={{
+                            opacity: [0, 1, 0],
+                            scale: [0.8, 1.2, 0.8]
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            delay: index * 1.5
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <motion.p 
+                          className="font-bold text-[#1F2937] relative"
+                          whileHover={{
+                            color: index === 0 ? "#6D28D9" : "#EC4899",
+                            transition: { duration: 0.2 }
+                          }}
+                        >
+                          {sponsor.name}
+                          <motion.span 
+                            className="absolute -bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#6D28D9] to-[#EC4899]"
+                            whileHover={{
+                              width: "100%",
+                              transition: { duration: 0.3 }
+                            }}
+                          />
+                        </motion.p>
+                        <div className="flex items-center">
+                          <motion.div 
+                            className={`mr-1 text-xs font-medium px-1.5 py-0.5 rounded-sm bg-gradient-to-r ${index === 0 ? 'from-purple-100 to-indigo-100 text-purple-700' : 'from-pink-100 to-purple-100 text-pink-700'}`}
+                            whileHover={{ y: -1 }}
+                          >
+                            {sponsor.role}
+                          </motion.div>
+                        </div>
+                      </div>
+                    </motion.a>
+                  ))}
+                </div>
+
+                <motion.button
+                  className="text-sm font-medium flex items-center gap-1 relative overflow-hidden"
+                  whileHover={{ x: 3 }}
+                >
+                  <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r from-[#6D28D9] to-[#EC4899]">Learn More</span>
+                  <motion.div
+                    className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-[#6D28D9]/50 to-[#EC4899]/50"
+                    initial={{ scaleX: 0, originX: 0 }}
+                    whileHover={{ scaleX: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  <motion.span
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      repeatType: "reverse"
+                    }}
+                  >
+                    <ArrowRight className="h-3.5 w-3.5 text-[#EC4899]" />
+                  </motion.span>
+                </motion.button>
+              </div>
             </div>
           </div>
         </motion.div>
