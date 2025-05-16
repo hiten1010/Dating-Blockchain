@@ -3,8 +3,8 @@
 'use client'
 
 import React from 'react'
-import { TooltipProvider } from '@/components/ui/tooltip' // Adjust the path based on your project structure
-import { CourseProvider } from '@/app/CourseContext' // Adjust if necessary
+import { ThemeProvider } from 'next-themes'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 interface ProvidersProps {
   children: React.ReactNode
@@ -12,11 +12,11 @@ interface ProvidersProps {
 
 const Providers: React.FC<ProvidersProps> = ({ children }) => {
   return (
-    <TooltipProvider>
-      <CourseProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <TooltipProvider>
         {children}
-      </CourseProvider>
-    </TooltipProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   )
 }
 

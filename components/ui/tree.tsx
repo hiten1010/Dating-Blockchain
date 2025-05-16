@@ -124,7 +124,7 @@ function TreeNode({ node, level, selectedId, onSelectChange }: TreeNodeProps) {
         )}
         {node.name}
       </Button>
-      {hasChildren && isExpanded && (
+      {hasChildren && isExpanded && node.children && (
         <TreeNodes
           nodes={node.children}
           level={level + 1}
