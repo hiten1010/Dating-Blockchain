@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Heart, Menu, X, Wallet } from "lucide-react"
+import { Menu, X, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -27,12 +27,10 @@ export default function Header({ activeSection, scrollY, navItems }: HeaderProps
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="relative w-10 h-10 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] rounded-xl flex items-center justify-center overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] opacity-80 group-hover:opacity-100 transition-opacity"></div>
-                <div className="absolute inset-0 bg-pattern opacity-30"></div>
-                <Heart className="h-5 w-5 text-white relative z-10" />
+              <div className="relative w-10 h-10">
+                <img src="/logo2.svg" alt="VeraLove Logo" className="w-full h-full" />
               </div>
-              <span className="font-bold text-xl tracking-tight text-[#1F2937]">DecentralMatch</span>
+              <span className="font-bold text-xl tracking-tight text-[#1F2937]">VeraLove</span>
             </Link>
 
             <nav className="hidden md:flex items-center space-x-6">

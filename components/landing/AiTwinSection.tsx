@@ -6,6 +6,7 @@ import { MessageSquare, Brain, Shield, Zap, Users, Heart, Sparkles, Cpu, Network
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useMobile } from "@/hooks/use-mobile"
+import Link from "next/link"
 
 const chatMessages = [
   { role: "user", message: "I'm looking for someone who loves hiking and photography" },
@@ -193,7 +194,7 @@ export default function AiTwinSection() {
   ];
 
   return (
-    <section className="relative bg-gradient-to-b from-[#F9F5FF] to-white py-24 md:py-32 overflow-hidden">
+    <section id="your-personal-ai-twin" className="relative bg-gradient-to-b from-[#F9F5FF] to-white py-24 md:py-32 overflow-hidden">
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden">
         {particles.map((particle) => (
@@ -323,18 +324,20 @@ export default function AiTwinSection() {
               whileTap={{ scale: 0.98 }}
             >
               <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] rounded-xl opacity-75 blur group-hover:opacity-100 transition duration-200"></div>
-              <Button className="relative w-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white py-6 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-200">
-                <span className="flex items-center text-lg">
-                  Create Your AI Twin
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
-                </span>
-              </Button>
+              <Link href="/onboarding">
+                <Button className="relative w-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white py-6 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-200">
+                  <span className="flex items-center text-lg">
+                    Create Your AI Twin
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
+                  </span>
+                </Button>
+              </Link>
             </motion.div>
           </div>
 
           {/* Middle Section - Interactive AI Twin Visualization */}
           <motion.div
-            className="lg:col-span-4 relative z-20"
+            className="lg:col-span-4 relative z-20 mt-20"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
@@ -758,7 +761,7 @@ export default function AiTwinSection() {
           </motion.div>
         </div>
         
-        {/* AI Twin Capabilities Section */}
+        {/* AI Twin Capabilities Section
         <motion.div
           className="mt-24 md:mt-32"
           initial={{ opacity: 0 }}
@@ -812,7 +815,7 @@ export default function AiTwinSection() {
               </motion.div>
             ))}
           </div>
-        </motion.div>
+        </motion.div> */}
       </div>
       
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#EC4899]/30 to-transparent"></div>

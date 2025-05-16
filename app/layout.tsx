@@ -9,7 +9,7 @@ import MainWrapper from "./components/main-wrapper"
 import './styles/verida-fonts.css';
 
 export const metadata = {
-  title: "DecentralMatch - Discover Love on the Decentralized Frontier",
+  title: "VeraLove - Discover Love on the Decentralized Frontier",
   description:
     "A revolutionary dating platform powered by blockchain technology, decentralized identities, and AI-powered matchmaking.",
   generator: 'v0.dev'

@@ -51,7 +51,7 @@ export default function InteractiveDemo() {
             <div className="flex flex-col h-full">
               <div className="relative h-48 rounded-lg overflow-hidden mb-4">
                 <img 
-                  src="/placeholder.svg?height=300&width=300" 
+                  src="/Tom_cruise.svg?height=300&width=300" 
                   alt="Profile" 
                   className="w-full h-full object-cover"
                 />

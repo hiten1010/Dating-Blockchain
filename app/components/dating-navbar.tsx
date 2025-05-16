@@ -88,7 +88,7 @@ export default function DatingNavbar() {
               </div>
               <span className={`text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-rose-600 
                 ${isScrolled ? 'opacity-100' : 'opacity-100'}`}>
-                DecentralMatch
+                VeraLove
               </span>
             </Link>
 

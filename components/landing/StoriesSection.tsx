@@ -146,7 +146,7 @@ export default function StoriesSection({ stories }: StoriesSectionProps) {
           ))}
         </div>
 
-        <div className="flex justify-center">
+        {/* <div className="flex justify-center">
           <Button className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl">
             <span className="flex items-center">
               Share Your Story
@@ -155,7 +155,7 @@ export default function StoriesSection({ stories }: StoriesSectionProps) {
               </svg>
             </span>
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#EC4899]/30 to-transparent"></div>

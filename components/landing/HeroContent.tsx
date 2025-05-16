@@ -23,8 +23,8 @@ export default function HeroContent() {
         </span>
       </h1>
 
-      <p className="text-xl text-[#4B5563] mb-8 max-w-xl">
-        Powered by the security of Cheqd, the trust of Verida, and the innovation of Sprite.
+      <p className="text-lg md:text-xl text-[#4B5563] max-w-3xl mx-auto mb-8">
+        Powered by the security of Cheqd and the trust of Verida.
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-8">

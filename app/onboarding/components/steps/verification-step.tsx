@@ -19,8 +19,8 @@ export default function VerificationStep({ onComplete }: VerificationStepProps) 
   const [userAnswer, setUserAnswer] = useState<number | null>(null)
 
   const handleVerify = () => {
-    if (userAnswer == captchaValue) {
-      //setError("Incorrect answer. Please try again.")
+    if (userAnswer !== captchaValue + captchaValue) {
+      setError("Incorrect answer. Please try again.")
       return
     }
 
@@ -42,6 +42,7 @@ export default function VerificationStep({ onComplete }: VerificationStepProps) 
   const refreshCaptcha = () => {
     setCaptchaValue(Math.floor(Math.random() * 10) + 1)
     setUserAnswer(null)
+    setError(null)
   }
 
   return (
@@ -88,7 +89,10 @@ export default function VerificationStep({ onComplete }: VerificationStepProps) 
                     key={i}
                     variant={userAnswer === value ? "default" : "outline"}
                     className={`h-12 w-12 ${userAnswer === value ? "bg-purple-600" : ""}`}
-                    onClick={() => setUserAnswer(value)}
+                    onClick={() => {
+                      setUserAnswer(value)
+                      setError(null)
+                    }}
                   >
                     {value}
                   </Button>

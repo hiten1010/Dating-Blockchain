@@ -13,7 +13,7 @@ import Header from "@/components/landing/Header"
 import Background from "@/components/landing/Background"
 import LoadingScreen from "@/components/landing/LoadingScreen"
 import HeroSection from "@/components/landing/HeroSection"
-import SponsorsSection from "@/components/landing/SponsorsSection"
+// import SponsorsSection from "@/components/landing/SponsorsSection"
 import TechnologySection from "@/components/landing/TechnologySection"
 import FeaturesSection from "@/components/landing/FeaturesSection"
 import JourneySection from "@/components/landing/JourneySection"
@@ -82,10 +82,9 @@ export default function LandingPage() {
 
   const navItems = [
     { name: "Home", href: "#home" },
-    { name: "Technology", href: "#technology" },
     { name: "Features", href: "#features" },
+    { name: "AI Twin", href: "#your-personal-ai-twin" },
     { name: "Journey", href: "#journey" },
-    { name: "Partners", href: "#partners" },
   ]
 
   // Define sponsors for Partners section
@@ -101,12 +100,6 @@ export default function LandingPage() {
       logo: "/placeholder.svg?height=60&width=120",
       tagline: "Empowering decentralized identities.",
       letter: "V",
-    },
-    {
-      name: "Sprite",
-      logo: "/placeholder.svg?height=60&width=120",
-      tagline: "Securing your every transaction.",
-      letter: "S",
     },
   ];
 
@@ -135,9 +128,9 @@ export default function LandingPage() {
       ],
     },
     {
-      title: "Secure Transactions",
+      title: "Blockchain Security",
       icon: <Shield className="h-6 w-6 text-[#EC4899]" />,
-      description: "Every interaction is secured by Sprite's cutting-edge blockchain technology.",
+      description: "Every interaction is secured by advanced blockchain technology for maximum protection.",
       details: [
         "End-to-end encryption",
         "Tamper-proof messaging",
@@ -187,7 +180,7 @@ export default function LandingPage() {
     {
       step: 5,
       title: "Connect Securely",
-      description: "Engage in end-to-end encrypted conversations secured by Sprite.",
+      description: "Engage in end-to-end encrypted conversations secured by blockchain technology.",
       icon: <MessageSquare className="h-5 w-5 text-white" />,
     },
   ]
@@ -250,16 +243,18 @@ export default function LandingPage() {
         {/* Hero Section */}
         <HeroSection sectionRef={sectionRefCallback(0)} />
 
-        {/* Technology Section */}
+        {/* Technology Section
         <TechnologySection sectionRef={sectionRefCallback(1)} features={features} />
 
-        
+         */}
 
         {/* Features Section */}
         <FeaturesSection sectionRef={sectionRefCallback(2)} />
+        
+        {/* AI Twin Section */}
+        <AiTwinSection />
 
-
-        <section className="py-20 md:py-32 relative bg-[#F9F5FF]">
+        {/* <section className="py-20 md:py-32 relative bg-[#F9F5FF]">
           <div className="absolute inset-0 bg-pattern opacity-5"></div>
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#6D28D9]/30 to-transparent"></div>
 
@@ -454,15 +449,13 @@ export default function LandingPage() {
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#6D28D9]/30 to-transparent"></div>
-        </section>
+        </section> */}
         {/* Journey Section */}
         <JourneySection sectionRef={sectionRefCallback(3)} journeySteps={journeySteps} />
 
-        {/* Sponsors Section */}
-        <SponsorsSection sectionRef={sectionRefCallback(4)} />
+        {/* Sponsors Section
+        <SponsorsSection sectionRef={sectionRefCallback(4)} /> */}
 
-        {/* Stories Section */}
-        <StoriesSection stories={stories} />
 
         {/* Interactive Demo Section */}
         <InteractiveDemo />
@@ -470,339 +463,27 @@ export default function LandingPage() {
         {/* Date Ideas Section */}
         <DateIdeasSection />
 
+        {/* Stories Section */}
+        <StoriesSection stories={stories} />
+
         {/* Matchmaking Section */}
-        <MatchmakingSection />
+        {/* <MatchmakingSection /> */}
 
-        {/* AI Twin Section */}
-        <AiTwinSection />
 
-        {/* DNA Compatibility Section */}
-        <DNACompatibility />
-
-        <section className="py-20 md:py-32 relative bg-white overflow-hidden">
-          <div className="absolute inset-0 bg-pattern opacity-5"></div>
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#6D28D9]/30 to-transparent"></div>
-
-          <div className="container mx-auto px-4 md:px-6 relative z-10">
-            <div className="max-w-3xl mx-auto text-center mb-16">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-              >
-                <div className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-[#6D28D9]/10 to-[#EC4899]/10 border border-[#6D28D9]/30 text-sm font-medium text-[#EC4899] mb-6">
-                  <Shield className="h-3.5 w-3.5 mr-2" />
-                  Privacy & Security
-                </div>
-
-                <h2 className="text-3xl md:text-5xl font-bold mb-6 text-[#1F2937]">
-                  Your Love Life,{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6D28D9] to-[#EC4899]">
-                    Your Control
-                  </span>
-                </h2>
-
-                <p className="text-xl text-[#4B5563]">
-                  We've reimagined dating privacy and security from the ground up, putting you in complete control.
-                </p>
-              </motion.div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-              >
-                <div className="relative">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-[#6D28D9]/20 to-[#EC4899]/20 rounded-blob-3 blur-lg"></div>
-                  <div className="relative bg-white rounded-xl shadow-xl overflow-hidden p-6">
-                    <div className="absolute inset-0 bg-pattern opacity-5"></div>
-
-                    <div className="relative aspect-square">
-                      {/* Interactive security visualization */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="relative w-48 h-48">
-                          {/* Outer security ring */}
-                          <div className="absolute inset-0 border-4 border-dashed border-[#6D28D9]/30 rounded-full animate-spin-slow"></div>
-
-                          {/* Middle security ring */}
-                          <div className="absolute inset-4 border-4 border-dashed border-[#EC4899]/30 rounded-full animate-spin-reverse-slow"></div>
-
-                          {/* Inner security ring */}
-                          <div className="absolute inset-8 border-4 border-dashed border-[#6D28D9]/30 rounded-full animate-spin-slow"></div>
-
-                          {/* Center profile */}
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] p-1">
-                              <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                                <UserCircle className="h-12 w-12 text-[#6D28D9]" />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Security icons */}
-                          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                            <div className="bg-white rounded-full p-2 shadow-md">
-                              <Lock className="h-5 w-5 text-[#6D28D9]" />
-                            </div>
-                          </div>
-
-                          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-                            <div className="bg-white rounded-full p-2 shadow-md">
-                              <Shield className="h-5 w-5 text-[#EC4899]" />
-                            </div>
-                          </div>
-
-                          <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                            <div className="bg-white rounded-full p-2 shadow-md">
-                              <Fingerprint className="h-5 w-5 text-[#6D28D9]" />
-                            </div>
-                          </div>
-
-                          <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2">
-                            <div className="bg-white rounded-full p-2 shadow-md">
-                              <Key className="h-5 w-5 text-[#EC4899]" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-              >
-                <div className="space-y-8">
-                  {[
-                    {
-                      title: "Zero-Knowledge Privacy",
-                      icon: <Lock className="h-6 w-6 text-white" />,
-                      description:
-                        "Share only what you want. Our zero-knowledge proofs let you verify attributes without revealing sensitive data.",
-                    },
-                    {
-                      title: "Self-Sovereign Identity",
-                      icon: <UserCircle className="h-6 w-6 text-white" />,
-                      description:
-                        "Your identity belongs to you alone. Control exactly what information is shared with potential matches.",
-                    },
-                    {
-                      title: "End-to-End Encryption",
-                      icon: <Shield className="h-6 w-6 text-white" />,
-                      description:
-                        "All messages and interactions are fully encrypted. Only you and your match can read your conversations.",
-                    },
-                    {
-                      title: "Revocable Permissions",
-                      icon: <Key className="h-6 w-6 text-white" />,
-                      description:
-                        "Change your mind? Revoke access to your data at any time with our blockchain-based permission system.",
-                    },
-                  ].map((item, index) => (
-                    <div key={index} className="flex gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-[#6D28D9] to-[#EC4899] flex items-center justify-center flex-shrink-0">
-                        {item.icon}
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold mb-2 text-[#1F2937]">{item.title}</h3>
-                        <p className="text-[#6B7280]">{item.description}</p>
-                      </div>
-                    </div>
-                  ))}
-
-                  <Button className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl">
-                    <span className="flex items-center">
-                      Learn About Our Security
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </span>
-                  </Button>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#EC4899]/30 to-transparent"></div>
-        </section>
-        {/* Partners Section */}
-        <section
-          id="partners"
-          ref={sectionRefCallback(4)}
-          className="py-20 md:py-32 relative bg-[#F9F5FF]"
-        >
-          <div className="absolute inset-0 bg-pattern opacity-5"></div>
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#EC4899]/30 to-transparent"></div>
-
-          <div className="container mx-auto px-4 md:px-6 relative z-10">
-            <div className="relative max-w-5xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-              >
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] rounded-xl blur-lg opacity-75"></div>
-                <div className="relative bg-white rounded-xl shadow-sm border border-[#E5E7EB] p-8 md:p-12 overflow-hidden">
-                  <div className="absolute inset-0 bg-pattern opacity-5"></div>
-
-                  <div className="relative z-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                      <div className="text-center lg:text-left">
-                        <h2 className="text-3xl md:text-5xl font-bold mb-6 text-[#1F2937]">
-                          Ready to Redefine Your Dating Experience?
-                        </h2>
-                        <p className="text-xl text-[#4B5563] mb-8">
-                          Join us in pioneering a new era of digital relationships, where privacy, security, and
-                          authenticity are built into the foundation.
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center lg:justify-start">
-                          <Link href="/onboarding">
-                            <Button
-                              size="lg"
-                              className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl"
-                            >
-                              <span className="flex items-center">
-                                <Wallet className="mr-2 h-5 w-5" />
-                                Connect Wallet
-                              </span>
-                            </Button>
-                          </Link>
-
-                          <Button
-                            size="lg"
-                            variant="outline"
-                            className="border-[#6D28D9]/30 text-[#6D28D9] hover:bg-[#6D28D9]/10 rounded-xl"
-                          >
-                            Learn More
-                          </Button>
-                        </div>
-
-                        <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                          {sponsors.map((sponsor, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#F9F5FF] border border-[#E5E7EB]"
-                            >
-                              <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#6D28D9]/20 to-[#EC4899]/20 flex items-center justify-center">
-                                <span className="text-xs font-bold">{sponsor.letter}</span>
-                              </div>
-                              <span className="text-sm font-medium">{sponsor.name}</span>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Testimonial */}
-                        <div className="mt-12 pt-8 border-t border-[#E5E7EB]">
-                          <div className="relative">
-                            <div className="absolute -left-4 top-0 text-4xl text-[#EC4899] opacity-50">"</div>
-                            <p className="text-[#4B5563] italic pl-6">
-                              DecentralMatch helped me find my soulmate! The security features gave me confidence, and
-                              the AI matching was spot-on. We're celebrating our 6-month anniversary next week!
-                            </p>
-                            <div className="flex items-center gap-3 mt-4 pl-6 justify-center lg:justify-start">
-                              <div className="relative">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] flex items-center justify-center text-white font-bold">
-                                  AT
-                                </div>
-                                <div className="absolute -right-1 -bottom-1 bg-white rounded-full p-0.5">
-                                  <Heart className="h-4 w-4 text-[#EC4899]" />
-                                </div>
-                              </div>
-                              <div>
-                                <p className="font-medium text-[#1F2937]">Alex T.</p>
-                                <p className="text-sm text-[#6B7280]">Found love 6 months ago</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="relative">
-                          <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6D28D9]/20 to-[#EC4899]/20 rounded-xl blur-lg opacity-75"></div>
-                          <div className="relative bg-white rounded-xl shadow-sm border border-[#E5E7EB] p-8">
-                            <h3 className="text-xl font-bold mb-6 text-center text-[#1F2937]">Join the Waitlist</h3>
-                            <div className="space-y-4">
-                              <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-[#4B5563] mb-1">
-                                  Name
-                                </label>
-                                <Input
-                                  id="name"
-                                  type="text"
-                                  placeholder="Your name"
-                                  className="bg-[#F9F5FF] border-[#E5E7EB] text-[#1F2937] placeholder:text-[#9CA3AF]"
-                                />
-                              </div>
-                              <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-[#4B5563] mb-1">
-                                  Email
-                                </label>
-                                <Input
-                                  id="email"
-                                  type="email"
-                                  placeholder="Your email"
-                                  className="bg-[#F9F5FF] border-[#E5E7EB] text-[#1F2937] placeholder:text-[#9CA3AF]"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-[#4B5563] mb-1">Interests</label>
-                                <div className="flex flex-wrap gap-2">
-                                  {["Security", "Privacy", "AI Matching", "Blockchain"].map((interest, i) => (
-                                    <label
-                                      key={i}
-                                      className="flex items-center gap-2 cursor-pointer bg-[#F9F5FF] hover:bg-[#F9F5FF]/80 transition-colors px-3 py-1.5 rounded-md border border-[#E5E7EB]"
-                                    >
-                                      <input type="checkbox" className="sr-only peer" />
-                                      <div className="w-4 h-4 rounded border border-[#D1D5DB] peer-checked:bg-gradient-to-r from-[#6D28D9] to-[#EC4899] peer-checked:border-transparent flex items-center justify-center">
-                                        <Check className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" />
-                                      </div>
-                                      <span className="text-sm">{interest}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-                              <Link href="/onboarding">
-                                <Button className="w-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl">
-                                  Join Waitlist
-                                </Button>
-                              </Link>
-                              <p className="text-xs text-[#9CA3AF] text-center">
-                                We respect your privacy and will never share your information.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </section>
 
 
       </main>
 
       <footer className="relative z-10 border-t border-[#E5E7EB] bg-white">
         <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            {/* Company Info */}
             <div className="space-y-4">
               <Link href="/" className="flex items-center space-x-2">
-                <div className="relative w-8 h-8 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] rounded-lg flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-pattern opacity-30"></div>
-                  <Heart className="h-5 w-5 text-white relative z-10" />
+                <div className="relative w-12 h-12">
+                  <img src="/logo2.svg" alt="VeraLove Logo" className="w-full h-full" />
                 </div>
-                <span className="font-bold text-xl tracking-tight text-[#1F2937]">DecentralMatch</span>
+                <span className="font-bold text-xl tracking-tight text-[#1F2937]">VeraLove</span>
               </Link>
               <p className="text-sm text-[#6B7280]">
                 Pioneering the future of decentralized dating with blockchain security and AI innovation.
@@ -823,10 +504,7 @@ export default function LandingPage() {
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path
-                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419
--.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                    ></path>
+                    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path>
                   </svg>,
                   <svg
                     key="discord"
@@ -842,6 +520,31 @@ export default function LandingPage() {
                   </a>
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="mt-12 pt-8 border-t border-[#E5E7EB]">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-sm text-[#6B7280]">
+                © {new Date().getFullYear()} VeraLove. All rights reserved.
+              </p>
+              <div className="flex gap-6">
+                <Link href="/privacy" className="text-sm text-[#6B7280] hover:text-[#EC4899] transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms" className="text-sm text-[#6B7280] hover:text-[#EC4899] transition-colors">
+                  Terms of Service
+                </Link>
+                <Link href="/cookies" className="text-sm text-[#6B7280] hover:text-[#EC4899] transition-colors">
+                  Cookie Policy
+                </Link>
+              </div>
+            </div>
+            <div className="mt-4 text-left">
+              <p className="text-sm text-[#6B7280]">
+              © Made for Verifiable Hackathon dorahacks@2025
+              </p>
             </div>
           </div>
         </div>
