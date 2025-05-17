@@ -23,6 +23,7 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const initialLoadRef = useRef(false)
   const lastNameRef = useRef<string | null>(null)
+  const nameTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Auto-scroll when messages change
   useEffect(() => {
@@ -38,32 +39,41 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
     }
   }, [formData]);
 
-  // Generate static preview message when name changes or on initial load
+  // Generate static preview message when name changes, with debouncing
   useEffect(() => {
     // Only proceed if we have a name
     if (!formData.name) {
       return;
     }
     
-    // If this is the same name as before, don't regenerate
-    if (formData.name === lastNameRef.current) {
-      return;
+    // Clear any existing timeout
+    if (nameTimeoutRef.current) {
+      clearTimeout(nameTimeoutRef.current);
     }
     
-    // Update the last name ref
-    lastNameRef.current = formData.name;
+    // Set a new timeout with 10-15 second delay
+    const delayTime = Math.floor(Math.random() * 5000); // 10-15 seconds
     
-    // Clear existing messages
-    setMessages([]);
-    
-    // Add a user greeting message
-    setTimeout(() => {
+    // Create a new timeout
+    nameTimeoutRef.current = setTimeout(() => {
+      // If this is the same name as before, don't regenerate
+      if (formData.name === lastNameRef.current) {
+        return;
+      }
+      
+      // Update the last name ref
+      lastNameRef.current = formData.name;
+      
+      // Clear existing messages
+      setMessages([]);
+      
+      // Add a user greeting message
       setMessages([{ content: "Hi there! Tell me about yourself.", isAi: false }]);
       
       // Show typing indicator
       setIsTyping(true);
       
-      // Generate a static preview message based on form data
+      // Generate a static preview message based on form data after a delay
       setTimeout(() => {
         setIsTyping(false);
         
@@ -72,7 +82,14 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
         setPreviewMessage(staticResponse);
         setMessages(prev => [...prev, { content: staticResponse, isAi: true }]);
       }, 1500);
-    }, 500);
+    }, delayTime);
+    
+    // Cleanup function to clear the timeout if the component unmounts
+    return () => {
+      if (nameTimeoutRef.current) {
+        clearTimeout(nameTimeoutRef.current);
+      }
+    };
   }, [formData.name]);
 
   // Simulate typing with LLM-generated response - only used for chat messages, not form changes
