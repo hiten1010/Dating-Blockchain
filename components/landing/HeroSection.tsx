@@ -87,7 +87,9 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                   variant="outline"
                   className="border-[#6D28D9]/30 text-[#6D28D9] hover:bg-[#6D28D9]/10 rounded-xl"
                 >
-                  Learn More
+                  <Link href="https://github.com/hiten1010/Dating-Blockchain">
+                    Learn More
+                  </Link>
                 </Button>
                </div>
 
@@ -639,7 +641,7 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
                   className="text-sm font-medium flex items-center gap-1 relative overflow-hidden"
                   whileHover={{ x: 3 }}
                 >
-                  <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r from-[#6D28D9] to-[#EC4899]">Learn More</span>
+                  <Link href="https://github.com/hiten1010/Dating-Blockchain" className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r from-[#6D28D9] to-[#EC4899]">Learn More</Link>
                   <motion.div
                     className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-[#6D28D9]/50 to-[#EC4899]/50"
                     initial={{ scaleX: 0, originX: 0 }}

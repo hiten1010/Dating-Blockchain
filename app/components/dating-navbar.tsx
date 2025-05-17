@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Heart, MessageCircle, Sparkles, User, Settings, Bell, Search, ChevronDown, LogOut } from "lucide-react"
+import { Heart, MessageCircle, Sparkles, User, Settings, Bell, Search, ChevronDown, LogOut, Bot } from "lucide-react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -44,7 +44,8 @@ export default function DatingNavbar() {
   const mainNavItems = [
     { href: "/explore", label: "Explore", icon: Heart },
     { href: "/chats", label: "Messages", icon: MessageCircle, notifications: 2 },
-    { href: "/create-twin", label: "AI Twin", icon: Sparkles },
+    { href: "/create-twin", label: "Create Twin", icon: Sparkles },
+    { href: "/chat-with-twin", label: "Chat Twin", icon: Bot },
     { href: "/user", label: "Profile", icon: User },
   ]
 
@@ -205,7 +206,7 @@ export default function DatingNavbar() {
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden">
         <div className="grid grid-cols-5 h-16">
-          {mainNavItems.map((item) => {
+          {mainNavItems.slice(0, 5).map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
             
