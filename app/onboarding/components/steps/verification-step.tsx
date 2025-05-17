@@ -49,7 +49,7 @@ export default function VerificationStep({ onComplete }: VerificationStepProps) 
     <>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Quick Verification</CardTitle>
-        <CardDescription>To keep our platform safe from bots, please complete this quick verification</CardDescription>
+        <CardDescription>To keep our platform safe from bots and verify your Cheqd identity, please complete this quick verification</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {error && (
@@ -105,8 +105,8 @@ export default function VerificationStep({ onComplete }: VerificationStepProps) 
         <Separator />
 
         <div className="text-center text-sm text-muted-foreground">
-          This verification helps us prevent automated bots from accessing our platform and ensures a better experience
-          for all users.
+          This verification helps us prevent automated bots from accessing our platform and ensures your Cheqd identity is properly verified,
+          providing a better experience for all users.
         </div>
       </CardContent>
       <CardFooter>

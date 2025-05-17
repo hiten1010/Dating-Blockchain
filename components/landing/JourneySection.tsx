@@ -49,7 +49,7 @@ export default function JourneySection({ sectionRef, journeySteps }: JourneySect
 
             <p className="text-xl text-[#4B5563]">
               Our streamlined process makes it easy to get started with decentralized dating, from connecting your
-              wallet to finding your perfect match.
+              wallets to finding your perfect match.
             </p>
           </motion.div>
         </div>

@@ -4,18 +4,20 @@ A modern dating application built with decentralized identity and encrypted data
 
 ## Features
 
-- **Decentralized Identity (DID)**: Users control their identity using Verida's DID solution
+- **Decentralized Identity (DID)**: Users control their identity using Verida's DID solution and Cheqd's blockchain verification
 - **Encrypted Data Storage**: All profile data is stored in user-owned encrypted databases
 - **Self-Sovereign Profile**: Users own their dating profile data
 - **Privacy-First**: Share only what you want with who you want
-- **Blockchain Integration**: Support for interoperability with blockchain applications
+- **Dual Blockchain Integration**: Support for both Verida and Cheqd blockchain technologies
 - **Decentralized Chat**: Secure, private messaging stored on Verida blockchain
 - **AI Twin Creation**: Build a blockchain-stored AI representation of yourself
+- **Verifiable Credentials**: Identity verification through Cheqd's verifiable credentials
 
 ## Technologies
 
 - Next.js 14
 - Verida Protocol (Client SDK, Account Web Vault)
+- Cheqd Protocol (DID creation and verification)
 - React
 - TypeScript
 - Tailwind CSS
@@ -47,6 +49,7 @@ A modern dating application built with decentralized identity and encrypted data
    NEXT_PUBLIC_VERIDA_NETWORK=testnet
    NEXT_PUBLIC_CONTEXT_NAME="VeraLove Dating Application"
    NEXT_PUBLIC_LOGO_URL="https://your-logo-url.com/logo.png"
+   NEXT_PUBLIC_CHEQD_API_KEY="your-cheqd-api-key"
    ```
 
 4. Start the development server:
@@ -54,20 +57,24 @@ A modern dating application built with decentralized identity and encrypted data
    npm run dev
    ```
 
-### Verida Integration Details
+### Verida and Cheqd Integration Details
 
-This application uses Verida for decentralized identity and data storage:
+This application uses Verida for decentralized data storage and Cheqd for identity verification:
 
 1. **Verida Client Setup**: 
    - `app/lib/verida-client.ts` contains the client configuration
    - Uses the `@verida/client-ts` and `@verida/account-web-vault` packages
 
-2. **Key Components**:
-   - `OnboardingFlow`: Handles user onboarding and wallet connection
-   - `ProfileCreationFlow`: Manages user profile creation using Verida
+2. **Cheqd Integration**:
+   - `app/lib/cheqd-service.ts` contains the Cheqd client configuration
+   - Provides functions for creating keypairs, DIDs, and updating DID documents
+
+3. **Key Components**:
+   - `OnboardingFlow`: Handles user onboarding and dual wallet connection
+   - `ProfileCreationFlow`: Manages user profile creation using Verida and Cheqd
    - `ProfileService`: Service for storing and retrieving profile data
 
-3. **Database Structure**:
+4. **Database Structure**:
    - `dating_profile`: Stores basic profile information
    - `dating_preferences`: Stores user preferences
    - `dating_photos`: Stores profile photos
@@ -79,15 +86,105 @@ This application uses Verida for decentralized identity and data storage:
 
 ### User Authentication
 
-1. Users connect to the application by scanning a QR code with their Verida Wallet
-2. Once connected, a DID is established for the user
-3. The user's DID is used to create and access their encrypted databases
+1. Users connect to the application by connecting both their Verida and Cheqd wallets
+2. The Verida wallet is connected by scanning a QR code with the Verida mobile app
+3. The Cheqd wallet is created and connected through the Cheqd API
+4. Once both wallets are connected, DIDs are established for the user
+5. The user's DIDs are used to create and access their encrypted databases and verify their identity
 
 ### Profile Management
 
 1. Basic profile data is stored in the user's Verida profile database
-2. Photos are stored separately in the photos database
-3. All data is encrypted and only accessible by the user or those they grant permission to
+2. Identity verification is handled through Cheqd's verifiable credentials
+3. Photos are stored separately in the photos database
+4. All data is encrypted and only accessible by the user or those they grant permission to
+
+## Cheqd Integration Architecture
+
+The Cheqd integration provides robust identity verification and credential management through blockchain technology.
+
+### Core Components
+
+#### Cheqd Service
+
+* **`cheqd-service.ts`** - Core service that manages Cheqd API interactions:
+  * Creating keypairs for users
+  * Creating DIDs on the Cheqd blockchain
+  * Converting keys between formats (hex to base58)
+  * Updating DID documents with services and verification methods
+
+### Cheqd Wallet Flow
+
+The Cheqd wallet connection process follows these steps:
+
+1. **Keypair Creation**
+   - Creates a cryptographic keypair using Ed25519 algorithm
+   - Stores the keypair securely for future reference
+
+2. **DID Creation**
+   - Uses the keypair to create a DID on the Cheqd testnet
+   - Format: `did:cheqd:testnet:{uuid}`
+   - Stores the DID in localStorage for persistent sessions
+
+3. **DID Document Update**
+   - Updates the DID document with verification methods
+   - Adds service endpoints for future credential verification
+   - Converts public keys to the required format (base58)
+
+### Dual Wallet Authentication
+
+The application requires both Verida and Cheqd wallets to be connected:
+
+1. **Verida Wallet** - Provides encrypted data storage and messaging
+2. **Cheqd Wallet** - Provides identity verification and credential management
+
+Only when both wallets are connected can the user proceed with profile creation.
+
+### Technical Implementation
+
+#### Cheqd API Integration
+
+The application integrates with the Cheqd Studio API for DID operations:
+
+```typescript
+// Creating a keypair
+const keypair = await createKeypair();
+
+// Creating a DID
+const didResponse = await createDid(keypair.publicKeyHex);
+
+// Converting hex key to base58
+const base58Key = hexToBase58(keypair.publicKeyHex);
+
+// Updating a DID document
+const updatedDid = await updateDid(didResponse.did, keypair.publicKeyHex);
+```
+
+#### Wallet Connection UI
+
+The onboarding process has been updated to require both wallets:
+
+1. Users see both wallet options in the connection screen
+2. Each wallet shows its connection status independently
+3. The "Continue" button is only enabled when both wallets are connected
+4. Wallet addresses are stored in localStorage for persistent sessions
+
+#### Data Flow
+
+1. User connects both Verida and Cheqd wallets
+2. Cheqd DID is created and stored
+3. Verida DID is created and stored
+4. Both DIDs are used throughout the application for different purposes:
+   - Verida DID for data storage and encryption
+   - Cheqd DID for identity verification and credentials
+
+### Benefits of Dual Blockchain Approach
+
+1. **Enhanced Security** - Two independent blockchain technologies provide additional security
+2. **Specialized Functionality** - Each blockchain offers specialized features:
+   - Verida: Encrypted data storage and messaging
+   - Cheqd: Identity verification and credential management
+3. **Future Interoperability** - Foundation for cross-chain functionality and expanded features
 
 ## Profile System Architecture
 
@@ -224,8 +321,9 @@ The NFT minting process:
 1. **Data Preparation** - Formats profile data and metadata for on-chain representation
 2. **On-Chain Storage** - Public metadata is stored on-chain
 3. **Off-Chain References** - Private data remains in Verida with secure references
-4. **Blockchain Transaction** - NFT is minted on the Cheqd protocol
+4. **Blockchain Transaction** - NFT is minted on the Cheqd protocol using the user's Cheqd DID
 5. **Ownership Assignment** - NFT is assigned to the user's wallet address
+6. **Credential Verification** - Cheqd verifiable credentials are used to verify the profile authenticity
 
 #### NFT Metadata Structure
 
@@ -236,7 +334,8 @@ The NFT minting process:
   image: "ipfs://hash-of-profile-image",
   attributes: [
     { trait_type: "Display Name", value: "User's display name" },
-    { trait_type: "DID", value: "did:verida:user-did" },
+    { trait_type: "Verida DID", value: "did:verida:user-did" },
+    { trait_type: "Cheqd DID", value: "did:cheqd:testnet:user-did" },
     { trait_type: "Interest Count", value: 5 },
     { trait_type: "Photo Count", value: 3 },
     { trait_type: "Creation Date", value: "2023-05-01" }
@@ -255,12 +354,15 @@ The NFT minting process:
 
 ### Technical Flow
 
-1. User creates a DID through Verida protocol
-2. Profile data is stored in schema-compliant format in Verida databases
-3. Data is mapped between app models and standard Verida schemas
-4. When minting an NFT, public metadata is prepared for on-chain storage
-5. The NFT links to the Verida-stored private data via secure references
-6. User maintains full control of profile data and can revoke access at any time
+1. User creates DIDs through both Verida and Cheqd protocols
+2. Verida DID is used for data storage and encryption
+3. Cheqd DID is used for identity verification and credentials
+4. Profile data is stored in schema-compliant format in Verida databases
+5. Data is mapped between app models and standard Verida schemas
+6. When minting an NFT, public metadata is prepared for on-chain storage
+7. The NFT links to the Verida-stored private data via secure references
+8. Cheqd verifiable credentials are attached to the profile for verification
+9. User maintains full control of profile data and can revoke access at any time
 
 ## Chat System Database Architecture
 
@@ -584,9 +686,10 @@ app/
 │   ├── profile-rest-service.ts   # REST API service for profile operations
 │   ├── verida-ai-twin-service.ts # AI Twin service for Verida blockchain
 │   ├── chat-message-service.ts   # Chat service for blockchain messages
+│   ├── cheqd-service.ts          # Cheqd service for DID operations
 ├── onboarding/                   # Onboarding flow components
 │   └── components/               # Onboarding step components
-│       ├── connect-wallet-step.tsx # Wallet connection step
+│       ├── connect-wallet-step.tsx # Wallet connection step (Verida & Cheqd)
 │       ├── create-did-step.tsx   # DID creation step
 │       ├── verification-step.tsx # User verification step
 │       └── success-step.tsx      # Onboarding completion step
@@ -612,33 +715,20 @@ app/
 
 ### Centralized Configuration System
 
-The application uses a centralized configuration system to manage Verida-related settings:
+The application uses a centralized configuration system to manage Verida and Cheqd related settings:
 
-1. **Configuration File**: `app/lib/verida-config.ts` contains all shared constants:
-   - Authentication tokens for API access
-   - API endpoints and base URLs
-   - Environment settings (network, context name)
-   - Database collection names
-   - RPC configuration for blockchain connectivity
-   - Application information
+1. **Configuration Files**: 
+   - `app/lib/verida-config.ts` contains all Verida-related settings
+   - `app/lib/cheqd-service.ts` contains Cheqd API configuration
 
-2. **Benefits**:
-   - Single source of truth for configuration values
-   - Easy updates across the entire application
-   - Clear overview of all configuration parameters
-   - Simplified token rotation for security maintenance
-
-3. **Usage in Services**:
-   - All service files import values from this central configuration
-   - Authentication tokens are never hardcoded in individual files
-   - Database names are standardized throughout the application
-
-4. **Key Configuration Parameters**:
+2. **Key Configuration Parameters**:
    - `AUTH_TOKEN`: Authentication token for Verida REST API access
    - `API_BASE_URL`: Base URL for Verida API endpoints
    - `VERIDA_NETWORK`: Network setting ('testnet' or 'mainnet')
    - `DB_NAMES`: Object containing all database collection names
    - `APP_INFO`: Application metadata and versioning
+   - `CHEQD_API_KEY`: Authentication token for Cheqd API access
+   - `CHEQD_API_BASE_URL`: Base URL for Cheqd API endpoints
 
 ### Adding New Features
 
