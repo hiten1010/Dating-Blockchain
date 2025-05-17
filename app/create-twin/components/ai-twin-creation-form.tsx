@@ -42,6 +42,7 @@ interface AiTwinCreationFormProps {
   updateFormData: (data: any) => void
   nextStep: () => void
   prevStep: () => void
+  onSaveSuccess?: () => void
 }
 
 export default function AiTwinCreationForm({
@@ -50,6 +51,7 @@ export default function AiTwinCreationForm({
   updateFormData,
   nextStep,
   prevStep,
+  onSaveSuccess,
 }: AiTwinCreationFormProps) {
   const [tagInputs, setTagInputs] = useState({
     significantEvents: "",
@@ -169,6 +171,10 @@ export default function AiTwinCreationForm({
       })
       
       console.log("Saved AI Twin data:", savedData)
+
+      if (onSaveSuccess) {
+        onSaveSuccess()
+      }
     } catch (error) {
       console.error("Failed to create AI twin:", error)
       // Display error toast
