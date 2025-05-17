@@ -179,7 +179,10 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
 
       <div className="flex items-center gap-4 mb-4">
         <Avatar className="h-14 w-14 border-2 border-white">
-          <AvatarImage src="/placeholder.svg?height=64&width=64" alt="AI Twin" />
+          <AvatarImage 
+            src={formData.photo || `/ai-twin-avatar-${formData.gender || 'neutral'}.png`} 
+            alt={formData.name || "AI Twin"} 
+          />
           <AvatarFallback className="bg-gradient-to-br from-pink-400 to-rose-400 text-white">
             {formData.name ? formData.name.substring(0, 2).toUpperCase() : "AI"}
           </AvatarFallback>
@@ -219,6 +222,10 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
             <div key={index} className={`flex items-end gap-2 ${!msg.isAi ? "justify-end" : ""}`}>
               {msg.isAi && (
                 <Avatar className="h-8 w-8 border-2 border-white flex-shrink-0">
+                  <AvatarImage 
+                    src={formData.photo || `/ai-twin-avatar-${formData.gender || 'neutral'}.png`}
+                    alt={formData.name || "AI Twin"}
+                  />
                   <AvatarFallback className="bg-gradient-to-br from-pink-400 to-rose-400 text-white text-xs">
                     {formData.name ? formData.name.substring(0, 2).toUpperCase() : "AI"}
                   </AvatarFallback>
@@ -254,6 +261,10 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
           {isTyping && (
             <div className="flex items-end gap-2">
               <Avatar className="h-8 w-8 border-2 border-white flex-shrink-0">
+                <AvatarImage 
+                  src={formData.photo || `/ai-twin-avatar-${formData.gender || 'neutral'}.png`}
+                  alt={formData.name || "AI Twin"}
+                />
                 <AvatarFallback className="bg-gradient-to-br from-pink-400 to-rose-400 text-white text-xs">
                   {formData.name ? formData.name.substring(0, 2).toUpperCase() : "AI"}
                 </AvatarFallback>
