@@ -4,13 +4,16 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AiTwinCreationForm from "./components/ai-twin-creation-form"
 import AiTwinPreview from "./components/ai-twin-preview"
-import { Shield, Lock, Sparkles, Database } from "lucide-react"
+import { Shield, Lock, Sparkles, Database, MessageCircle } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { getUserAiTwin } from "../lib/verida-ai-twin-service"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function CreateAiTwinPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaved, setIsSaved] = useState(false)
   const [formData, setFormData] = useState({
     // Personal details
     name: "",
@@ -125,6 +128,10 @@ export default function CreateAiTwinPage() {
     setCurrentStep((prev) => Math.max(prev - 1, 1))
   }
 
+  const handleSaveSuccess = () => {
+    setIsSaved(true);
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 text-slate-800 overflow-hidden">
       {/* Loading indicator */}
@@ -194,6 +201,7 @@ export default function CreateAiTwinPage() {
               updateFormData={updateFormData}
               nextStep={nextStep}
               prevStep={prevStep}
+              onSaveSuccess={handleSaveSuccess}
             />
           </motion.div>
 
@@ -232,7 +240,24 @@ export default function CreateAiTwinPage() {
                 </div>
               </div>
             </motion.div>
-          )}
+            )}
+            
+            {/* Chat button - shown after saving */}
+            {isSaved && formData.name && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-3"
+              >
+                <Link href="/chat-with-twin">
+                  <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Chat with {formData.name}
+                  </Button>
+                </Link>
+              </motion.div>
+            )}
             </div>
           </motion.div>
         </div>

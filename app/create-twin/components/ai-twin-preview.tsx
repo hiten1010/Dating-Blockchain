@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Brain, Bot, User, Database, Sparkles, Send } from "lucide-react"
+import { generateAiTwinResponse } from "../../lib/prompts/ai-twin-service"
+import { toast } from "@/components/ui/use-toast"
 
 interface AiTwinPreviewProps {
   formData: any
@@ -19,6 +21,8 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
   const [userInput, setUserInput] = useState("")
   const [veridaStatus, setVeridaStatus] = useState<'loading' | 'loaded' | 'none'>('none')
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const initialLoadRef = useRef(false)
+  const lastNameRef = useRef<string | null>(null)
 
   // Auto-scroll when messages change
   useEffect(() => {
@@ -34,10 +38,20 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
     }
   }, [formData]);
 
-  // Generate chat messages based on form data
+  // Generate static preview message when name changes or on initial load
   useEffect(() => {
-    // Only generate if we have basic data
-    if (!formData.name) return;
+    // Only proceed if we have a name
+    if (!formData.name) {
+      return;
+    }
+    
+    // If this is the same name as before, don't regenerate
+    if (formData.name === lastNameRef.current) {
+      return;
+    }
+    
+    // Update the last name ref
+    lastNameRef.current = formData.name;
     
     // Clear existing messages
     setMessages([]);
@@ -46,112 +60,55 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
     setTimeout(() => {
       setMessages([{ content: "Hi there! Tell me about yourself.", isAi: false }]);
       
-      // Start AI twin response
+      // Show typing indicator
+      setIsTyping(true);
+      
+      // Generate a static preview message based on form data
       setTimeout(() => {
-        simulateTyping(generateIntroduction());
-      }, 1000);
+        setIsTyping(false);
+        
+        const staticResponse = `Hi! I'm ${formData.name}${formData.age ? `, ${formData.age}` : ""}${formData.location ? ` from ${formData.location}` : ""}. ${formData.bio || "Nice to meet you!"} ${formData.occupation ? `I work as a ${formData.occupation}.` : ""}`;
+        
+        setPreviewMessage(staticResponse);
+        setMessages(prev => [...prev, { content: staticResponse, isAi: true }]);
+      }, 1500);
     }, 500);
-  }, [formData.name, formData.bio]);
+  }, [formData.name]);
 
-  // Generate a personalized introduction based on form data
-  const generateIntroduction = () => {
-    let intro = `Hi! I'm ${formData.name}'s AI twin.`;
-    
-    if (formData.age) {
-      intro += ` I'm ${formData.age} years old`;
-      if (formData.location) {
-        intro += ` and I'm from ${formData.location}.`;
-      } else {
-        intro += '.';
-      }
-    } else if (formData.location) {
-      intro += ` I'm from ${formData.location}.`;
-    }
-    
-    if (formData.occupation) {
-      intro += ` I work as a ${formData.occupation}.`;
-    }
-    
-    if (formData.bio) {
-      intro += ` ${formData.bio}`;
-    }
-    
-    return intro;
-  }
-  
-  // Generate information about interests and personality
-  const generateAboutMessage = () => {
-    let message = '';
-    
-    if (formData.personalityTraits && formData.personalityTraits.length > 0) {
-      message += `I would describe myself as ${formData.personalityTraits.slice(0, 3).join(", ")}.`;
-    }
-    
-    if (formData.interests && formData.interests.length > 0) {
-      if (message) message += ' ';
-      message += `I'm interested in ${formData.interests.slice(0, 3).join(", ")}.`;
-    }
-    
-    if (formData.hobbies && formData.hobbies.length > 0) {
-      if (message) message += ' ';
-      message += `In my free time, I enjoy ${formData.hobbies.slice(0, 2).join(" and ")}.`;
-    }
-    
-    return message || "I'd love to chat and get to know each other better!";
-  }
-
-  // Generate message about relationship preferences
-  const generateRelationshipMessage = () => {
-    let message = '';
-    
-    if (formData.relationshipGoals) {
-      message += `I'm looking for ${formData.relationshipGoals}.`;
-    }
-    
-    if (formData.lookingFor && formData.lookingFor.length > 0) {
-      if (message) message += ' ';
-      message += `I'm attracted to people who are ${formData.lookingFor.slice(0, 3).join(", ")}.`;
-    }
-    
-    if (formData.dealBreakers && formData.dealBreakers.length > 0) {
-      if (message) message += ' ';
-      message += `My dealbreakers include ${formData.dealBreakers.slice(0, 2).join(" and ")}.`;
-    }
-    
-    return message || "I'm open to all kinds of connections!";
-  }
-
-  // Generate message about values
-  const generateValuesMessage = () => {
-    let message = '';
-    
-    if (formData.coreValues && formData.coreValues.length > 0) {
-      message += `My core values are ${formData.coreValues.slice(0, 3).join(", ")}.`;
-    }
-    
-    if (formData.spirituality) {
-      if (message) message += ' ';
-      message += `In terms of spirituality, I identify as ${formData.spirituality}.`;
-    }
-    
-    return message || "I value authentic connections and honesty.";
-  }
-
-  const simulateTyping = (message: string) => {
+  // Simulate typing with LLM-generated response - only used for chat messages, not form changes
+  const simulateTypingWithLLM = async (userMessage: string) => {
+    // Show typing indicator
     setIsTyping(true);
-
-    // Clear previous message
-    setPreviewMessage("");
-
-    // Simulate typing delay
-    setTimeout(() => {
+    
+    try {
+      // Generate response using LLM service
+      const response = await generateAiTwinResponse(formData, userMessage);
+      
+      // Hide typing indicator and show message
       setIsTyping(false);
-      setPreviewMessage(message);
-
+      setPreviewMessage(response);
+      
       // Add to message history
-      setMessages((prev) => [...prev, { content: message, isAi: true }]);
-    }, 1500);
-  }
+      setMessages((prev) => [...prev, { content: response, isAi: true }]);
+    } catch (error) {
+      console.error('Error generating LLM response:', error);
+      
+      // Hide typing indicator
+      setIsTyping(false);
+      
+      // Add fallback response
+      const fallbackResponse = "I'm sorry, I couldn't connect to my brain right now. Let's try again later.";
+      setPreviewMessage(fallbackResponse);
+      setMessages((prev) => [...prev, { content: fallbackResponse, isAi: true }]);
+      
+      // Show error toast
+      toast({
+        title: "Connection Error",
+        description: "Could not connect to the AI service. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Handle user input submission
   const handleSendMessage = (e: React.FormEvent) => {
@@ -164,43 +121,10 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
     setMessages(prev => [...prev, { content: userMessage, isAi: false }]);
     setUserInput('');
     
-    // Generate AI response based on user input
+    // Generate AI response using LLM - only make API call when user explicitly sends a message
     setTimeout(() => {
-      let response = '';
-      
-      // Check for keywords in user message and respond with appropriate information
-      const normalizedInput = userMessage.toLowerCase();
-      
-      if (normalizedInput.includes('about') || normalizedInput.includes('who are you') || normalizedInput.includes('yourself')) {
-        response = generateAboutMessage();
-      } 
-      else if (normalizedInput.includes('relationship') || normalizedInput.includes('looking for') || normalizedInput.includes('dating')) {
-        response = generateRelationshipMessage();
-      }
-      else if (normalizedInput.includes('value') || normalizedInput.includes('believe') || normalizedInput.includes('important')) {
-        response = generateValuesMessage();
-      }
-      else if (normalizedInput.includes('hobby') || normalizedInput.includes('interest') || normalizedInput.includes('like to do')) {
-        response = `My interests include ${formData.interests.length > 0 ? formData.interests.slice(0, 3).join(", ") : "various activities"} and I enjoy ${formData.hobbies.length > 0 ? formData.hobbies.slice(0, 2).join(" and ") : "spending time with interesting people"}.`;
-      }
-      else if (normalizedInput.includes('age') || normalizedInput.includes('old')) {
-        response = formData.age ? `I'm ${formData.age} years old.` : "I prefer not to share my exact age.";
-      }
-      else if (normalizedInput.includes('location') || normalizedInput.includes('live') || normalizedInput.includes('from')) {
-        response = formData.location ? `I'm from ${formData.location}.` : "I prefer not to share my exact location for privacy reasons.";
-      }
-      else if (normalizedInput.includes('job') || normalizedInput.includes('work') || normalizedInput.includes('occupation')) {
-        response = formData.occupation ? `I work as a ${formData.occupation}.` : "I prefer not to discuss my exact occupation.";
-      }
-      else if (normalizedInput.includes('hello') || normalizedInput.includes('hi') || normalizedInput.includes('hey')) {
-        response = `Hi there! It's nice to meet you. I'm ${formData.name}'s AI twin. How can I help you today?`;
-      }
-      else {
-        response = `Thanks for your message! As ${formData.name}'s AI twin, I'm still learning. Could you ask me about my interests, values, or relationship preferences?`;
-      }
-      
-      simulateTyping(response);
-    }, 1000);
+      simulateTypingWithLLM(userMessage);
+    }, 500);
   };
 
   return (
@@ -297,7 +221,7 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
                     <span className="text-xs text-pink-200">AI Twin</span>
                   </div>
                 )}
-                <p className="text-sm">{msg.content}</p>
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
               </div>
 
               {!msg.isAi && (
@@ -346,11 +270,11 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
           className="flex-1 bg-white border-pink-100 focus:border-pink-300"
-          disabled={!formData.name}
+          disabled={!formData.name || isTyping}
         />
         <Button 
           type="submit" 
-          disabled={!formData.name || !userInput.trim()}
+          disabled={!formData.name || !userInput.trim() || isTyping}
           className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
         >
           <Send className="h-4 w-4" />
