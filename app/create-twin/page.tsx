@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import AiTwinCreationForm from "./components/ai-twin-creation-form"
 import AiTwinPreview from "./components/ai-twin-preview"
@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/use-toast"
 import { getUserAiTwin } from "../lib/verida-ai-twin-service"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { HeartLoader } from "@/components/ui/heart-loader"
 
 export default function CreateAiTwinPage() {
   const [currentStep, setCurrentStep] = useState(1)
@@ -74,6 +75,23 @@ export default function CreateAiTwinPage() {
     aiConfidentiality: [] as string[],
   })
 
+  const [binaryElements, setBinaryElements] = useState<Array<{top: string, left: string, fontSize: string, animation: string, delay: string, value: string}>>([])
+  
+  // Generate floating binary elements on client side only
+  useEffect(() => {
+    // Generate floating binary elements
+    const elements = Array.from({ length: 15 }).map(() => ({
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      fontSize: `${Math.random() * 1 + 0.8}rem`,
+      animation: `float ${Math.random() * 10 + 10}s linear infinite`,
+      delay: `${Math.random() * 5}s`,
+      value: Math.random() > 0.5 ? "1" : "0"
+    }));
+    
+    setBinaryElements(elements);
+  }, []);
+
   // Fetch Twin data when component mounts
   useEffect(() => {
     const fetchTwinData = async () => {
@@ -90,24 +108,24 @@ export default function CreateAiTwinPage() {
             ...twinData
           }));
           
-          toast({
-            title: "Data Loaded",
-            description: "Your previous AI twin data has been loaded from Verida.",
-          });
+          // toast({
+          //   title: "Data Loaded",
+          //   description: "Your previous AI twin data has been loaded from Verida.",
+          // });
         } else {
           console.log("No AI twin data found in Verida");
-          toast({
-            title: "No Existing Data",
-            description: "No previous AI twin data found. Starting with a new form.",
-          });
+          // toast({
+          //   title: "No Existing Data",
+          //   description: "No previous AI twin data found. Starting with a new form.",
+          // });
         }
       } catch (error) {
         console.error("Failed to fetch twin data:", error);
-        toast({
-          title: "Error Loading Data",
-          description: error instanceof Error ? error.message : "Could not load your existing data from Verida.",
-          variant: "destructive",
-        });
+        // toast({
+        //   title: "Error Loading Data",
+        //   description: error instanceof Error ? error.message : "Could not load your existing data from Verida.",
+        //   variant: "destructive",
+        // });
       } finally {
         setIsLoading(false);
       }
@@ -138,12 +156,9 @@ export default function CreateAiTwinPage() {
       {isLoading && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl shadow-xl">
-            <div className="flex items-center space-x-4">
-              <div className="animate-spin h-8 w-8 border-4 border-pink-500 rounded-full border-t-transparent"></div>
-              <div>
-                <h3 className="font-medium">Loading Your Twin Data</h3>
-                <p className="text-sm text-gray-500">Retrieving your saved data from Verida...</p>
-              </div>
+            <div className="flex flex-col items-center space-y-4">
+              <HeartLoader size="lg" showText={true} text="Loading Your Twin Data" />
+              <p className="text-sm text-gray-500">Retrieving your saved data from Verida...</p>
             </div>
           </div>
         </div>
@@ -163,21 +178,21 @@ export default function CreateAiTwinPage() {
           ></div>
         </div>
 
-        {/* Floating binary elements */}
+        {/* Floating binary elements - now client-side only */}
         <div className="absolute top-0 left-0 w-full h-full">
-          {Array.from({ length: 15 }).map((_, i) => (
+          {binaryElements.map((element, i) => (
             <div
               key={i}
               className="absolute text-pink-500 opacity-10 font-mono"
               style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                fontSize: `${Math.random() * 1 + 0.8}rem`,
-                animation: `float ${Math.random() * 10 + 10}s linear infinite`,
-                animationDelay: `${Math.random() * 5}s`,
+                top: element.top,
+                left: element.left,
+                fontSize: element.fontSize,
+                animation: element.animation,
+                animationDelay: element.delay,
               }}
             >
-              {Math.random() > 0.5 ? "1" : "0"}
+              {element.value}
             </div>
           ))}
         </div>

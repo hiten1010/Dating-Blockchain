@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Brain, Bot, User, Database, Sparkles, Send } from "lucide-react"
 import { generateAiTwinResponse } from "../../lib/prompts/ai-twin-service"
 import { toast } from "@/components/ui/use-toast"
+import { HeartLoader } from "@/components/ui/heart-loader"
 
 interface AiTwinPreviewProps {
   formData: any
@@ -166,7 +167,7 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
         )}
         
         {/* Add Record Status Badge */}
-        {formData._id && (
+        {/* {formData._id && (
           <Badge 
             variant="outline" 
             className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1 flex items-center gap-1 ml-2"
@@ -174,7 +175,7 @@ export default function AiTwinPreview({ formData }: AiTwinPreviewProps) {
             <Database className="h-3 w-3 mr-1" />
             Existing Record
           </Badge>
-        )}
+        )} */}
       </div>
 
       <div className="flex items-center gap-4 mb-4">
