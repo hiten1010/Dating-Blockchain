@@ -18,20 +18,33 @@ const nextConfig = {
       tls: false,
     };
     
-    // Handle font files as static assets
+    // Handle font files as static assets - excluding problematic Verida font
     config.module.rules.push({
       test: /\.(woff|woff2|eot|ttf|otf)$/i,
+      exclude: /node_modules\/@verida\/account-web-vault\/dist\/assets\/fonts\/Sora-Regular\.ttf$/,
       type: 'asset/resource',
       generator: {
         filename: 'static/fonts/[name].[hash][ext]',
       },
     });
-
-    // Create a null module for the problematic Verida font file
+    
+    // Specifically handle the problematic Verida font file
     config.module.rules.push({
-      test: /Sora-Regular\.ttf$/,
-      include: /@verida/,
+      test: /node_modules\/@verida\/account-web-vault\/dist\/assets\/fonts\/Sora-Regular\.ttf$/,
       use: 'null-loader',
+    });
+    
+    // Also add a rule to prevent importing the font in JS files
+    config.module.rules.push({
+      test: /\.js$/,
+      include: [/node_modules\/@verida\/account-web-vault\/dist/],
+      use: {
+        loader: 'string-replace-loader',
+        options: {
+          search: /import.*?from.*?['"]\.\/assets\/fonts\/Sora-Regular\.ttf['"].*?;/g,
+          replace: '/* Font import removed */',
+        },
+      },
     });
     
     // Handle native modules
