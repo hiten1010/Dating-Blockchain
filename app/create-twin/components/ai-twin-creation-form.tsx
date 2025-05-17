@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useVeridaClient } from "../../lib/clientside-verida"
 import { formatAiTwinData, saveAiTwin } from "../../lib/verida-ai-twin-service"
+import { HeartLoader } from "@/components/ui/heart-loader"
 import {
   User,
   Brain,
@@ -30,7 +31,6 @@ import {
   BookOpen,
   Shield,
   Lock,
-  Loader2,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -42,6 +42,7 @@ interface AiTwinCreationFormProps {
   updateFormData: (data: any) => void
   nextStep: () => void
   prevStep: () => void
+  onSaveSuccess?: () => void
 }
 
 export default function AiTwinCreationForm({
@@ -50,6 +51,7 @@ export default function AiTwinCreationForm({
   updateFormData,
   nextStep,
   prevStep,
+  onSaveSuccess,
 }: AiTwinCreationFormProps) {
   const [tagInputs, setTagInputs] = useState({
     significantEvents: "",
@@ -169,6 +171,10 @@ export default function AiTwinCreationForm({
       })
       
       console.log("Saved AI Twin data:", savedData)
+
+      if (onSaveSuccess) {
+        onSaveSuccess()
+      }
     } catch (error) {
       console.error("Failed to create AI twin:", error)
       // Display error toast
@@ -1645,10 +1651,9 @@ export default function AiTwinCreationForm({
               className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
             >
               {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
+                <div className="flex items-center justify-center">
+                  <HeartLoader size="sm" showText={true} text="Saving..." className="mr-2" />
+                </div>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 mr-2" />
