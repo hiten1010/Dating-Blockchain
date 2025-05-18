@@ -37,12 +37,6 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
       }
     }
     
-    // Check if Leap wallet was previously connected from localStorage
-    const leapWalletAddress = localStorage.getItem("walletAddress");
-    if (leapWalletAddress) {
-      setWalletAddress(leapWalletAddress);
-    }
-    
     // Check if Cheqd wallet was previously connected
     const storedCheqdAddress = localStorage.getItem("cheqdWalletAddress");
     if (storedCheqdAddress) {
@@ -67,6 +61,9 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
         const did = client.getDid();
         if (did) {
           setWalletAddress(did);
+          
+          // Store Verida DID in localStorage for future use
+          localStorage.setItem("veridaDID", did);
           
           // Only proceed to next step if both wallets are connected
           if (cheqdWalletAddress) {
@@ -148,7 +145,7 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
           <InfoIcon className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm text-muted-foreground">
-              You need to connect both your Leap and Cheqd wallets. Leap is used for blockchain transactions and account management, 
+              You need to connect both your Verida and Cheqd wallets. Verida stores your encrypted profile data, 
               while Cheqd provides blockchain-based identity verification.
             </p>
           </div>
@@ -171,7 +168,7 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
           <div className="space-y-6">
             {/* Verida Wallet Section */}
             <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3">Leap Wallet</h3>
+              <h3 className="font-medium mb-3">Verida Wallet</h3>
               
               {walletAddress ? (
                 <div className="flex items-center justify-between">
@@ -191,8 +188,8 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
               ) : (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <img src="/logo.svg" alt="Leap" className="h-6 w-6 rounded-full" />
-                    <span>Leap Wallet</span>
+                    <img src="/verida.jpg" alt="Verida" className="h-6 w-6 rounded-full" />
+                    <span>Verida Wallet</span>
                   </div>
                   <Button 
                     variant="outline" 
@@ -275,4 +272,3 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
     </>
   )
 }
-

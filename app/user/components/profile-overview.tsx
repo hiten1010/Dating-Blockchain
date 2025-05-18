@@ -46,10 +46,16 @@ export default function ProfileOverview() {
         <div className="absolute -top-3 -left-3">
           <Hexagon className="h-10 w-10 text-indigo-500 fill-indigo-100" />
         </div>
-        <h2 className="text-xl font-semibold mb-2 text-indigo-800 ml-8">Your Profile at a Glance</h2>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent inline-block">
+            Your Blockchain Profile
+          </h1>
         <p className="text-sm text-slate-600">
-          Any on-chain updates may involve blockchain transactions. Sensitive details are stored off-chain for privacy.
+        Your profile is now secured on the Unichain Sepolia blockchain with Verida integration. Manage your on-chain and off-chain data below.
         </p>
+        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 border border-green-200">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="text-xs font-medium text-green-700">Connected to Blockchain</span>
+          </div>
       </div>
 
       <div className="flex overflow-x-auto pb-2 scrollbar-hide">

@@ -1,15 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { PlusIcon, XIcon, PencilIcon, ImageIcon, TagIcon, SlidersHorizontal } from "lucide-react"
+import { PlusIcon, XIcon, PencilIcon, ImageIcon, TagIcon, SlidersHorizontal, LockIcon, Copy, CheckCircle2, AlertCircleIcon, RefreshCwIcon } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 
-// Mock data - would be fetched from your API
-const offChainData = {
+// Define interface for off-chain data
+interface OffChainDataType {
+  veridaDID: string;
+  cheqdDID?: string; // Optional because it might not be available
+  photos: string[];
+  interests: string[];
+  preferences: {
+    ageRange: number[];
+    distance: number;
+    relationshipGoals: string;
+    aiMatchingEnabled: boolean;
+  };
+  encryptionStatus: string;
+  lastSynced: string;
+}
+
+// Updated mock data with Verida DID information - will be replaced with real data
+const defaultOffChainData: OffChainDataType = {
+  veridaDID: "", 
   photos: [
     "/placeholder.svg?height=300&width=300",
     "/placeholder.svg?height=300&width=300",
@@ -23,19 +40,65 @@ const offChainData = {
     relationshipGoals: "Long-term",
     aiMatchingEnabled: true,
   },
+  encryptionStatus: "Encrypted with Verida protocol",
+  lastSynced: new Date().toLocaleString()
 }
 
 export default function OffChainData() {
   const [activeTab, setActiveTab] = useState("photos")
-  const [ageRange, setAgeRange] = useState(offChainData.preferences.ageRange)
-  const [distance, setDistance] = useState(offChainData.preferences.distance)
-  const [aiMatching, setAiMatching] = useState(offChainData.preferences.aiMatchingEnabled)
+  const [ageRange, setAgeRange] = useState(defaultOffChainData.preferences.ageRange)
+  const [distance, setDistance] = useState(defaultOffChainData.preferences.distance)
+  const [aiMatching, setAiMatching] = useState(defaultOffChainData.preferences.aiMatchingEnabled)
+  const [copied, setCopied] = useState<string | null>(null)
+  const [offChainData, setOffChainData] = useState<OffChainDataType>(defaultOffChainData)
+
+  useEffect(() => {
+    // Load real data from localStorage
+    const loadStoredData = () => {
+      // Load Verida DID
+      const veridaDID = localStorage.getItem("veridaDID") || defaultOffChainData.veridaDID;
+      
+      // Load Cheqd DID
+      const cheqdDID = localStorage.getItem("cheqdWalletAddress") || undefined;
+      
+      // Load profile data
+      const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
+      
+      // Load preferences
+      const preferences = JSON.parse(localStorage.getItem("profilePreferences") || JSON.stringify(defaultOffChainData.preferences));
+      
+      // Update state with real data
+      setOffChainData({
+        veridaDID,
+        ...(cheqdDID ? { cheqdDID } : {}), // Only add cheqdDID if it exists
+        photos: profileData.photos || defaultOffChainData.photos,
+        interests: profileData.interests || defaultOffChainData.interests,
+        preferences,
+        encryptionStatus: "Encrypted with Verida protocol",
+        lastSynced: localStorage.getItem("lastSyncTime") || new Date().toLocaleString()
+      });
+      
+      // Update UI state
+      setAgeRange(preferences.ageRange || defaultOffChainData.preferences.ageRange);
+      setDistance(preferences.distance || defaultOffChainData.preferences.distance);
+      setAiMatching(preferences.aiMatchingEnabled || defaultOffChainData.preferences.aiMatchingEnabled);
+    };
+    
+    loadStoredData();
+  }, []);
 
   const tabs = [
     { id: "photos", label: "Photos", icon: ImageIcon },
     { id: "interests", label: "Interests", icon: TagIcon },
     { id: "preferences", label: "Preferences", icon: SlidersHorizontal },
+    { id: "encryption", label: "Encryption", icon: LockIcon },
   ]
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(field)
+    setTimeout(() => setCopied(null), 2000)
+  }
 
   return (
     <div className="backdrop-blur-sm bg-white/80 rounded-2xl border border-indigo-100 p-6 shadow-md">
@@ -258,6 +321,98 @@ export default function OffChainData() {
 
             <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
               Save Preferences
+            </Button>
+          </motion.div>
+        )}
+
+        {activeTab === "encryption" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-4"
+          >
+            <div className="backdrop-blur-sm bg-white/90 rounded-xl border border-indigo-100 p-4 shadow-sm space-y-4">
+              <h3 className="text-sm font-medium text-indigo-700">Verida DID (Decentralized Identifier)</h3>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-200/50 to-blue-200/50 rounded-md blur-sm opacity-75 group-hover:opacity-100 transition-opacity"></div>
+                  <code className="relative block w-full rounded-md bg-white px-3 py-2 font-mono text-sm text-slate-700 overflow-hidden text-ellipsis">
+                    {offChainData.veridaDID}
+                  </code>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600"
+                  onClick={() => copyToClipboard(offChainData.veridaDID, "veridaDID")}
+                >
+                  {copied === "veridaDID" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              
+              {/* Add Cheqd DID display if available */}
+              {offChainData.cheqdDID && (
+                <>
+                  <h3 className="text-sm font-medium text-indigo-700 mt-2">Cheqd DID</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-200/50 to-blue-200/50 rounded-md blur-sm opacity-75 group-hover:opacity-100 transition-opacity"></div>
+                      <code className="relative block w-full rounded-md bg-white px-3 py-2 font-mono text-sm text-slate-700 overflow-hidden text-ellipsis">
+                        {offChainData.cheqdDID}
+                      </code>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600"
+                      onClick={() => offChainData.cheqdDID && copyToClipboard(offChainData.cheqdDID, "cheqdDID")}
+                    >
+                      {copied === "cheqdDID" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </>
+              )}
+              
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-indigo-700">Encryption Status</h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 p-3 bg-green-50 rounded-lg border border-green-100">
+                    <div className="flex items-center gap-2">
+                      <LockIcon className="h-4 w-4 text-green-600" />
+                      <span className="text-sm text-green-800">{offChainData.encryptionStatus}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <h3 className="text-sm font-medium text-indigo-700">Last Synced with Verida</h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className="flex items-center gap-2">
+                      <RefreshCwIcon className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm text-blue-800">{offChainData.lastSynced}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                <div className="flex items-start gap-2">
+                  <AlertCircleIcon className="h-4 w-4 text-amber-600 mt-0.5" />
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-medium text-amber-800">Verida Data Privacy</h4>
+                    <p className="text-xs text-amber-700">
+                      Your profile data is encrypted and stored on the Verida network. Only you control who has access to your private information. The encrypted data is linked to your NFT profile on the blockchain.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
+              <RefreshCwIcon className="h-4 w-4 mr-2" />
+              Sync with Verida
             </Button>
           </motion.div>
         )}

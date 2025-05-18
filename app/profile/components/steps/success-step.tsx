@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle2Icon, ExternalLinkIcon, Sparkles, ShieldCheck, Zap, Users, Star, Shield } from "lucide-react"
+import { CheckCircle2Icon, ExternalLinkIcon, Sparkles, ShieldCheck, Zap, Users, Star, Shield, ExternalLink } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import type { ProfileData } from "../profile-creation-flow"
 import { cn } from "@/lib/utils"
@@ -184,19 +184,18 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
           You are now the sole owner of this profile NFT. Manage it anytime from your dashboard.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 relative" ref={containerRef} onMouseMove={handleMouseMove}>
-        {/* Confetti canvas */}
-        {showConfetti && (
-          <canvas
-            ref={canvasRef}
-            className="fixed inset-0 pointer-events-none z-50"
-            style={{ width: "100vw", height: "100vh" }}
-          ></canvas>
-        )}
+      <CardContent className="space-y-6 px-3">
+        <div className="flex justify-center">
+          <div className="relative w-full max-w-sm h-[350px]" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} ref={containerRef}>
+            {/* Confetti canvas */}
+            {showConfetti && (
+              <canvas
+                ref={canvasRef}
+                className="fixed inset-0 pointer-events-none z-50"
+                style={{ width: "100vw", height: "100vh" }}
+              ></canvas>
+            )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* NFT Card - Using the same design as in mint-nft-step */}
-          <div>
             <div
               ref={nftCardRef}
               className="relative w-full max-w-[350px] mx-auto aspect-[3/4] rounded-2xl overflow-hidden transition-all duration-300 ease-out"
@@ -341,117 +340,90 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
               ></div>
             </div>
           </div>
+        </div>
 
-          <div className="space-y-4">
-            {/* NFT Details */}
-            <div className="relative">
-              <div className="absolute -inset-2 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
-              <div className="relative bg-white p-4 rounded-2xl border border-purple-100 shadow-md">
-                <h3 className="font-medium mb-3 text-center text-sm text-purple-700">Your NFT Details</h3>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <div className="text-xs">
-                      <span className="text-muted-foreground">NFT Token ID:</span>
-                    </div>
-                    <div className="font-mono text-xs bg-purple-50 px-2 py-0.5 rounded-lg">{nftTokenId}</div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex justify-between items-center">
-                    <div className="text-xs">
-                      <span className="text-muted-foreground">Transaction Hash:</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="font-mono text-xs mr-1 bg-purple-50 px-2 py-0.5 rounded-lg">
-                        {transactionHash.substring(0, 10)}...{transactionHash.substring(transactionHash.length - 6)}
-                      </span>
-                      <Button variant="ghost" size="icon" className="h-5 w-5 bg-purple-100 hover:bg-purple-200">
-                        <ExternalLinkIcon className="h-3 w-3 text-purple-700" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex justify-between items-center">
-                    <div className="text-xs">
-                      <span className="text-muted-foreground">DID:</span>
-                    </div>
-                    <div className="font-mono text-xs bg-purple-50 px-2 py-0.5 rounded-lg">
-                      {didId.substring(0, 10)}...{didId.substring(didId.length - 6)}
-                    </div>
-                  </div>
-                </div>
-              </div>
+        {/* NFT and Blockchain Information */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 space-y-3 border border-purple-100">
+          <h3 className="font-medium text-sm text-center text-purple-900">NFT and Blockchain Information</h3>
+          
+          {/* Token ID */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">Token ID</span>
+              <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-gray-100 shadow-sm">{nftTokenId}</span>
             </div>
-
-            {/* What's Next Section */}
-            <div className="relative">
-              <div className="absolute -inset-2 bg-gradient-to-r from-purple-200/50 to-pink-200/50 rounded-3xl blur-lg opacity-50"></div>
-              <div className="relative bg-white p-4 rounded-2xl border border-purple-100 shadow-md">
-                <h3 className="font-medium mb-3 text-center text-sm text-purple-700">What's Next?</h3>
-                <p className="text-xs text-muted-foreground mb-4 text-center">
-                  Now that your profile is minted as an NFT, you can:
-                </p>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    {
-                      icon: <Zap className="h-4 w-4 text-purple-500" />,
-                      title: "Configure AI Twin",
-                      description: "Set up your AI agent for personalized matchmaking",
-                      onClick: navigateToCreateTwin
-                    },
-                    {
-                      icon: <Users className="h-4 w-4 text-pink-500" />,
-                      title: "Browse Matches",
-                      description: "Discover potential matches on the platform",
-                      onClick: navigateToExplore
-                    },
-                    {
-                      icon: <Sparkles className="h-4 w-4 text-purple-500" />,
-                      title: "Update Profile",
-                      description: "Modify your profile information anytime",
-                      onClick: navigateToProfile
-                    },
-                    {
-                      icon: <ShieldCheck className="h-4 w-4 text-pink-500" />,
-                      title: "Control Data Access",
-                      description: "Manage who can access your private data",
-                      onClick: navigateToSettings
-                    },
-                  ].map((feature, index) => (
-                    <div
-                      key={index}
-                      className={`relative overflow-hidden rounded-lg transition-all duration-300 ${
-                        activeFeature === `feature-${index}` ? "scale-105 shadow-lg" : "shadow-md"
-                      } cursor-pointer`}
-                      onMouseEnter={() => setActiveFeature(`feature-${index}`)}
-                      onMouseLeave={() => setActiveFeature(null)}
-                      onClick={feature.onClick}
-                    >
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-br ${
-                          index % 2 === 0 ? "from-purple-500/10 to-purple-500/5" : "from-pink-500/10 to-pink-500/5"
-                        } transition-opacity duration-300 ${
-                          activeFeature === `feature-${index}` ? "opacity-100" : "opacity-50"
-                        }`}
-                      ></div>
-
-                      <div className="relative p-2 flex flex-col items-center text-center">
-                        <div className={`p-2 rounded-full mb-1 ${index % 2 === 0 ? "bg-purple-100" : "bg-pink-100"}`}>
-                          {feature.icon}
-                        </div>
-                        <h4 className="font-medium text-xs mb-0.5">{feature.title}</h4>
-                        <p className="text-[10px] text-muted-foreground">{feature.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            
+            {/* Transaction Hash with link */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">Transaction</span>
+              <a 
+                href={`https://sepolia.uniscan.xyz/tx/${transactionHash}`}
+                target="_blank"
+                rel="noopener noreferrer" 
+                className="text-xs font-mono bg-white px-2 py-1 rounded border border-purple-100 shadow-sm flex items-center hover:bg-purple-50 transition-colors"
+              >
+                {transactionHash.substring(0, 6)}...{transactionHash.substring(transactionHash.length - 4)}
+                <ExternalLink className="h-3 w-3 ml-1 text-purple-400" />
+              </a>
             </div>
+            
+            {/* Verida DID */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">Verida DID</span>
+              <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-gray-100 shadow-sm">
+                {didId.substring(0, 6)}...{didId.substring(didId.length - 4)}
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex justify-center pt-2">
+            <a 
+              href={`https://sepolia.uniscan.xyz/token/${transactionHash}`} 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-purple-600 hover:text-purple-800 flex items-center"
+            >
+              View on Blockchain Explorer <ExternalLink className="h-3 w-3 ml-1" />
+            </a>
+          </div>
+        </div>
+        
+        {/* What's Next section */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 space-y-3 border border-purple-100">
+          <h3 className="font-medium text-sm text-center text-purple-900">What's Next?</h3>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              onClick={navigateToExplore} 
+              className="bg-white border border-purple-100 hover:border-purple-300 p-3 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md"
+            >
+              <h4 className="font-medium text-xs text-purple-800 mb-1">Explore Matches</h4>
+              <p className="text-[10px] text-gray-500">Find potential matches based on your profile</p>
+            </button>
+            
+            <button 
+              onClick={navigateToProfile} 
+              className="bg-white border border-purple-100 hover:border-purple-300 p-3 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md"
+            >
+              <h4 className="font-medium text-xs text-purple-800 mb-1">View Profile</h4>
+              <p className="text-[10px] text-gray-500">See your completed profile</p>
+            </button>
+            
+            <button 
+              onClick={navigateToCreateTwin} 
+              className="bg-white border border-purple-100 hover:border-purple-300 p-3 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md"
+            >
+              <h4 className="font-medium text-xs text-purple-800 mb-1">Create Twin</h4>
+              <p className="text-[10px] text-gray-500">Generate an AI twin based on your profile</p>
+            </button>
+            
+            <button 
+              onClick={navigateToSettings} 
+              className="bg-white border border-purple-100 hover:border-purple-300 p-3 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md"
+            >
+              <h4 className="font-medium text-xs text-purple-800 mb-1">Settings</h4>
+              <p className="text-[10px] text-gray-500">Manage privacy and notification settings</p>
+            </button>
           </div>
         </div>
       </CardContent>

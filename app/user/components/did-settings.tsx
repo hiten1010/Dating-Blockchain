@@ -1,22 +1,38 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ShieldIcon, KeyIcon, RefreshCwIcon, Copy, CheckCircle2 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-// Mock data - would be fetched from your API
-const didData = {
-  did: "did:verida:0x1234567890abcdef1234567890abcdef12345678",
+// Mock data - would be fetched from your API or localStorage
+const defaultDidData = {
+  veridaDid: "", // 
+  cheqdDid: "", // 
   verificationStatus: "Verified",
   lastVerified: "2023-09-10T11:20:00Z",
   expirationDate: "2024-09-10T11:20:00Z",
 }
 
 export default function DidSettings() {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
+  const [didData, setDidData] = useState(defaultDidData)
+  
+  useEffect(() => {
+    // Try to get DIDs from localStorage
+    const veridaDid = localStorage.getItem("veridaDID");
+    const cheqdDid = localStorage.getItem("cheqdWalletAddress");
+    
+    if (veridaDid || cheqdDid) {
+      setDidData(prev => ({
+        ...prev,
+        ...(veridaDid ? { veridaDid } : {}),
+        ...(cheqdDid ? { cheqdDid } : {})
+      }));
+    }
+  }, []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -26,10 +42,10 @@ export default function DidSettings() {
     })
   }
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setCopied(type)
+    setTimeout(() => setCopied(null), 2000)
   }
 
   return (
@@ -80,22 +96,53 @@ export default function DidSettings() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h3 className="text-sm font-medium text-indigo-700 mb-3">Your DID</h3>
+          <h3 className="text-sm font-medium text-indigo-700 mb-3">Verida DID</h3>
           <div className="flex items-center gap-2">
             <div className="relative flex-1 group">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-indigo-200/50 rounded-md blur-sm opacity-75 group-hover:opacity-100 transition-opacity"></div>
               <code className="relative block w-full rounded-md bg-white px-3 py-2 font-mono text-xs sm:text-sm text-slate-700 overflow-x-auto whitespace-nowrap">
-                {didData.did}
+                {didData.veridaDid}
               </code>
             </div>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600"
-              onClick={() => copyToClipboard(didData.did)}
+              onClick={() => copyToClipboard(didData.veridaDid, "veridaDid")}
             >
-              {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied === "veridaDid" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
+            <Badge className="bg-gradient-to-r from-purple-400 to-fuchsia-400 text-white border-0">
+              Data Storage
+            </Badge>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="backdrop-blur-sm bg-white/90 rounded-xl border border-indigo-100 p-4 mb-6 shadow-sm"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h3 className="text-sm font-medium text-indigo-700 mb-3">Cheqd DID</h3>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-indigo-200/50 rounded-md blur-sm opacity-75 group-hover:opacity-100 transition-opacity"></div>
+              <code className="relative block w-full rounded-md bg-white px-3 py-2 font-mono text-xs sm:text-sm text-slate-700 overflow-x-auto whitespace-nowrap">
+                {didData.cheqdDid}
+              </code>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600"
+              onClick={() => copyToClipboard(didData.cheqdDid, "cheqdDid")}
+            >
+              {copied === "cheqdDid" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+            <Badge className="bg-gradient-to-r from-blue-400 to-cyan-400 text-white border-0">
+              Identity
+            </Badge>
           </div>
         </motion.div>
 
@@ -104,7 +151,7 @@ export default function DidSettings() {
             className="backdrop-blur-sm bg-white/90 rounded-xl border border-indigo-100 p-4 shadow-sm"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.3 }}
           >
             <h3 className="text-sm font-medium text-indigo-700 mb-3">Verification Status</h3>
             <div className="flex items-center gap-2">
@@ -119,7 +166,7 @@ export default function DidSettings() {
             className="backdrop-blur-sm bg-white/90 rounded-xl border border-indigo-100 p-4 shadow-sm"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.4 }}
           >
             <h3 className="text-sm font-medium text-indigo-700 mb-3">Last Verified</h3>
             <p className="text-slate-700">{formatDate(didData.lastVerified)}</p>
@@ -129,7 +176,7 @@ export default function DidSettings() {
             className="backdrop-blur-sm bg-white/90 rounded-xl border border-indigo-100 p-4 shadow-sm"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.5 }}
           >
             <h3 className="text-sm font-medium text-indigo-700 mb-3">Expires</h3>
             <p className="text-slate-700">{formatDate(didData.expirationDate)}</p>
