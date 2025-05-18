@@ -47,6 +47,12 @@ const NavigationWalletButton = () => {
           setWalletAddress(address)
           // Store address in local storage to persist across sessions
           localStorage.setItem("walletAddress", address)
+          
+          // Trigger storage event for current window
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'walletAddress',
+            newValue: address
+          }))
         } else {
           throw new Error("No accounts found in Leap wallet. Please create an account for Unichain Sepolia.")
         }
@@ -78,13 +84,28 @@ const NavigationWalletButton = () => {
 
   const disconnectWallet = async () => {
     try {
+      // Call the disconnectLeap utility function
       if (isLeapWalletInstalled()) {
         await disconnectLeap()
       }
+      
+      // Ensure the local state is updated
       setWalletAddress("")
+      
+      // Make sure localStorage and sessionStorage are cleared
       localStorage.removeItem("walletAddress")
+      sessionStorage.removeItem("walletAddress")
+      
+      // Dispatch storage event to notify other components
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'walletAddress',
+        oldValue: walletAddress,
+        newValue: null
+      }))
     } catch (error) {
       console.error("Error disconnecting wallet:", error)
+      // Still update the UI state even if there was an error
+      setWalletAddress("")
     }
   }
 
@@ -101,11 +122,13 @@ const NavigationWalletButton = () => {
     <Button
       variant="outline"
       onClick={disconnectWallet}
-      className="hidden md:flex border-[#6D28D9] bg-gradient-to-r from-[#6D28D9]/10 to-[#EC4899]/10 text-[#6D28D9] hover:bg-[#6D28D9] hover:text-white"
+      className="hidden md:flex border-[#6D28D9] bg-gradient-to-r from-[#6D28D9]/10 to-[#EC4899]/10 text-[#6D28D9] hover:bg-[#6D28D9] hover:text-white relative overflow-hidden group transition-all duration-300"
     >
-      <span className="flex items-center gap-2">
+      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-[#6D28D9]/0 to-[#EC4899]/0 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+      <span className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJoZWFydHMiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTE1IDVjMS45Ny0xLjk3IDUuMTUtMS45NyA3LjEyIDAgMS45NyAxLjk3IDEuOTcgNS4xNSAwIDcuMTJMMTUgMTkuMjQgNy44OCAxMi4xMmMtMS45Ny0xLjk3LTEuOTctNS4xNSAwLTcuMTIgMS45Ny0xLjk3IDUuMTUtMS45NyA3LjEyIDB6IiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMTA5LCA0MCwgMjE3LCAwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2hlYXJ0cykiIC8+PC9zdmc+')] opacity-10"></span>
+      <span className="relative flex items-center gap-2 z-10">
         {formatAddress(walletAddress)}
-        <LogOut className="h-4 w-4" />
+        <LogOut className="h-4 w-4 transition-transform group-hover:translate-x-1" />
       </span>
     </Button>
   ) : (
@@ -114,11 +137,26 @@ const NavigationWalletButton = () => {
         variant="outline"
         onClick={connectLeapWallet}
         disabled={isConnecting}
-        className="hidden md:flex border-[#6D28D9] text-[#6D28D9] hover:bg-[#6D28D9] hover:text-white relative"
+        className="hidden md:flex border-[#6D28D9] text-[#6D28D9] hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#EC4899] hover:text-white relative overflow-hidden group transition-all duration-300"
       >
-        <span className="flex items-center gap-2">
-          {isConnecting ? "Connecting..." : "Connect Wallet"}
-          <Wallet className="h-4 w-4" />
+        <span className="absolute inset-0 bg-gradient-to-r from-[#6D28D9]/10 via-[#EC4899]/10 to-[#6D28D9]/10 opacity-0 group-hover:opacity-100 bg-[length:200%_100%] animate-shimmer"></span>
+        <span className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJoZWFydHMiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTE1IDVjMS45Ny0xLjk3IDUuMTUtMS45NyA3LjEyIDAgMS45NyAxLjk3IDEuOTcgNS4xNSAwIDcuMTJMMTUgMTkuMjQgNy44OCAxMi4xMmMtMS45Ny0xLjk3LTEuOTctNS4xNSAwLTcuMTIgMS45Ny0xLjk3IDUuMTUtMS45NyA3LjEyIDB6IiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMTA5LCA0MCwgMjE3LCAwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2hlYXJ0cykiIC8+PC9zdmc+')] opacity-10"></span>
+        <span className="absolute -inset-[1px] bg-gradient-to-r from-[#6D28D9]/20 to-[#EC4899]/20 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-[2px]"></span>
+        <span className="relative flex items-center gap-2 z-10">
+          {isConnecting ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-[#6D28D9]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Connecting...
+            </>
+          ) : (
+            <>
+              Connect Wallet
+              <Wallet className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </>
+          )}
         </span>
       </Button>
       {showError && (
@@ -150,11 +188,13 @@ const NavigationWalletButton = () => {
   const mobileButton = walletAddress ? (
     <Button
       onClick={disconnectWallet}
-      className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 w-full"
+      className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 w-full group relative overflow-hidden transition-all duration-300"
     >
-      <span className="flex items-center gap-2">
+      <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-10 transition-opacity"></span>
+      <span className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJoZWFydHMiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTE1IDVjMS45Ny0xLjk3IDUuMTUtMS45NyA3LjEyIDAgMS45NyAxLjk3IDEuOTcgNS4xNSAwIDcuMTJMMTUgMTkuMjQgNy44OCAxMi4xMmMtMS45Ny0xLjk3LTEuOTctNS4xNSAwLTcuMTIgMS45Ny0xLjk3IDUuMTUtMS45NyA3LjEyIDB6IiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4xKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2hlYXJ0cykiIC8+PC9zdmc+')] opacity-10"></span>
+      <span className="relative flex items-center gap-2 z-10">
         {formatAddress(walletAddress)}
-        <LogOut className="h-4 w-4" />
+        <LogOut className="h-4 w-4 transition-transform group-hover:translate-x-1" />
       </span>
     </Button>
   ) : (
@@ -162,11 +202,26 @@ const NavigationWalletButton = () => {
       <Button
         onClick={connectLeapWallet}
         disabled={isConnecting}
-        className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 w-full"
+        className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 w-full group relative overflow-hidden transition-all duration-300"
       >
-        <span className="flex items-center gap-2">
-          {isConnecting ? "Connecting..." : "Connect Wallet"}
-          <Wallet className="h-4 w-4" />
+        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 animate-shimmer-fast"></span>
+        <span className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJoZWFydHMiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTE1IDVjMS45Ny0xLjk3IDUuMTUtMS45NyA3LjEyIDAgMS45NyAxLjk3IDEuOTcgNS4xNSAwIDcuMTJMMTUgMTkuMjQgNy44OCAxMi4xMmMtMS45Ny0xLjk3LTEuOTctNS4xNSAwLTcuMTIgMS45Ny0xLjk3IDUuMTUtMS45NyA3LjEyIDB6IiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4xKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2hlYXJ0cykiIC8+PC9zdmc+')] opacity-10"></span>
+        <span className="absolute -inset-[1px] bg-gradient-to-r from-white/20 to-white/20 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-[2px]"></span>
+        <span className="relative flex items-center gap-2 z-10">
+          {isConnecting ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Connecting...
+            </>
+          ) : (
+            <>
+              Connect Wallet
+              <Wallet className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </>
+          )}
         </span>
       </Button>
       {showError && (

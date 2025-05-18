@@ -1,11 +1,40 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import ConnectButton from "@/components/wallet/ConnectButton"
 import { Wallet, Shield, Fingerprint } from "lucide-react"
 import Link from "next/link"
 
 export default function WalletPage() {
+  const router = useRouter()
+  
+  // Check for wallet connection on mount and after wallet state changes
+  useEffect(() => {
+    const checkWalletConnection = () => {
+      const walletAddress = localStorage.getItem("walletAddress")
+      if (walletAddress) {
+        router.push("/onboarding")
+      }
+    }
+    
+    // Initial check
+    checkWalletConnection()
+    
+    // Set up listener for storage changes (in case wallet is connected in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "walletAddress" && e.newValue) {
+        checkWalletConnection()
+      }
+    }
+    
+    window.addEventListener("storage", handleStorageChange)
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+    }
+  }, [router])
+  
   return (
     <div className="min-h-screen bg-[#F9F5FF]">
       <header className="border-b border-[#E5E7EB] bg-white">

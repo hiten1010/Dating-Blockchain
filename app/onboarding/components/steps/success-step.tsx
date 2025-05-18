@@ -18,6 +18,9 @@ export default function SuccessStep({ walletAddress }: SuccessStepProps) {
     if (storedCheqdAddress) {
       setCheqdWalletAddress(storedCheqdAddress);
     }
+    
+    // Mark onboarding as complete
+    localStorage.setItem("onboardingCompleted", "true");
   }, []);
 
   return (
@@ -30,15 +33,15 @@ export default function SuccessStep({ walletAddress }: SuccessStepProps) {
         </div>
         <CardTitle className="text-xl">Wallets Connected — Let's Set Up Your Profile</CardTitle>
         <CardDescription className="text-sm">
-          Both your Verida and Cheqd wallets are now linked. Next, you'll create a Decentralized Identity (DID) and mint your NFT-based profile.
+          Both your Leap and Cheqd wallets are now linked. Next, you'll create a Decentralized Identity (DID) and mint your NFT-based profile.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 px-4">
         <div className="bg-purple-50 p-4 rounded-lg flex items-start space-x-3">
-          <img src="/verida.jpg" alt="Verida" className="h-5 w-5 mt-0.5 flex-shrink-0 rounded-full" />
+          <img src="/logo.svg" alt="Leap" className="h-5 w-5 mt-0.5 flex-shrink-0 rounded-full" />
           <div>
             <p className="text-xs text-muted-foreground">
-              Your data remains secure and private with Verida, while your identity is verified through Cheqd blockchain technology.
+              Your data remains secure and private with Leap, while your identity is verified through Cheqd blockchain technology.
             </p>
           </div>
         </div>
@@ -49,8 +52,8 @@ export default function SuccessStep({ walletAddress }: SuccessStepProps) {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <div className="text-xs flex items-center">
-                <img src="/verida.jpg" alt="Verida" className="h-3 w-3 mr-1 rounded-full" />
-                <span className="text-muted-foreground">Verida Wallet:</span>
+                <img src="/logo.svg" alt="Leap" className="h-3 w-3 mr-1 rounded-full" />
+                <span className="text-muted-foreground">Leap Wallet:</span>
               </div>
               <div className="font-mono text-xs">
                 {walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}

@@ -240,27 +240,39 @@ export const disconnectLeap = async (): Promise<void> => {
       throw new Error("Leap wallet not installed");
     }
     
-    // For Unichain Sepolia (EVM chain), try EVM disconnect
-    const provider = getLeapProvider();
-    if (provider && provider.request) {
-      try {
-        await provider.request({ method: 'wallet_disconnectSite' });
-        console.log("Disconnected Leap wallet EVM provider");
-      } catch (evmError) {
-        console.warn("Leap wallet EVM disconnect failed (might not be supported):", evmError);
+    // Leap doesn't support wallet_disconnectSite method
+    // Instead, we'll clear local storage and session storage
+    // This is a client-side disconnect that doesn't affect the wallet's connection state
+    // but effectively disconnects the user from the app
+    
+    console.log("Disconnecting Leap wallet (client-side)");
+    
+    // Clear any stored addresses
+    localStorage.removeItem("walletAddress");
+    sessionStorage.removeItem("walletAddress");
+    
+    // Optionally try the standard Leap disconnect method (may not work for EVM chains)
+    try {
+      if (window.leap && window.leap.disconnect) {
+        await window.leap.disconnect(UNICHAIN_SEPOLIA_CHAIN_ID);
+        console.log(`Attempted disconnect from chain ${UNICHAIN_SEPOLIA_CHAIN_ID}`);
       }
+    } catch (disconnectError) {
+      console.warn("Standard Leap disconnect method failed (expected for EVM chains):", disconnectError);
+      // This is expected to fail for EVM chains, so we don't rethrow
     }
     
-    // Also try the standard Leap disconnect
-    try {
-      await window.leap.disconnect(UNICHAIN_SEPOLIA_CHAIN_ID);
-      console.log(`Disconnected from chain ${UNICHAIN_SEPOLIA_CHAIN_ID}`);
-    } catch (disconnectError) {
-      console.warn("Error during standard disconnect:", disconnectError);
-    }
+    // Dispatch storage event to notify other components
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'walletAddress',
+      oldValue: localStorage.getItem('walletAddress'),
+      newValue: null
+    }));
+    
+    console.log("Wallet disconnected (client-side)");
   } catch (error) {
-    console.error("Error disconnecting from Leap wallet:", error);
-    throw error;
+    console.error("Error during wallet disconnect:", error);
+    // Don't throw the error, as we want the UI to update regardless
   }
 };
 

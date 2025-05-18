@@ -91,7 +91,7 @@ export default function HeroSection({ sectionRef, walletState }: HeroSectionProp
                   </>
                 ) : (
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <Link href="/dashboard">
+                    <Link href="/onboarding">
                       <Button
                         size="lg"
                         className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 group relative overflow-hidden rounded-xl"
