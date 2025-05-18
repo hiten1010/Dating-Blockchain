@@ -7,6 +7,8 @@ import { Shield,SparklesIcon, Lock, Fingerprint, Sparkles, Wallet, Key, MessageS
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useRouter } from "next/navigation"
+import { loadExistingNFTData } from "@/utils/nft-check"
 
 // Import components from landing directory
 import Header from "@/components/landing/Header"
@@ -26,6 +28,7 @@ import AiTwinSection from "@/components/landing/AiTwinSection"
 import { SectionRefsProvider } from "@/components/landing/AppStateSectionRefs"
 
 export default function LandingPage() {
+  const router = useRouter()
   const isMobile = useMobile()
   const [activeSection, setActiveSection] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -34,6 +37,29 @@ export default function LandingPage() {
 
   const sectionsRef = useRef<(HTMLElement | null)[]>([])
   const { scrollYProgress } = useScroll()
+
+  // Check if user has wallet connected and NFT profile
+  useEffect(() => {
+    const checkWalletAndNFT = async () => {
+      const walletAddress = localStorage.getItem("walletAddress")
+      
+      if (walletAddress) {
+        // User has wallet connected, check if they have an NFT
+        const nftData = await loadExistingNFTData()
+        
+        if (nftData) {
+          // User has NFT profile, redirect to user page
+          router.push("/user")
+        } else {
+          // User has wallet but no NFT, redirect to onboarding
+          router.push("/onboarding")
+        }
+      }
+      // If no wallet connected, stay on landing page
+    }
+    
+    checkWalletAndNFT()
+  }, [router])
 
   // Handle mouse movement for interactive elements
   useEffect(() => {

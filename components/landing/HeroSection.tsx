@@ -1,18 +1,87 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Shield, ArrowRight, Heart, UserCircle, Lock, Fingerprint, HeartPulse, Flame, Zap, Sparkles, Star, CheckCircle, Stars, Database, Server, Brain } from "lucide-react"
+import { Shield, ArrowRight, Heart, UserCircle, Lock, Fingerprint, HeartPulse, Flame, Zap, Sparkles, Star, CheckCircle, Stars, Database, Server, Brain, Wallet, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import NavigationWalletButton from "@/components/wallet/NavigationWalletButton"
+import { checkNFTAndRedirect } from "@/utils/nft-check"
+import { formatAddress, connectLeap, disconnectLeap, isLeapWalletInstalled } from "@/utils/wallet"
 
 interface HeroSectionProps {
   sectionRef: (el: HTMLElement | null) => void
-  walletState?: any // Optional wallet state
 }
 
-export default function HeroSection({ sectionRef, walletState }: HeroSectionProps) {
-  const walletButton = NavigationWalletButton();
+export default function HeroSection({ sectionRef }: HeroSectionProps) {
+  const [isConnected, setIsConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
+  
+  // Handle Enter App button click
+  const handleEnterApp = async () => {
+    await checkNFTAndRedirect();
+  };
+  
+  // Handle wallet connection
+  const handleConnectWallet = async () => {
+    setIsConnecting(true);
+    try {
+      if (!isLeapWalletInstalled()) {
+        window.open("https://www.leapwallet.io/", "_blank");
+        alert("Please install Leap wallet and reload the page");
+        return;
+      }
+      
+      const address = await connectLeap();
+      if (address) {
+        setIsConnected(true);
+        setWalletAddress(address);
+        localStorage.setItem("walletAddress", address);
+        await checkNFTAndRedirect();
+      }
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+  
+  // Handle wallet disconnection
+  const handleDisconnectWallet = async () => {
+    try {
+      await disconnectLeap();
+      setIsConnected(false);
+      setWalletAddress("");
+      localStorage.removeItem("walletAddress");
+    } catch (error) {
+      console.error("Error disconnecting wallet:", error);
+    }
+  };
+  
+  // Check wallet connection status on component mount
+  useEffect(() => {
+    const storedAddress = localStorage.getItem("walletAddress");
+    if (storedAddress) {
+      setIsConnected(true);
+      setWalletAddress(storedAddress);
+    }
+    
+    // Listen for wallet connection changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "walletAddress") {
+        if (e.newValue) {
+          setIsConnected(true);
+          setWalletAddress(e.newValue);
+        } else {
+          setIsConnected(false);
+          setWalletAddress("");
+        }
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
   
   const sponsors = [
     {
@@ -33,7 +102,7 @@ export default function HeroSection({ sectionRef, walletState }: HeroSectionProp
       role: "Secure Data Storage",
       icon: Database
     },
-  ]
+  ];
 
   return (
     <section
@@ -73,12 +142,33 @@ export default function HeroSection({ sectionRef, walletState }: HeroSectionProp
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                {!walletButton.isConnected ? (
+                {!isConnected ? (
                   <>
-                    <div>
-                      {walletButton.desktopButton}
-                    </div>
-                  
+                    <Button
+                      size="lg"
+                      onClick={handleConnectWallet}
+                      disabled={isConnecting}
+                      className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 group relative overflow-hidden rounded-xl"
+                    >
+                      <span className="absolute inset-0 bg-pattern opacity-20"></span>
+                      <span className="relative flex items-center">
+                        {isConnecting ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Connecting...
+                          </>
+                        ) : (
+                          <>
+                            Connect Wallet
+                            <Wallet className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          </>
+                        )}
+                      </span>
+                    </Button>
+                    
                     <Button
                       size="lg"
                       variant="outline"
@@ -91,25 +181,32 @@ export default function HeroSection({ sectionRef, walletState }: HeroSectionProp
                   </>
                 ) : (
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <Link href="/onboarding">
-                      <Button
-                        size="lg"
-                        className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 group relative overflow-hidden rounded-xl"
-                      >
-                        <span className="absolute inset-0 bg-pattern opacity-20"></span>
-                        <span className="relative flex items-center">
-                          Enter App
-                          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                        </span>
-                      </Button>
-                    </Link>
+                    <Button
+                      size="lg"
+                      className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 group relative overflow-hidden rounded-xl"
+                      onClick={handleEnterApp}
+                    >
+                      <span className="absolute inset-0 bg-pattern opacity-20"></span>
+                      <span className="relative flex items-center">
+                        Join the Revolution
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      </span>
+                    </Button>
 
-                    <div>
-                      {walletButton.desktopButton}
-                    </div>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={handleDisconnectWallet}
+                      className="border-[#6D28D9]/30 text-[#6D28D9] hover:bg-[#6D28D9]/10 rounded-xl"
+                    >
+                      <span className="flex items-center">
+                        {formatAddress(walletAddress)}
+                        <LogOut className="ml-2 h-4 w-4" />
+                      </span>
+                    </Button>
                   </div>  
                 )}
-               </div>
+              </div>
 
               {/* <div className="flex items-center gap-4 text-sm text-[#6B7280]">
                 <div className="flex -space-x-2">

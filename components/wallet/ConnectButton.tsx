@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Wallet, LogOut, AlertCircle, ExternalLink } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { loadExistingNFTData } from "@/utils/nft-check"
 
 import {
   isLeapWalletInstalled,
@@ -13,6 +15,7 @@ import {
 
 /* ---------- component ---------- */
 export default function ConnectButton() {
+  const router = useRouter()
   const [walletAddress, setWalletAddress] = useState("")
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,6 +59,17 @@ export default function ConnectButton() {
             key: 'walletAddress',
             newValue: address
           }))
+          
+          // Check if user already has an NFT profile
+          const nftData = await loadExistingNFTData()
+          
+          if (nftData) {
+            // User has NFT profile, redirect to user page
+            router.push("/user")
+          } else {
+            // User has wallet but no NFT, redirect to onboarding
+            router.push("/onboarding")
+          }
         } else {
           throw new Error("No accounts found in Leap wallet. Please create an account for Unichain Sepolia.")
         }

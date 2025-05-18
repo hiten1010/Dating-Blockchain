@@ -5,16 +5,26 @@ import { useRouter } from "next/navigation"
 import ConnectButton from "@/components/wallet/ConnectButton"
 import { Wallet, Shield, Fingerprint } from "lucide-react"
 import Link from "next/link"
+import { loadExistingNFTData } from "@/utils/nft-check"
 
 export default function WalletPage() {
   const router = useRouter()
   
   // Check for wallet connection on mount and after wallet state changes
   useEffect(() => {
-    const checkWalletConnection = () => {
+    const checkWalletConnection = async () => {
       const walletAddress = localStorage.getItem("walletAddress")
       if (walletAddress) {
-        router.push("/onboarding")
+        // Check if user already has an NFT profile
+        const nftData = await loadExistingNFTData()
+        
+        if (nftData) {
+          // User has NFT profile, redirect to user page
+          router.push("/user")
+        } else {
+          // User has wallet but no NFT, redirect to onboarding
+          router.push("/onboarding")
+        }
       }
     }
     

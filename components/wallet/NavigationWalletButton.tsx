@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Wallet, LogOut, AlertCircle, ExternalLink } from "lucide-react"
 import { isLeapWalletInstalled, connectLeap, formatAddress, disconnectLeap } from "@/utils/wallet"
+import { checkNFTAndRedirect } from "@/utils/nft-check"
 
-const NavigationWalletButton = () => {
+export default function NavigationWalletButton() {
   const [walletAddress, setWalletAddress] = useState<string>("")
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,6 +54,9 @@ const NavigationWalletButton = () => {
             key: 'walletAddress',
             newValue: address
           }))
+
+          // Check if user has an NFT and redirect accordingly
+          await checkNFTAndRedirect()
         } else {
           throw new Error("No accounts found in Leap wallet. Please create an account for Unichain Sepolia.")
         }
@@ -281,9 +285,6 @@ const NavigationWalletButton = () => {
     desktopButton,
     mobileButton,
     isConnected: !!walletAddress,
-    address: walletAddress,
-    error,
+    walletAddress
   }
-}
-
-export default NavigationWalletButton 
+} 
