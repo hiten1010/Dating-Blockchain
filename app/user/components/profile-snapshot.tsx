@@ -23,7 +23,7 @@ const profileData = {
   bio: "Blockchain enthusiast and coffee lover. Looking for meaningful connections in the web3 world.",
   age: 28,
   location: "San Francisco, CA",
-  profileImage: "/placeholder.svg?height=200&width=200",
+  profileImage: "/Profile.png?height=200&width=200",
   isOnChain: {
     name: true,
     bio: false,

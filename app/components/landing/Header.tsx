@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Heart, Menu, X, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import EthereumConnectButton from "@/components/wallet/EthereumConnectButton"
 
 interface HeaderProps {
   activeSection: number
@@ -55,13 +56,9 @@ export default function Header({ activeSection, scrollY, navItems }: HeaderProps
             </nav>
 
             <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                className="hidden md:flex border-[#6D28D9] text-[#6D28D9] hover:bg-[#6D28D9] hover:text-white"
-              >
-                <Wallet className="mr-2 h-4 w-4" />
-                Connect Wallet
-              </Button>
+              <div className="hidden md:block">
+                <EthereumConnectButton />
+              </div>
 
               <button
                 className="md:hidden text-[#4B5563] hover:text-[#1F2937]"
@@ -102,10 +99,9 @@ export default function Header({ activeSection, scrollY, navItems }: HeaderProps
                   {item.name}
                 </Link>
               ))}
-              <Button className="mt-4 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 w-full">
-                <Wallet className="mr-2 h-4 w-4" />
-                Connect Wallet
-              </Button>
+              <div className="mt-4 w-full">
+                <EthereumConnectButton />
+              </div>
             </div>
           </motion.div>
         )}

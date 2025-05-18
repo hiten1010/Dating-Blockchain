@@ -1,16 +1,137 @@
+// Types for Ethereum provider request
+interface RequestParams {
+  method: string;
+  params?: unknown[];
+}
+
+interface SwitchChainError extends Error {
+  code: number;
+}
+
+// Add a type for the Ethereum provider
+interface EthereumProvider {
+  request: (args: RequestParams) => Promise<unknown>;
+  isLeap?: boolean;
+  isMetaMask?: boolean;
+}
+
 // Define types for the Leap wallet
 declare global {
   interface Window {
     leap: {
       enable: (chainId: string) => Promise<string[]>;
       disconnect: (chainId: string) => Promise<void>;
-      getOfflineSigner: (chainId: string) => any;
+      getOfflineSigner: (chainId: string) => unknown;
+      experimentalSuggestChain?: (chainInfo: ChainInfo) => Promise<void>;
+      ethereum?: {
+        request: (args: RequestParams) => Promise<unknown>;
+        isLeap?: boolean;
+      };
+    };
+    ethereum?: {
+      request: (args: RequestParams) => Promise<unknown>;
+      isLeap?: boolean;
     };
   }
 }
 
+// Chain info interface
+interface ChainInfo {
+  chainId: string;
+  chainName: string;
+  rpc: string;
+  rest: string;
+  bip44: {
+    coinType: number;
+  };
+  bech32Config: {
+    bech32PrefixAccAddr: string;
+    bech32PrefixAccPub: string;
+    bech32PrefixValAddr: string;
+    bech32PrefixValPub: string;
+    bech32PrefixConsAddr: string;
+    bech32PrefixConsPub: string;
+  };
+  currencies: Currency[];
+  feeCurrencies: Currency[];
+  stakeCurrency: Currency;
+  coinType: number;
+  gasPriceStep: {
+    low: number;
+    average: number;
+    high: number;
+  };
+}
+
+interface Currency {
+  coinDenom: string;
+  coinMinimalDenom: string;
+  coinDecimals: number;
+}
+
 // Chain ID for Cosmos
 export const COSMOS_CHAIN_ID = "cosmoshub-4";
+
+// Chain info for Unichain Sepolia
+export const UNICHAIN_SEPOLIA_CHAIN_ID = "1301";
+
+// This is the correct format required by EIP-3085
+// Use '0x515' instead of '0x0515' to avoid the padding issue
+export const UNICHAIN_SEPOLIA = {
+  // The proper hexadecimal representation without padding
+  hexChainId: '0x515',
+  params: {
+    chainId: '0x515', // Must be a 0x-prefixed, non-padded, non-zero hexadecimal string
+    chainName: 'Unichain Sepolia',
+    nativeCurrency: { name: 'Sepolia ETH', symbol: 'ETH', decimals: 18 },
+    rpcUrls: ['https://sepolia.unichain.org'],
+    blockExplorerUrls: ['https://sepolia.uniscan.xyz'],
+  },
+};
+
+// Define chain info for Cosmos - only needed if using experimentalSuggestChain
+export const COSMOS_CHAIN_INFO = {
+  chainId: COSMOS_CHAIN_ID,
+  chainName: "Cosmos Hub",
+  rpc: "https://rpc.cosmos.network",
+  rest: "https://rest.cosmos.network",
+  bip44: {
+    coinType: 118,
+  },
+  bech32Config: {
+    bech32PrefixAccAddr: "cosmos",
+    bech32PrefixAccPub: "cosmospub",
+    bech32PrefixValAddr: "cosmosvaloper",
+    bech32PrefixValPub: "cosmosvaloperpub",
+    bech32PrefixConsAddr: "cosmosvalcons",
+    bech32PrefixConsPub: "cosmosvalconspub",
+  },
+  currencies: [
+    {
+      coinDenom: "ATOM",
+      coinMinimalDenom: "uatom",
+      coinDecimals: 6,
+    },
+  ],
+  feeCurrencies: [
+    {
+      coinDenom: "ATOM",
+      coinMinimalDenom: "uatom",
+      coinDecimals: 6,
+    },
+  ],
+  stakeCurrency: {
+    coinDenom: "ATOM",
+    coinMinimalDenom: "uatom",
+    coinDecimals: 6,
+  },
+  coinType: 118,
+  gasPriceStep: {
+    low: 0.01,
+    average: 0.025,
+    high: 0.04,
+  },
+};
 
 /**
  * Check if the Leap wallet extension is installed
@@ -20,7 +141,27 @@ export const isLeapWalletInstalled = (): boolean => {
 };
 
 /**
- * Connect to the Leap wallet
+ * Get the Leap wallet Ethereum provider, not any other wallet
+ */
+export const getLeapProvider = (): EthereumProvider | null => {
+  // First try window.leap.ethereum which is specific to Leap
+  if (window.leap?.ethereum) {
+    console.log("Using window.leap.ethereum provider");
+    return window.leap.ethereum;
+  }
+  
+  // As fallback, check if window.ethereum is from Leap (avoid MetaMask)
+  if (window.ethereum && (window.ethereum.isLeap === true)) {
+    console.log("Using window.ethereum provider from Leap");
+    return window.ethereum;
+  }
+  
+  console.log("No Leap wallet provider found");
+  return null;
+};
+
+/**
+ * Connect to the Leap wallet - specifically for Unichain Sepolia
  * @returns {Promise<string>} The connected wallet address
  */
 export const connectLeap = async (): Promise<string> => {
@@ -29,16 +170,96 @@ export const connectLeap = async (): Promise<string> => {
       throw new Error("Leap wallet not installed");
     }
     
-    // Request access to the wallet
-    const accounts = await window.leap.enable(COSMOS_CHAIN_ID);
+    console.log("Attempting to connect to Unichain Sepolia via Leap wallet");
+    console.log("Chain ID (decimal):", UNICHAIN_SEPOLIA_CHAIN_ID);
+    console.log("Chain ID (hex):", UNICHAIN_SEPOLIA.hexChainId);
     
-    if (accounts && accounts.length > 0) {
-      return accounts[0];
-    } else {
-      throw new Error("No accounts found in Leap wallet");
+    // Get the Leap-specific provider
+    const provider = getLeapProvider();
+    
+    if (!provider) {
+      throw new Error("No Leap wallet Ethereum provider found. Make sure Leap wallet is installed and enabled.");
+    }
+    
+    try {
+      // First try to switch chains
+      try {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: UNICHAIN_SEPOLIA.hexChainId }]
+        });
+        console.log("Switched to Unichain Sepolia chain");
+      } catch (error) {
+        // Cast to the error type we defined earlier
+        const switchError = error as SwitchChainError;
+        
+        // If the chain doesn't exist, add it
+        if (switchError.code === 4902) {
+          console.log("Chain not found in wallet, adding it now");
+          console.log("Adding with params:", JSON.stringify(UNICHAIN_SEPOLIA.params));
+          await provider.request({
+            method: 'wallet_addEthereumChain',
+            params: [UNICHAIN_SEPOLIA.params]
+          });
+          console.log("Added Unichain Sepolia to wallet");
+        } else {
+          console.warn("Error switching chains:", switchError);
+          console.warn("Error message:", switchError.message);
+          console.warn("Error code:", switchError.code);
+          // If it's not a 4902 error, rethrow it
+          throw switchError;
+        }
+      }
+      
+      // Request accounts
+      console.log("Requesting accounts for Unichain Sepolia from Leap wallet");
+      const accounts = await provider.request({ method: 'eth_requestAccounts' }) as string[];
+      
+      if (accounts && accounts.length > 0) {
+        console.log("Connected via Leap wallet:", accounts[0]);
+        return accounts[0];
+      } else {
+        throw new Error("No accounts returned from Leap wallet. Please make sure you've created an account for Unichain Sepolia.");
+      }
+    } catch (evmError) {
+      console.warn("Leap wallet EVM connection failed:", evmError);
+      throw evmError;
     }
   } catch (error) {
     console.error("Error connecting to Leap wallet:", error);
+    throw error;
+  }
+};
+
+/**
+ * Disconnect from the Leap wallet
+ */
+export const disconnectLeap = async (): Promise<void> => {
+  try {
+    if (!isLeapWalletInstalled()) {
+      throw new Error("Leap wallet not installed");
+    }
+    
+    // For Unichain Sepolia (EVM chain), try EVM disconnect
+    const provider = getLeapProvider();
+    if (provider && provider.request) {
+      try {
+        await provider.request({ method: 'wallet_disconnectSite' });
+        console.log("Disconnected Leap wallet EVM provider");
+      } catch (evmError) {
+        console.warn("Leap wallet EVM disconnect failed (might not be supported):", evmError);
+      }
+    }
+    
+    // Also try the standard Leap disconnect
+    try {
+      await window.leap.disconnect(UNICHAIN_SEPOLIA_CHAIN_ID);
+      console.log(`Disconnected from chain ${UNICHAIN_SEPOLIA_CHAIN_ID}`);
+    } catch (disconnectError) {
+      console.warn("Error during standard disconnect:", disconnectError);
+    }
+  } catch (error) {
+    console.error("Error disconnecting from Leap wallet:", error);
     throw error;
   }
 };
@@ -62,4 +283,13 @@ export const formatAddress = (
   }
   
   return `${address.slice(0, prefixLength)}...${address.slice(-suffixLength)}`;
-}; 
+};
+
+export const WALLETCONNECT_METHODS = [
+  "eth_sendTransaction",
+  "personal_sign",
+  "eth_signTypedData",
+  "eth_sign"
+]
+
+export const WALLETCONNECT_EVENTS = ["accountsChanged", "chainChanged"]
