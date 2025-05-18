@@ -687,6 +687,11 @@ app/
 │   ├── verida-ai-twin-service.ts # AI Twin service for Verida blockchain
 │   ├── chat-message-service.ts   # Chat service for blockchain messages
 │   ├── cheqd-service.ts          # Cheqd service for DID operations
+│   ├── ai-twin-chat-service.ts   # AI twin chat response generation service
+│   ├── verida-llm-service.ts     # Verida LLM API integration service
+│   └── prompts/                  # AI prompt templates
+│       ├── ai-twin-prompts.ts    # AI twin personality prompts
+│       └── chat-suggestions-prompts.ts # Chat suggestion prompts
 ├── onboarding/                   # Onboarding flow components
 │   └── components/               # Onboarding step components
 │       ├── connect-wallet-step.tsx # Wallet connection step (Verida & Cheqd)
@@ -705,7 +710,12 @@ app/
 │   └── components/               # Chat UI components
 │       ├── chat-interface.tsx    # Main chat orchestrator
 │       ├── chat-list.tsx         # Conversation list
-│       └── conversation-panel.tsx # Individual conversation view
+│       └── conversation-panel.tsx # Individual conversation view with AI mode
+├── chat-with-twin/               # AI Twin chat interface
+│   └── page.tsx                  # Dedicated page for chatting with your AI twin
+├── components/                   # Shared UI components
+│   └── ui/                       # UI component library
+│       └── heart-loader.tsx      # Heart-themed loading animation
 └── create-twin/                  # AI Twin creation components
     ├── page.tsx                  # Main AI Twin creation page
     └── components/               # AI Twin creation components
@@ -742,6 +752,3 @@ The application uses a centralized configuration system to manage Verida and Che
 - [Verida Client SDK](https://developers.verida.network/protocol/client-sdk/how-it-works)
 - [Verida Authentication](https://developers.verida.network/protocol/client-sdk/authentication)
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
