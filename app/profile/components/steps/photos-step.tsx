@@ -74,11 +74,11 @@ export default function PhotosStep({ profileData, updateProfileData, onContinue 
                     })
                   }
                   
-                  toast({
-                    title: "Photos Retrieved",
-                    description: `Loaded ${photoUrls.length} existing photos from your profile.`,
-                    duration: 3000,
-                  })
+                  // toast({
+                  //   title: "Photos Retrieved",
+                  //   description: `Loaded ${photoUrls.length} existing photos from your profile.`,
+                  //   duration: 3000,
+                  // })
                 } else {
                   console.log("No photos found for this DID")
                 }

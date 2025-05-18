@@ -76,11 +76,11 @@ export default function CreateDIDStep({ onDidCreated }: CreateDIDStepProps) {
         onDidCreated(did);
       }, 1000);
       
-      toast({
-        title: "DID Created Successfully",
-        description: "Your decentralized identity has been created on the Verida network.",
-        duration: 3000,
-      });
+      // toast({
+      //   title: "DID Created Successfully",
+      //   description: "Your decentralized identity has been created on the Verida network.",
+      //   duration: 3000,
+      // });
     } catch (err) {
       console.error("DID creation error:", err);
       setError(err instanceof Error ? err.message : "Failed to create DID. Please try again.");

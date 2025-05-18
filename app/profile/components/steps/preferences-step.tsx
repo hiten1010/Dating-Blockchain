@@ -74,11 +74,11 @@ export default function PreferencesStep({ profileData, updateProfileData, onCont
                     // Include any other preference fields here
                   })
                   
-                  toast({
-                    title: "Preferences Retrieved",
-                    description: "Loaded your existing preferences from your profile.",
-                    duration: 3000,
-                  })
+                  // toast({
+                  //   title: "Preferences Retrieved",
+                  //   description: "Loaded your existing preferences from your profile.",
+                  //   duration: 3000,
+                  // })
                 } else {
                   console.log("No preferences found for this DID")
                 }

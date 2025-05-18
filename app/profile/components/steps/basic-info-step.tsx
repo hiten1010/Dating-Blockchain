@@ -89,11 +89,11 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
               _rev: profile._rev
             });
             
-            toast({
-              title: "Profile Data Retrieved",
-              description: "Loaded your existing profile data from Verida.",
-              duration: 3000,
-            });
+            // toast({
+            //   title: "Profile Data Retrieved",
+            //   description: "Loaded your existing profile data from Verida.",
+            //   duration: 3000,
+            // });
           }
         }
       } catch (error) {
