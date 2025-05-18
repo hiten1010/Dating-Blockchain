@@ -25,7 +25,7 @@ export default function DatingNavbar() {
   }, [])
 
   // Pages where navbar should not appear
-  const excludedPages = ["/", "/profile", "/onboarding", "/ai-twin"]
+  const excludedPages = ["/", "/profile", "/onboarding", "/ai-twin", "/wallet"]
   
   // If current path is in excluded pages, don't render the navbar
   if (excludedPages.some(page => pathname === page || pathname.startsWith(`${page}/`))) {

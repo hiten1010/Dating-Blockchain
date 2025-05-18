@@ -12,7 +12,7 @@ export const metadata = {
   title: "VeraLove - Discover Love on the Decentralized Frontier",
   description:
     "A revolutionary dating platform powered by blockchain technology, decentralized identities, and AI-powered matchmaking.",
-  generator: 'v0.dev'
+  generator: 'hiten'
 }
 
 export default function RootLayout({

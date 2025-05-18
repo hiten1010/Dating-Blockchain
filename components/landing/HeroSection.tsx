@@ -4,12 +4,16 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Shield, ArrowRight, Heart, UserCircle, Lock, Fingerprint, HeartPulse, Flame, Zap, Sparkles, Star, CheckCircle, Stars, Database, Server, Brain } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import NavigationWalletButton from "@/components/wallet/NavigationWalletButton"
 
 interface HeroSectionProps {
   sectionRef: (el: HTMLElement | null) => void
+  walletState?: any // Optional wallet state
 }
 
-export default function HeroSection({ sectionRef }: HeroSectionProps) {
+export default function HeroSection({ sectionRef, walletState }: HeroSectionProps) {
+  const walletButton = NavigationWalletButton();
+  
   const sponsors = [
     {
       name: "Cheqd",
@@ -69,28 +73,42 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Link href="/onboarding">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 group relative overflow-hidden rounded-xl"
-                  >
-                    <span className="absolute inset-0 bg-pattern opacity-20"></span>
-                    <span className="relative flex items-center">
-                      Join the Revolution
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </Button>
-                </Link>
+                {!walletButton.isConnected ? (
+                  <>
+                    <div>
+                      {walletButton.desktopButton}
+                    </div>
+                  
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="border-[#6D28D9]/30 text-[#6D28D9] hover:bg-[#6D28D9]/10 rounded-xl"
+                    >
+                      <Link href="https://github.com/hiten1010/Dating-Blockchain">
+                        Learn More
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <Link href="/dashboard">
+                      <Button
+                        size="lg"
+                        className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 group relative overflow-hidden rounded-xl"
+                      >
+                        <span className="absolute inset-0 bg-pattern opacity-20"></span>
+                        <span className="relative flex items-center">
+                          Enter App
+                          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </span>
+                      </Button>
+                    </Link>
 
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-[#6D28D9]/30 text-[#6D28D9] hover:bg-[#6D28D9]/10 rounded-xl"
-                >
-                  <Link href="https://github.com/hiten1010/Dating-Blockchain">
-                    Learn More
-                  </Link>
-                </Button>
+                    <div>
+                      {walletButton.desktopButton}
+                    </div>
+                  </div>  
+                )}
                </div>
 
               {/* <div className="flex items-center gap-4 text-sm text-[#6B7280]">

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import NavigationWalletButton from "@/components/wallet/NavigationWalletButton"
 
 interface HeaderProps {
   activeSection: number
@@ -15,6 +16,7 @@ interface HeaderProps {
 
 export default function Header({ activeSection, scrollY, navItems }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const walletButton = NavigationWalletButton()
 
   return (
     <>
@@ -53,15 +55,7 @@ export default function Header({ activeSection, scrollY, navItems }: HeaderProps
             </nav>
 
             <div className="flex items-center gap-4">
-              <Link href="/onboarding">
-                <Button
-                  variant="outline"
-                  className="hidden md:flex border-[#6D28D9] text-[#6D28D9] hover:bg-[#6D28D9] hover:text-white"
-                >
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Connect Wallet
-                </Button>
-              </Link>
+              {walletButton.desktopButton}
 
               <button
                 className="md:hidden text-[#4B5563] hover:text-[#1F2937]"
@@ -102,12 +96,9 @@ export default function Header({ activeSection, scrollY, navItems }: HeaderProps
                   {item.name}
                 </Link>
               ))}
-              <Link href="/onboarding">
-                <Button className="mt-4 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 w-full">
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Connect Wallet
-                </Button>
-              </Link>
+              <div className="mt-4 w-full">
+                {walletButton.mobileButton}
+              </div>
             </div>
           </motion.div>
         )}
