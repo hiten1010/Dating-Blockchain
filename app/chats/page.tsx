@@ -1,8 +1,21 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import ChatInterface from "./components/chat-interface"
+import { HeartLoader } from "@/components/ui/heart-loader"
 
 export default function ChatsPage() {
+  const [isLoading, setIsLoading] = useState(true)
+  
+  useEffect(() => {
+    // Simulate loading for a better UX
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 2000)
+    
+    return () => clearTimeout(timer)
+  }, [])
+  
   return (
     <div className="h-screen fixed w-full bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 text-slate-800 overflow-hidden">
       {/* Animated background elements */}
@@ -43,11 +56,21 @@ export default function ChatsPage() {
       </div>
 
       <div className="relative container mx-auto px-4 py-8">
-        
-
-        <div className="h-[calc(100%-120px)]">
-          <ChatInterface />
-        </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)]">
+            <HeartLoader size="lg" showText text="Loading your matches..." />
+            <p className="text-pink-500 mt-6 text-lg font-medium">
+              Connecting to the blockchain...
+            </p>
+            <p className="text-pink-400 mt-2 text-sm max-w-md text-center">
+              We're retrieving your conversations and preparing your AI assistant
+            </p>
+          </div>
+        ) : (
+          <div className="h-[calc(100%-120px)]">
+            <ChatInterface />
+          </div>
+        )}
       </div>
 
       {/* Custom CSS for animations */}

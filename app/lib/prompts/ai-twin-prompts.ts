@@ -204,12 +204,16 @@ Childhood: ${twinData.childhood}
 /**
  * Generate a prompt for the AI twin to respond to a user message
  * @param twinData - The AI twin data
- * @param userMessage - The user's message
+ * @param userMessage - The user's message (may include conversation history)
  * @returns The formatted prompt
  */
 export function generateAiTwinPrompt(twinData: any, userMessage: string): string {
   // Format the twin data into a structured format for the prompt
   const formattedTwinData = formatTwinDataForPrompt(twinData);
+  
+  // Determine if the userMessage contains conversation history
+  const hasConversationHistory = userMessage.includes('\n') && 
+    (userMessage.includes('User:') || userMessage.includes('AI Twin:'));
   
   // Create a prompt that includes the twin data and user message
   return `
@@ -227,7 +231,13 @@ IMPORTANT INSTRUCTIONS:
 7. Express emotions in a way that aligns with the emotional responses described.
 8. If asked about something not covered in the profile, respond in a way consistent with the overall personality.
 9. Keep responses natural and conversational - you are having a casual chat as ${twinData.name}.
+10. Maintain continuity with previous messages in the conversation history.
+11. DO NOT include "AI Twin:" or any other prefix before your response.
+12. DO NOT explain that you're an AI - just respond naturally as ${twinData.name}.
 
-User message: "${userMessage}"
+${hasConversationHistory ? 'CONVERSATION HISTORY AND CURRENT MESSAGE:' : 'USER MESSAGE:'}
+${userMessage}
+
+Remember to respond as ${twinData.name}, using first person ("I", "me", "my") and maintaining ${twinData.name}'s personality throughout.
 `;
 } 
