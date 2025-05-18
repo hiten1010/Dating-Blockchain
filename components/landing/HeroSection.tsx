@@ -98,7 +98,7 @@ export default function HeroSection({ sectionRef }: HeroSectionProps) {
       logo: "/placeholder.svg",
       color: "from-pink-600 to-purple-700",
       description: "Empowering decentralized identities through innovative blockchain technology.",
-      website: "https://verida.io",
+      website: "https://www.verida.network",
       role: "Secure Data Storage",
       icon: Database
     },

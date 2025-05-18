@@ -103,7 +103,7 @@ export default function JourneySection({ sectionRef, journeySteps }: JourneySect
         </div>
 
         <div className="mt-16 text-center">
-          <Link href="/onboarding">
+          <Link href="/wallet">
             <Button
               size="lg"
               className="bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl"

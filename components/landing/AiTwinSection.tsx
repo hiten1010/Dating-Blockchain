@@ -324,7 +324,7 @@ export default function AiTwinSection() {
               whileTap={{ scale: 0.98 }}
             >
               <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] rounded-xl opacity-75 blur group-hover:opacity-100 transition duration-200"></div>
-              <Link href="/onboarding">
+              <Link href="/wallet">
                 <Button className="relative w-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white py-6 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-200">
                   <span className="flex items-center text-lg">
                     Create Your AI Twin

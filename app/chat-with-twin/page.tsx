@@ -208,7 +208,7 @@ export default function ChatWithTwinPage() {
               <p className="text-slate-600 text-center max-w-md mb-6">
                 You need to create an AI twin before you can chat with it. Go to the twin creation page to get started.
               </p>
-              <Link href="/create-twin">
+              <Link href="/wallet">
                 <Button className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white">
                   Create Your AI Twin
                 </Button>
