@@ -23,7 +23,9 @@ export default function ChatWithTwinPage() {
   const [userInput, setUserInput] = useState("")
   const [aiMode, setAiMode] = useState(false)
   const [currentSuggestion, setCurrentSuggestion] = useState("")
+  const [autoSendCountdown, setAutoSendCountdown] = useState(0)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Auto-scroll when messages change
   useEffect(() => {
@@ -31,6 +33,56 @@ export default function ChatWithTwinPage() {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
+
+  // Auto-send messages when in AI mode and a new suggestion is generated
+  useEffect(() => {
+    // Clear any existing timeout
+    if (autoSendTimeoutRef.current) {
+      clearTimeout(autoSendTimeoutRef.current);
+      autoSendTimeoutRef.current = null;
+    }
+    
+    // Reset countdown
+    setAutoSendCountdown(0);
+    
+    // If AI mode is enabled and we have a suggestion and we're not already typing
+    if (aiMode && currentSuggestion && !isTyping) {
+      console.log("Setting up auto-send timer");
+      
+      // Set the delay (5 seconds)
+      const autoSendDelay = 5000;
+      const startTime = Date.now();
+      
+      // Start countdown
+      setAutoSendCountdown(5);
+      
+      // Update countdown every second
+      const countdownInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, Math.ceil((autoSendDelay - elapsed) / 1000));
+        setAutoSendCountdown(remaining);
+        
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+      
+      // Set timeout to send the message
+      autoSendTimeoutRef.current = setTimeout(() => {
+        console.log("Auto-sending message:", currentSuggestion);
+        setUserInput(currentSuggestion);
+        handleSendMessage();
+        clearInterval(countdownInterval);
+      }, autoSendDelay);
+      
+      // Clean up on unmount or when dependencies change
+      return () => {
+        clearTimeout(autoSendTimeoutRef.current as NodeJS.Timeout);
+        clearInterval(countdownInterval);
+      };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSuggestion, aiMode, isTyping]);
 
   // Fetch Twin data when component mounts
   useEffect(() => {
@@ -134,15 +186,22 @@ export default function ChatWithTwinPage() {
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    if (!userInput.trim() || !twinData || isTyping) return;
+    // In AI mode, we might be sending an empty message (using suggestion)
+    // In manual mode, we need a non-empty message
+    if ((!userInput.trim() && !aiMode) || !twinData || isTyping) return;
     
     // Add user message to chat
-    const userMessage = userInput.trim();
+    const userMessage = userInput.trim() || currentSuggestion;
     const timestamp = new Date().toISOString();
     
     const newMessage = { content: userMessage, isAi: false, timestamp };
     setMessages(prev => [...prev, newMessage]);
     setUserInput('');
+    
+    // Clear the current suggestion since we're using it
+    if (aiMode) {
+      setCurrentSuggestion('');
+    }
     
     // Generate AI response
     await generateAiResponse(userMessage, [...messages, newMessage]);
@@ -223,6 +282,12 @@ export default function ChatWithTwinPage() {
   const useSuggestion = () => {
     if (!currentSuggestion) return;
     
+    // Clear any auto-send timeout
+    if (autoSendTimeoutRef.current) {
+      clearTimeout(autoSendTimeoutRef.current);
+      autoSendTimeoutRef.current = null;
+    }
+    
     setUserInput(currentSuggestion);
     
     // If AI mode is on, automatically send the message
@@ -245,6 +310,24 @@ export default function ChatWithTwinPage() {
         : "You'll need to manually send messages.",
       variant: "default"
     });
+    
+    // If enabling AI mode and we have a suggestion, use it immediately
+    if (newMode && currentSuggestion) {
+      // Clear any existing timeout
+      if (autoSendTimeoutRef.current) {
+        clearTimeout(autoSendTimeoutRef.current);
+      }
+      
+      // Set countdown
+      setAutoSendCountdown(3);
+      
+      // Send after a short delay
+      autoSendTimeoutRef.current = setTimeout(() => {
+        setUserInput(currentSuggestion);
+        handleSendMessage();
+        autoSendTimeoutRef.current = null;
+      }, 3000);
+    }
   };
 
   const formatTime = (timestamp: string) => {
@@ -322,10 +405,17 @@ export default function ChatWithTwinPage() {
           
           {/* AI Mode Toggle */}
           <div className="flex items-center space-x-2 bg-white/80 px-3 py-2 rounded-full shadow-sm">
-            <Switch id="ai-mode" checked={aiMode} onCheckedChange={toggleAiMode} />
+            <Switch 
+              id="ai-mode" 
+              checked={aiMode} 
+              onCheckedChange={toggleAiMode}
+              className={aiMode ? "data-[state=checked]:bg-pink-500" : ""} 
+            />
             <Label htmlFor="ai-mode" className="flex items-center gap-1 text-slate-700 cursor-pointer">
-              <Bot className="h-4 w-4 text-pink-500" />
-              AI Mode
+              <Bot className={`h-4 w-4 ${aiMode ? "text-pink-500" : "text-slate-500"}`} />
+              <span className={aiMode ? "font-medium text-pink-700" : ""}>
+                {aiMode ? "AI Mode Active" : "AI Mode"}
+              </span>
             </Label>
           </div>
         </div>
@@ -420,21 +510,37 @@ export default function ChatWithTwinPage() {
               {currentSuggestion && (
                 <div className="px-4 py-2 border-t border-pink-100 mt-4">
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white/80 border-pink-200 hover:bg-pink-50 text-pink-700 rounded-full flex-shrink-0"
-                      onClick={useSuggestion}
-                    >
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      {currentSuggestion}
-                    </Button>
+                    {!aiMode ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-white/80 border-pink-200 hover:bg-pink-50 text-pink-700 rounded-full flex-shrink-0"
+                        onClick={useSuggestion}
+                      >
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        {currentSuggestion}
+                      </Button>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-pink-700 bg-pink-50 rounded-lg p-2 w-full">
+                        <Sparkles className="h-3 w-3 flex-shrink-0 text-pink-500" />
+                        <span className="flex-1">
+                          <span className="font-medium">Next message: </span>
+                          {currentSuggestion}
+                        </span>
+                        <span className="text-xs bg-pink-200 text-pink-800 px-2 py-1 rounded-full flex items-center gap-1">
+                          <Loader2 className={`h-3 w-3 ${autoSendCountdown > 0 ? "animate-spin" : ""}`} />
+                          {autoSendCountdown > 0 
+                            ? `Sending in ${autoSendCountdown}s` 
+                            : "Sending..."}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   {aiMode && (
                     <div className="mt-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-lg p-2">
-                      <Sparkles className="h-3 w-3 flex-shrink-0" />
-                      <span>AI Mode is active. Suggestions will be sent automatically.</span>
+                      <Bot className="h-3 w-3 flex-shrink-0" />
+                      <span>AI Mode is active. Messages will be sent automatically.</span>
                     </div>
                   )}
                 </div>
@@ -445,35 +551,37 @@ export default function ChatWithTwinPage() {
                 <div className="flex items-end gap-2">
                   <div className="flex-1 relative">
                     <Textarea
-                      placeholder="Type a message..."
-                      className="min-h-[60px] max-h-[150px] bg-white/80 border-pink-100 focus:border-pink-300 rounded-xl resize-none pr-12"
+                      placeholder={aiMode ? "AI Mode is active - messages will be sent automatically" : "Type a message..."}
+                      className={`min-h-[60px] max-h-[150px] bg-white/80 border-pink-100 focus:border-pink-300 rounded-xl resize-none pr-12 ${aiMode ? 'bg-gray-50 text-gray-400' : ''}`}
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
+                      disabled={aiMode}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
+                        if (e.key === 'Enter' && !e.shiftKey && !aiMode) {
                           e.preventDefault();
                           handleSendMessage();
                         }
                       }}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 bottom-2 h-8 w-8 rounded-full bg-white/80 hover:bg-pink-50 text-slate-600"
-                      onClick={() => setUserInput("")}
-                      disabled={!userInput}
-                    >
-                      <CloseIcon className="h-4 w-4" />
-                      <span className="sr-only">Clear</span>
-                    </Button>
+                    {!aiMode && userInput && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 bottom-2 h-8 w-8 rounded-full bg-white/80 hover:bg-pink-50 text-slate-600"
+                        onClick={() => setUserInput("")}
+                      >
+                        <CloseIcon className="h-4 w-4" />
+                        <span className="sr-only">Clear</span>
+                      </Button>
+                    )}
                   </div>
 
                   <Button
                     type="submit"
                     className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-full h-10 w-10 flex-shrink-0"
                     size="icon"
-                    disabled={!userInput.trim() || isTyping}
+                    disabled={(!userInput.trim() && !aiMode) || isTyping}
                   >
                     <Send className="h-4 w-4" />
                     <span className="sr-only">Send</span>
