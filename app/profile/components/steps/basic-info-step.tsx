@@ -82,6 +82,8 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
               age: profile.age || profileData.age,
               location: profile.location || profileData.location,
               bio: profile.bio || profileData.bio,
+              // Include primaryPhotoIndex from the profile
+              primaryPhotoIndex: profile.primaryPhotoIndex !== undefined ? profile.primaryPhotoIndex : profileData.primaryPhotoIndex,
               // Store _id and _rev for updates
               _id: profile._id,
               _rev: profile._rev

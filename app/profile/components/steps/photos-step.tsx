@@ -50,13 +50,29 @@ export default function PhotosStep({ profileData, updateProfileData, onContinue 
                   // Extract URLs and update profile data
                   const photoUrls = photos.map((photo: any) => photo.photoUrl)
                   
-                  // Update profile data with fetched photos
-                  updateProfileData({
-                    photos: photoUrls,
-                    photoDataArray: photos,
-                    // Set primary photo index if not already set
-                    primaryPhotoIndex: profileData.primaryPhotoIndex >= 0 ? profileData.primaryPhotoIndex : 0
-                  })
+                  // Get the profile to ensure we have the correct primaryPhotoIndex
+                  try {
+                    const profile = await profileRestService.getProfile(profileData.did)
+                    console.log("Profile data for primary photo index:", profile)
+                    
+                    // Update profile data with fetched photos and the correct primaryPhotoIndex from the profile
+                    updateProfileData({
+                      photos: photoUrls,
+                      photoDataArray: photos,
+                      // Use the primaryPhotoIndex from the profile if available, otherwise use the current value
+                      primaryPhotoIndex: profile?.primaryPhotoIndex !== undefined ? profile.primaryPhotoIndex : profileData.primaryPhotoIndex
+                    })
+                    
+                    console.log(`Using primaryPhotoIndex: ${profile?.primaryPhotoIndex !== undefined ? profile.primaryPhotoIndex : profileData.primaryPhotoIndex}`)
+                  } catch (profileError) {
+                    console.error("Error fetching profile for primaryPhotoIndex:", profileError)
+                    
+                    // Fallback to just updating photos without changing primaryPhotoIndex
+                    updateProfileData({
+                      photos: photoUrls,
+                      photoDataArray: photos
+                    })
+                  }
                   
                   toast({
                     title: "Photos Retrieved",

@@ -173,12 +173,13 @@ export default function PreferencesStep({ profileData, updateProfileData, onCont
         bio: profileData.bio || "",
         interests: profileData.interests || [],
         relationshipGoals: profileData.relationshipGoals || "",
-        primaryPhotoIndex: profileData.primaryPhotoIndex || 0,
+        primaryPhotoIndex: profileData.primaryPhotoIndex !== undefined ? profileData.primaryPhotoIndex : 0,
         _id: profileData._id,
         _rev: profileData._rev
       }
       
       console.log("Saving complete profile data:", profileDataToSave)
+      console.log("Using primaryPhotoIndex for save:", profileDataToSave.primaryPhotoIndex)
       
       // Try to save using the REST service
       if (profileRestService) {
