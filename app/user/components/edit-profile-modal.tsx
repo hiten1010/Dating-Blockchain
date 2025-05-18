@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { InfoIcon, Hexagon } from "lucide-react"
 import { motion } from "framer-motion"
+import { useVeridaClient, useProfileRestService } from "@/app/lib/clientside-verida"
 
 type ProfileData = {
   name: string
@@ -35,6 +36,53 @@ interface EditProfileModalProps {
 export default function EditProfileModal({ isOpen, onClose, profile }: EditProfileModalProps) {
   const [formData, setFormData] = useState<ProfileData>({ ...profile })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [dataLoaded, setDataLoaded] = useState(false)
+  
+  // Get Verida client and profile service
+  const { client, isLoading: clientLoading, getDidId } = useVeridaClient()
+  const { service: profileRestService, isLoading: serviceLoading } = useProfileRestService()
+
+  // Load user data from Verida
+  useEffect(() => {
+    const loadUserData = async () => {
+      // Skip if already loaded or dependencies are still loading
+      if (dataLoaded || clientLoading || serviceLoading || !profileRestService) {
+        return
+      }
+      
+      try {
+        // Get DID from localStorage
+        const did = localStorage.getItem("veridaDID")
+        
+        if (did) {
+          // Load profile data from Verida
+          try {
+            const profile = await profileRestService.getProfile(did)
+            console.log("Loaded profile data for edit modal:", profile)
+            
+            if (profile) {
+              setFormData(prevData => ({
+                ...prevData,
+                name: profile.displayName || prevData.name,
+                bio: profile.bio || prevData.bio,
+                age: profile.age || prevData.age,
+                location: profile.location || prevData.location,
+              }))
+            }
+          } catch (error) {
+            console.error("Error loading profile:", error)
+          }
+        }
+        
+        // Mark as loaded to prevent further calls
+        setDataLoaded(true)
+      } catch (error) {
+        console.error("Error in loadUserData:", error)
+      }
+    }
+    
+    loadUserData()
+  }, [client, clientLoading, serviceLoading, profileRestService, dataLoaded])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -48,12 +96,27 @@ export default function EditProfileModal({ isOpen, onClose, profile }: EditProfi
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Get DID from localStorage
+      const did = localStorage.getItem("veridaDID")
+      
+      if (did && profileRestService) {
+        // Save profile data to Verida
+        await profileRestService.updateProfile(did, {
+          displayName: formData.name,
+          bio: formData.bio,
+          age: formData.age,
+          location: formData.location
+        })
+        
+        console.log("Profile updated successfully")
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error)
+    } finally {
       setIsSubmitting(false)
       onClose()
-      // Here you would update the profile data
-    }, 1500)
+    }
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -16,24 +16,126 @@ import {
   HistoryIcon,
 } from "lucide-react"
 import EditProfileModal from "./edit-profile-modal"
+import { useVeridaClient, useProfileRestService } from "@/app/lib/clientside-verida"
 
-// Mock data - would be fetched from your API
-const profileData = {
-  name: "Alex Johnson",
-  bio: "Blockchain enthusiast and coffee lover. Looking for meaningful connections in the web3 world.",
-  age: 28,
-  location: "San Francisco, CA",
-  profileImage: "/Profile.png?height=200&width=200",
+// Default profile data structure
+const defaultProfileData = {
+  name: "",
+  bio: "",
+  age: 0,
+  location: "",
+  profileImage: "",
   isOnChain: {
-    name: true,
+    name: false,
     bio: false,
-    age: true,
+    age: false,
     location: false,
   },
 }
 
 export default function ProfileSnapshot() {
   const [isEditing, setIsEditing] = useState(false)
+  const [profileData, setProfileData] = useState(defaultProfileData)
+  const [dataLoaded, setDataLoaded] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // Get Verida client and profile service
+  const { client, isLoading: clientLoading, getDidId } = useVeridaClient()
+  const { service: profileRestService, isLoading: serviceLoading } = useProfileRestService()
+
+  // Load user data from Verida
+  useEffect(() => {
+    const loadUserData = async () => {
+      // Skip if already loaded or dependencies are still loading
+      if (dataLoaded || clientLoading || serviceLoading || !profileRestService) {
+        return
+      }
+      
+      try {
+        setIsLoading(true)
+        
+        // Get DID from localStorage
+        let did = localStorage.getItem("veridaDID") || ""
+        
+        if (!did && client) {
+          try {
+            did = await getDidId() || ""
+            if (did) {
+              localStorage.setItem("veridaDID", did)
+            }
+          } catch (error) {
+            console.error("Error getting DID:", error)
+          }
+        }
+        
+        if (did) {
+          // Load profile data from Verida
+          try {
+            const profile = await profileRestService.getProfile(did)
+            console.log("Loaded profile data for snapshot:", profile)
+            
+            if (profile) {
+              // Get the primary photo
+              let photoUrl = ""
+              try {
+                const photos = await profileRestService.getProfilePhotos(did)
+                if (photos && photos.length > 0) {
+                  // Use primary photo if set, otherwise use first photo
+                  const primaryIndex = profile.primaryPhotoIndex !== undefined ? profile.primaryPhotoIndex : 0
+                  if (photos[primaryIndex]) {
+                    photoUrl = photos[primaryIndex].photoUrl
+                  }
+                }
+              } catch (photoError) {
+                console.error("Error loading photos:", photoError)
+              }
+              
+              // Check if user has NFT (indicates on-chain data)
+              const hasNFT = !!localStorage.getItem("nftData")
+              
+              setProfileData({
+                name: profile.displayName || "User",
+                bio: profile.bio || "No bio available",
+                age: profile.age || 0,
+                location: profile.location || "Location not set",
+                profileImage: photoUrl || "/Profile.png?height=200&width=200",
+                isOnChain: {
+                  name: hasNFT,
+                  bio: false, // Bio is typically off-chain
+                  age: hasNFT,
+                  location: false, // Location is typically off-chain
+                },
+              })
+            }
+          } catch (error) {
+            console.error("Error loading profile:", error)
+            // Use default data if profile loading fails
+            setProfileData({
+              ...defaultProfileData,
+              name: "User",
+              profileImage: "/Profile.png?height=200&width=200",
+            })
+          }
+        } else {
+          // Use default data if no DID
+          setProfileData({
+            ...defaultProfileData,
+            name: "User",
+            profileImage: "/Profile.png?height=200&width=200",
+          })
+        }
+        
+        // Mark as loaded to prevent further calls
+        setDataLoaded(true)
+      } catch (error) {
+        console.error("Error in loadUserData:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadUserData()
+  }, [client, clientLoading, serviceLoading, profileRestService, getDidId, dataLoaded])
 
   return (
     <>
@@ -52,23 +154,26 @@ export default function ProfileSnapshot() {
             <div className="flex flex-col items-center space-y-6">
               <div className="relative group">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full blur opacity-70 group-hover:opacity-100 transition duration-1000"></div>
-                <Avatar className="h-32 w-32 relative">
-                  <AvatarImage src={profileData.profileImage} alt={profileData.name} className="object-cover" />
-                  <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white text-2xl">
-                    {profileData.name.substring(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
+                {isLoading ? (
+                  <div className="h-32 w-32 rounded-full bg-gray-200 animate-pulse"></div>
+                ) : (
+                  <Avatar className="h-32 w-32 relative">
+                    <AvatarImage src={profileData.profileImage} alt={profileData.name} className="object-cover" />
+                    <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white text-2xl">
+                      {profileData.name.substring(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
               </div>
-
-              <Button variant="ghost" size="sm" className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700">
-                <PencilIcon className="h-3 w-3 mr-1" />
-                Change Photo
-              </Button>
 
               <div className="w-full space-y-4 mt-4">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-800">{profileData.name}</h3>
+                    {isLoading ? (
+                      <div className="h-6 w-32 bg-gray-200 animate-pulse rounded"></div>
+                    ) : (
+                      <h3 className="text-lg font-semibold text-slate-800">{profileData.name}</h3>
+                    )}
                     {profileData.isOnChain.name && (
                       <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-300">
                         On-Chain
@@ -78,7 +183,11 @@ export default function ProfileSnapshot() {
 
                   <div className="flex items-center text-sm text-slate-600 gap-2">
                     <CalendarIcon className="h-4 w-4 text-indigo-500" />
-                    <span>{profileData.age} years old</span>
+                    {isLoading ? (
+                      <div className="h-4 w-20 bg-gray-200 animate-pulse rounded"></div>
+                    ) : (
+                      <span>{profileData.age > 0 ? `${profileData.age} years old` : "Age not set"}</span>
+                    )}
                     {profileData.isOnChain.age && (
                       <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-300">
                         On-Chain
@@ -88,7 +197,11 @@ export default function ProfileSnapshot() {
 
                   <div className="flex items-center text-sm text-slate-600 gap-2">
                     <MapPinIcon className="h-4 w-4 text-indigo-500" />
-                    <span>{profileData.location}</span>
+                    {isLoading ? (
+                      <div className="h-4 w-24 bg-gray-200 animate-pulse rounded"></div>
+                    ) : (
+                      <span>{profileData.location}</span>
+                    )}
                     {profileData.isOnChain.location && (
                       <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-300">
                         On-Chain
@@ -135,7 +248,14 @@ export default function ProfileSnapshot() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-slate-700 leading-relaxed">{profileData.bio}</p>
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-4 w-full bg-gray-200 animate-pulse rounded"></div>
+                    <div className="h-4 w-3/4 bg-gray-200 animate-pulse rounded"></div>
+                  </div>
+                ) : (
+                  <p className="text-slate-700 leading-relaxed">{profileData.bio}</p>
+                )}
               </div>
 
               <div className="pt-4 border-t border-indigo-100">
