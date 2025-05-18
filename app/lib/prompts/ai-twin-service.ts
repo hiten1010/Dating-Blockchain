@@ -6,17 +6,36 @@
 
 import { sendAgentPrompt } from '../verida-llm-service';
 import { generateAiTwinPrompt } from './ai-twin-prompts';
+import { Message } from '../../types/chat';
+import { extractAiTwinResponse } from '../ai-twin-chat-service';
 
 /**
  * Generate a response from the AI Twin using the agent LLM API
  * @param twinData - The AI twin data
  * @param userMessage - The user's message
+ * @param conversationHistory - Optional conversation history for context
  * @returns Promise with the AI twin's response
  */
-export async function generateAiTwinResponse(twinData: any, userMessage: string): Promise<string> {
+export async function generateAiTwinResponse(
+  twinData: any, 
+  userMessage: string,
+  conversationHistory?: Message[]
+): Promise<string> {
   try {
-    // Generate the prompt using the template
-    const prompt = generateAiTwinPrompt(twinData, userMessage);
+    // Format conversation history if provided
+    let formattedMessage = userMessage;
+    
+    if (conversationHistory && conversationHistory.length > 0) {
+      const formattedHistory = conversationHistory.map(msg => {
+        const role = msg.sender === 'user' ? 'User' : (twinData?.name || 'AI Twin');
+        return `${role}: ${msg.content}`;
+      }).join('\n\n');
+      
+      formattedMessage = `${formattedHistory}\n\nUser: ${userMessage}`;
+    }
+    
+    // Generate the prompt using the template with full conversation context
+    const prompt = generateAiTwinPrompt(twinData, formattedMessage);
 
     // Send the agent prompt
     const response = await sendAgentPrompt({
@@ -24,30 +43,10 @@ export async function generateAiTwinResponse(twinData: any, userMessage: string)
       temperature: 0.7 // Slightly creative but still coherent
     });
 
-    // Extract the response text from the result
-    let responseText = '';
-    
     console.log("API Response:", JSON.stringify(response, null, 2));
     
-    // Check for the response structure that contains the output field
-    if (response && response.response && response.response.output) {
-      responseText = response.response.output;
-    }
-    // Check for the older format with result.content
-    else if (response && response.result && response.result.content) {
-      responseText = response.result.content;
-    }
-    // Check for the format with choices array
-    else if (response && response.result && response.result.choices && response.result.choices.length > 0) {
-      responseText = response.result.choices[0].message.content;
-    }
-    else {
-      // Fallback response if the API doesn't return the expected format
-      responseText = "I'm sorry, I couldn't process your message right now. Could you try again?";
-      console.error("Unexpected API response format:", response);
-    }
-
-    return responseText;
+    // Use the shared utility function to extract and format the response
+    return extractAiTwinResponse(response);
   } catch (error) {
     console.error('Error generating AI twin response:', error);
     return "I'm having trouble connecting right now. Let's try again in a moment.";

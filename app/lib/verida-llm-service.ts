@@ -6,6 +6,15 @@
  */
 
 import { API_BASE_URL, AUTH_TOKEN } from './verida-config';
+import { 
+  generateSuggestionPrompt, 
+  generateAutoResponsePrompt, 
+  generateConversationStarterPrompt,
+  generateFlirtyResponsePrompt
+} from './prompts/chat-suggestions-prompts';
+import { formatTwinDataForPrompt, generateAiTwinPrompt } from './prompts/ai-twin-prompts';
+import { Message } from '../types/chat';
+import { generateAiTwinChatResponse } from './ai-twin-chat-service';
 
 // LLM API endpoints
 const LLM_API_ENDPOINTS = {

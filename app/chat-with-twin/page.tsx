@@ -8,17 +8,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
-import { Brain, Bot, User, Database, Sparkles, Send, Loader2, ArrowLeft } from "lucide-react"
+import { Brain, Bot, User, Database, Sparkles, Send, Loader2, ArrowLeft, X as CloseIcon } from "lucide-react"
 import { getUserAiTwin } from "../lib/verida-ai-twin-service"
-import { generateAiTwinResponse } from "../lib/prompts/ai-twin-service"
+import { generateAiTwinChatResponse } from "../lib/ai-twin-chat-service"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import Link from "next/link"
 
 export default function ChatWithTwinPage() {
   const [twinData, setTwinData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
-  const [messages, setMessages] = useState<{ content: string; isAi: boolean }[]>([])
+  const [messages, setMessages] = useState<{ content: string; isAi: boolean; timestamp: string }[]>([])
   const [userInput, setUserInput] = useState("")
+  const [aiMode, setAiMode] = useState(false)
+  const [currentSuggestion, setCurrentSuggestion] = useState("")
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll when messages change
@@ -41,14 +45,23 @@ export default function ChatWithTwinPage() {
           console.log('Successfully loaded AI twin data:', data.name);
           setTwinData(data);
           
-          // Start conversation with welcome message
+          // Start conversation with welcome message after a delay
           setTimeout(() => {
-            setMessages([
-              { 
-                content: `Welcome! I'm ${data.name}'s AI twin. How can I help you today?`, 
-                isAi: true 
+            const welcomeMessage = { 
+              id: `welcome-msg-${Date.now()}`,
+              content: `Welcome! I'm ${data.name}'s AI twin. How can I help you today?`, 
+              isAi: true,
+              timestamp: new Date().toISOString()
+            };
+            setMessages([welcomeMessage]);
+            
+            // Generate initial suggestion with a longer delay
+            // to prevent API call conflicts
+            setTimeout(() => {
+              if (!isTyping) {
+                generateSuggestion(data, [welcomeMessage]);
               }
-            ]);
+            }, 3000);
           }, 1000);
           
           toast({
@@ -78,29 +91,110 @@ export default function ChatWithTwinPage() {
     fetchTwinData();
   }, []);
 
+  // Generate a suggestion based on conversation history
+  const generateSuggestion = async (profile: any, conversationHistory: any[]) => {
+    // Don't generate suggestions if already typing
+    if (isTyping) {
+      return;
+    }
+    
+    try {
+      // Format messages for the API
+      const formattedMessages = conversationHistory.map(msg => ({
+        id: msg.id || `msg-${msg.isAi ? 'ai' : 'user'}-${msg.timestamp}`,
+        content: msg.content,
+        sender: msg.isAi ? "ai" : "user",
+        senderName: msg.isAi ? (profile?.name || "AI Twin") : "User",
+        timestamp: msg.timestamp || new Date().toISOString()
+      }));
+      
+      // Create suggestion prompt with full profile data
+      const suggestion = await generateAiTwinChatResponse({
+        userMessage: "Suggest a short message I could send to continue the conversation",
+        conversationHistory: formattedMessages,
+        profileData: profile, // Pass the complete twin data with all profile fields
+        temperature: 0.8, // More creative for suggestions
+        promptType: 'suggestion'
+      });
+      
+      // Clean up the suggestion
+      const cleanSuggestion = suggestion
+        .replace(/^["']|["']$/g, '') // Remove quotes
+        .replace(/^(I would |You could |Try |Say |Suggestion: )/i, '') // Remove prefixes
+        .trim();
+      
+      setCurrentSuggestion(cleanSuggestion);
+    } catch (error) {
+      console.error("Error generating suggestion:", error);
+      setCurrentSuggestion("How are you feeling today?");
+    }
+  };
+
   // Handle user input submission
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     
     if (!userInput.trim() || !twinData || isTyping) return;
     
     // Add user message to chat
     const userMessage = userInput.trim();
-    setMessages(prev => [...prev, { content: userMessage, isAi: false }]);
+    const timestamp = new Date().toISOString();
+    
+    const newMessage = { content: userMessage, isAi: false, timestamp };
+    setMessages(prev => [...prev, newMessage]);
     setUserInput('');
     
+    // Generate AI response
+    await generateAiResponse(userMessage, [...messages, newMessage]);
+  };
+  
+  // Generate AI response using conversation history
+  const generateAiResponse = async (userMessage: string, currentMessages: any[]) => {
     // Show typing indicator
     setIsTyping(true);
     
     try {
-      // Generate response using LLM service
-      const response = await generateAiTwinResponse(twinData, userMessage);
+      // Format messages for the API
+      const formattedMessages = currentMessages.map(msg => ({
+        id: msg.id || `msg-${msg.isAi ? 'ai' : 'user'}-${msg.timestamp}`,
+        content: msg.content,
+        sender: msg.isAi ? "ai" : "user",
+        senderName: msg.isAi ? (twinData?.name || "AI Twin") : "User",
+        timestamp: msg.timestamp || new Date().toISOString()
+      }));
       
-      // Hide typing indicator
-      setIsTyping(false);
+      // Generate response with conversation history context and full twin profile data
+      const response = await generateAiTwinChatResponse({
+        userMessage,
+        conversationHistory: formattedMessages,
+        profileData: twinData, // Pass the complete twin data with all profile fields
+        temperature: 0.7,
+        maxHistoryMessages: 15 // Keep a good amount of history for context
+      });
       
-      // Add AI response to chat
-      setMessages(prev => [...prev, { content: response, isAi: true }]);
+      // Hide typing indicator after a delay for realism
+      setTimeout(() => {
+        setIsTyping(false);
+        
+        // Add AI response to chat with timestamp
+        const timestamp = new Date().toISOString();
+        const aiMessage = { 
+          id: `ai-msg-${Date.now()}`,
+          content: response, 
+          isAi: true, 
+          timestamp 
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        
+        // Generate new suggestion based on updated conversation
+        // but with a longer delay to prevent too many API calls
+        setTimeout(() => {
+          // Only generate a suggestion if not currently typing
+          if (!isTyping) {
+            generateSuggestion(twinData, [...currentMessages, aiMessage]);
+          }
+        }, 2000);
+      }, 1500 + Math.random() * 1000); // Random delay between 1.5-2.5 seconds for realism
     } catch (error) {
       console.error('Error generating LLM response:', error);
       
@@ -109,7 +203,12 @@ export default function ChatWithTwinPage() {
       
       // Add fallback response
       const fallbackResponse = "I'm sorry, I couldn't process your message right now. Could you try again?";
-      setMessages(prev => [...prev, { content: fallbackResponse, isAi: true }]);
+      setMessages(prev => [...prev, { 
+        id: `error-msg-${Date.now()}`,
+        content: fallbackResponse, 
+        isAi: true, 
+        timestamp: new Date().toISOString() 
+      }]);
       
       // Show error toast
       toast({
@@ -118,6 +217,38 @@ export default function ChatWithTwinPage() {
         variant: "destructive",
       });
     }
+  };
+  
+  // Handle using a suggestion
+  const useSuggestion = () => {
+    if (!currentSuggestion) return;
+    
+    setUserInput(currentSuggestion);
+    
+    // If AI mode is on, automatically send the message
+    if (aiMode) {
+      setTimeout(() => {
+        handleSendMessage();
+      }, 100);
+    }
+  };
+  
+  // Toggle AI mode
+  const toggleAiMode = () => {
+    const newMode = !aiMode;
+    setAiMode(newMode);
+    
+    toast({
+      title: newMode ? "AI Mode Enabled" : "AI Mode Disabled",
+      description: newMode 
+        ? "Suggestions will be automatically sent without your confirmation." 
+        : "You'll need to manually send messages.",
+      variant: "default"
+    });
+  };
+
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -189,13 +320,13 @@ export default function ChatWithTwinPage() {
             </div>
           </div>
           
-          {/* Status indicator */}
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-            </span>
-            <span className="text-sm text-green-700">Online</span>
+          {/* AI Mode Toggle */}
+          <div className="flex items-center space-x-2 bg-white/80 px-3 py-2 rounded-full shadow-sm">
+            <Switch id="ai-mode" checked={aiMode} onCheckedChange={toggleAiMode} />
+            <Label htmlFor="ai-mode" className="flex items-center gap-1 text-slate-700 cursor-pointer">
+              <Bot className="h-4 w-4 text-pink-500" />
+              AI Mode
+            </Label>
           </div>
         </div>
         
@@ -230,6 +361,7 @@ export default function ChatWithTwinPage() {
                   <div key={index} className={`flex items-end gap-2 ${!msg.isAi ? "justify-end" : ""}`}>
                     {msg.isAi && (
                       <Avatar className="h-8 w-8 border-2 border-white flex-shrink-0">
+                        <AvatarImage src={twinData?.photo || "/placeholder.svg?height=32&width=32"} alt={twinData?.name} />
                         <AvatarFallback className="bg-gradient-to-br from-pink-400 to-rose-400 text-white text-xs">
                           {twinData?.name ? twinData.name.substring(0, 2).toUpperCase() : "AI"}
                         </AvatarFallback>
@@ -250,67 +382,103 @@ export default function ChatWithTwinPage() {
                         </div>
                       )}
                       <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      <div className="text-xs mt-1 text-white/70">{formatTime(msg.timestamp)}</div>
                     </div>
 
                     {!msg.isAi && (
                       <Avatar className="h-8 w-8 border-2 border-white flex-shrink-0">
+                        <AvatarImage src="/placeholder.svg?height=32&width=32" alt="You" />
                         <AvatarFallback className="bg-gradient-to-br from-blue-400 to-indigo-400 text-white text-xs">
-                          YOU
+                          You
                         </AvatarFallback>
                       </Avatar>
                     )}
                   </div>
                 ))}
 
+                {/* Typing indicator */}
                 {isTyping && (
                   <div className="flex items-end gap-2">
                     <Avatar className="h-8 w-8 border-2 border-white flex-shrink-0">
+                      <AvatarImage src={twinData?.photo || "/placeholder.svg?height=32&width=32"} alt={twinData?.name} />
                       <AvatarFallback className="bg-gradient-to-br from-pink-400 to-rose-400 text-white text-xs">
                         {twinData?.name ? twinData.name.substring(0, 2).toUpperCase() : "AI"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-2xl rounded-bl-none px-4 py-2 max-w-[80%] shadow-sm">
-                      <div className="flex items-center gap-1 mb-1">
-                        <Bot className="h-3 w-3 text-pink-200" />
-                        <span className="text-xs text-pink-200">{twinData?.name || "AI Twin"}</span>
-                      </div>
+                    <div className="bg-white rounded-2xl rounded-bl-none px-4 py-2 max-w-[80%] shadow-sm">
                       <div className="flex space-x-1">
-                        <div className="h-2 w-2 bg-white rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                        <div className="h-2 w-2 bg-white rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
-                        <div className="h-2 w-2 bg-white rounded-full animate-bounce" style={{ animationDelay: "600ms" }}></div>
+                        <div className="h-2 w-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                        <div className="h-2 w-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                        <div className="h-2 w-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: "600ms" }}></div>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
-              
-              {/* Input area */}
-              <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
-                <Textarea
-                  placeholder="Type a message..."
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  className="flex-1 bg-white/80 border-pink-100 focus:border-pink-300 resize-none"
-                  disabled={!twinData || isTyping}
-                  rows={1}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage(e);
-                    }
-                  }}
-                />
-                <Button 
-                  type="submit" 
-                  disabled={!twinData || !userInput.trim() || isTyping}
-                  className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white self-end h-full"
-                >
-                  {isTyping ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
+
+              {/* AI Suggestion */}
+              {currentSuggestion && (
+                <div className="px-4 py-2 border-t border-pink-100 mt-4">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/80 border-pink-200 hover:bg-pink-50 text-pink-700 rounded-full flex-shrink-0"
+                      onClick={useSuggestion}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      {currentSuggestion}
+                    </Button>
+                  </div>
+                  
+                  {aiMode && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-lg p-2">
+                      <Sparkles className="h-3 w-3 flex-shrink-0" />
+                      <span>AI Mode is active. Suggestions will be sent automatically.</span>
+                    </div>
                   )}
-                </Button>
+                </div>
+              )}
+
+              {/* Message input */}
+              <form onSubmit={handleSendMessage} className="mt-4">
+                <div className="flex items-end gap-2">
+                  <div className="flex-1 relative">
+                    <Textarea
+                      placeholder="Type a message..."
+                      className="min-h-[60px] max-h-[150px] bg-white/80 border-pink-100 focus:border-pink-300 rounded-xl resize-none pr-12"
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 bottom-2 h-8 w-8 rounded-full bg-white/80 hover:bg-pink-50 text-slate-600"
+                      onClick={() => setUserInput("")}
+                      disabled={!userInput}
+                    >
+                      <CloseIcon className="h-4 w-4" />
+                      <span className="sr-only">Clear</span>
+                    </Button>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-full h-10 w-10 flex-shrink-0"
+                    size="icon"
+                    disabled={!userInput.trim() || isTyping}
+                  >
+                    <Send className="h-4 w-4" />
+                    <span className="sr-only">Send</span>
+                  </Button>
+                </div>
               </form>
             </>
           )}
