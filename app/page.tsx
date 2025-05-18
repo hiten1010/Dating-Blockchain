@@ -155,8 +155,8 @@ export default function LandingPage() {
   const journeySteps = [
     {
       step: 1,
-      title: "Connect Your Wallet",
-      description: "Link your digital wallet to establish your secure, decentralized identity.",
+      title: "Connect Your Wallets",
+      description: "Link your Verida and Cheqd wallets to establish your secure, decentralized identity.",
       icon: <Wallet className="h-5 w-5 text-white" />,
     },
     {
@@ -168,7 +168,7 @@ export default function LandingPage() {
     {
       step: 3,
       title: "Verify Your Identity",
-      description: "Complete verification through Verida's decentralized identity framework.",
+      description: "Complete verification through Verida and Cheqd's decentralized identity framework.",
       icon: <Key className="h-5 w-5 text-white" />,
     },
     {

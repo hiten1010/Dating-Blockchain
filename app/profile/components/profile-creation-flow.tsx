@@ -22,6 +22,10 @@ export interface ProfileData {
   interests: string[]
   relationshipGoals: string
   primaryPhotoIndex: number
+  did?: string
+  photoDataArray?: any[]
+  _id?: string
+  _rev?: string
 }
 
 export default function ProfileCreationFlow() {
