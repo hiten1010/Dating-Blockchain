@@ -9,7 +9,8 @@ import { sendAgentPrompt, AgentPromptRequest } from './verida-llm-service';
 import { 
   generateSuggestionPrompt, 
   generateConversationStarterPrompt,
-  generateFlirtyResponsePrompt
+  generateFlirtyResponsePrompt,
+  generateAutoResponsePrompt
 } from './prompts/chat-suggestions-prompts';
 import { generateAiTwinPrompt, formatTwinDataForPrompt } from './prompts/ai-twin-prompts';
 import { Message } from '../types/chat';
@@ -23,7 +24,7 @@ export interface AiTwinChatRequest {
   profileData?: any;
   temperature?: number;
   maxHistoryMessages?: number;
-  promptType?: 'suggestion' | 'response' | 'starter' | 'flirty';
+  promptType?: 'suggestion' | 'response' | 'starter' | 'flirty' | 'auto';
   matchProfile?: any;
 }
 
@@ -46,7 +47,7 @@ export async function generateAiTwinChatResponse(request: AiTwinChatRequest): Pr
       : request.conversationHistory || [];
 
     // Get the full formatted twin data to ensure all profile details are available
-    const fullProfileData = formatTwinDataForPrompt(request.profileData);
+    const fullProfileData = request.profileData ? formatTwinDataForPrompt(request.profileData) : '';
 
     // Determine which prompt type to use
     const promptType = request.promptType || 'response';
@@ -55,9 +56,7 @@ export async function generateAiTwinChatResponse(request: AiTwinChatRequest): Pr
     switch (promptType) {
       case 'suggestion':
         // For suggesting the next message
-        // First get the standard suggestion prompt
         prompt = generateSuggestionPrompt(limitedHistory, request.profileData, request.matchProfile);
-        
         // Add the full profile data to ensure all details are available
         prompt = prompt + `\n\nADDITIONAL PROFILE INFORMATION:\n${fullProfileData}`;
         break;
@@ -67,10 +66,7 @@ export async function generateAiTwinChatResponse(request: AiTwinChatRequest): Pr
         if (!request.profileData || !request.matchProfile) {
           throw new Error('Profile data and match profile are required for conversation starters');
         }
-        
-        // First get the standard starter prompt
         prompt = generateConversationStarterPrompt(request.profileData, request.matchProfile);
-        
         // Add the full profile data to ensure all details are available
         prompt = prompt + `\n\nADDITIONAL PROFILE INFORMATION:\n${fullProfileData}`;
         break;
@@ -80,10 +76,16 @@ export async function generateAiTwinChatResponse(request: AiTwinChatRequest): Pr
         if (!request.profileData || !request.matchProfile) {
           throw new Error('Profile data and match profile are required for flirty responses');
         }
-        
-        // First get the standard flirty prompt
         prompt = generateFlirtyResponsePrompt(limitedHistory, request.profileData, request.matchProfile);
-        
+        // Add the full profile data to ensure all details are available
+        prompt = prompt + `\n\nADDITIONAL PROFILE INFORMATION:\n${fullProfileData}`;
+        break;
+      
+      case 'auto':
+        // For automatic responses (similar to response but with different prompt)
+        const lastUserMessage = limitedHistory.length > 0 ? 
+          limitedHistory[limitedHistory.length - 1].content : request.userMessage;
+        prompt = generateAutoResponsePrompt(limitedHistory, request.profileData, request.matchProfile, lastUserMessage);
         // Add the full profile data to ensure all details are available
         prompt = prompt + `\n\nADDITIONAL PROFILE INFORMATION:\n${fullProfileData}`;
         break;

@@ -14,6 +14,7 @@ import { generateAiTwinChatResponse } from "../lib/ai-twin-chat-service"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { HeartLoader } from "@/components/ui/heart-loader"
 
 export default function ChatWithTwinPage() {
   const [twinData, setTwinData] = useState<any>(null)
@@ -339,14 +340,9 @@ export default function ChatWithTwinPage() {
       {/* Loading indicator */}
       {isLoading && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl">
-            <div className="flex items-center space-x-4">
-              <div className="animate-spin h-8 w-8 border-4 border-pink-500 rounded-full border-t-transparent"></div>
-              <div>
-                <h3 className="font-medium">Connecting to Your Twin</h3>
-                <p className="text-sm text-gray-500">Retrieving your AI twin from Verida...</p>
-              </div>
-            </div>
+          <div className="bg-white p-8 rounded-xl shadow-xl flex flex-col items-center">
+            <HeartLoader size="lg" showText text="Connecting to Your Twin" />
+            <p className="text-pink-500 mt-4 text-sm">Retrieving your AI twin from Verida...</p>
           </div>
         </div>
       )}
