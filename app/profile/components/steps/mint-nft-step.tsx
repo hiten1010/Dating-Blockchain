@@ -18,6 +18,10 @@ import type { ProfileData } from "../profile-creation-flow"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
+import { nftService } from "@/app/services/nft-service"
+import { profileMetadataService } from "@/app/services/profile-metadata-service"
+import { updateDidWithNFT } from "@/app/lib/cheqd-service"
+import { checkExistingNFT } from "@/app/utils/nft-check"
 
 interface MintNFTStepProps {
   profileData: ProfileData
@@ -58,45 +62,181 @@ export default function MintNFTStep({ profileData, didId, onMintSuccess, onEdit 
     setMintingStage("preparing")
 
     try {
-      // Simulate minting process with progress updates
+      // Step 1: Check if user already has an NFT profile (25%)
+      let tokenId = "";
+      let txHash = "";
+      let alreadyMinted = false;
+      
+      // Check for existing NFT using our utility
+      const existingNFT = await checkExistingNFT();
+      if (existingNFT.hasNFT) {
+        tokenId = existingNFT.tokenId;
+        txHash = "existing"; // We don't have the original tx hash, but that's ok
+        alreadyMinted = true;
+        
+        console.log(`User already has NFT profile with token ID ${tokenId}`);
+        
+        toast({
+          title: "Profile NFT Already Exists",
+          description: `You already have a profile NFT with token ID ${tokenId}`,
+          duration: 5000,
+        });
+      } else if (existingNFT.error) {
+        console.warn("Error checking for existing NFT:", existingNFT.error);
+        // Continue with the flow anyway
+      }
+      
       await new Promise<void>((resolve) => {
         let progress = 0
         const interval = setInterval(() => {
           progress += 5
           setMintProgress(progress)
-
-          if (progress === 25) {
-            setMintingStage("metadata")
-          } else if (progress === 50) {
-            setMintingStage("minting")
-          } else if (progress === 75) {
-            setMintingStage("finalizing")
+          if (progress >= 25) {
+            clearInterval(interval)
+            resolve()
           }
+        }, 200)
+      })
+      setMintingStage("metadata")
 
+      // Step 2: Generate and store metadata (25%-50%)
+      const metadata = profileMetadataService.generateMetadata(profileData, didId)
+      const tokenURI = await profileMetadataService.storeMetadata(metadata)
+      
+      await new Promise<void>((resolve) => {
+        let progress = 25
+        const interval = setInterval(() => {
+          progress += 5
+          setMintProgress(progress)
+          if (progress >= 50) {
+            clearInterval(interval)
+            resolve()
+          }
+        }, 200)
+      })
+      setMintingStage("minting")
+
+      // Step 3: Mint NFT or use existing (50%-75%)
+      if (!alreadyMinted) {
+        // Only mint if user doesn't already have an NFT
+        const mintResult = await nftService.createProfile(tokenURI)
+        tokenId = mintResult.tokenId
+        txHash = mintResult.txHash
+      }
+      
+      // Get Cheqd wallet data from localStorage
+      const cheqdWalletData = JSON.parse(localStorage.getItem("cheqdWalletData") || "{}")
+      const cheqdDid = localStorage.getItem("cheqdWalletAddress")
+      
+      // Update Cheqd DID with NFT information if available
+      if (cheqdWalletData && cheqdWalletData.keypair && cheqdDid) {
+        try {
+          // Get the Verida DID from localStorage (preferred) or use the one passed as prop
+          const veridaDID = localStorage.getItem("veridaDID") || didId;
+          
+          console.log("Using Verida DID for Cheqd update:", veridaDID);
+          
+          // Update the Cheqd DID document with NFT information
+          await updateDidWithNFT(cheqdDid, cheqdWalletData.keypair.publicKeyHex, {
+            tokenId,
+            transactionHash: txHash,
+            contractAddress: nftService.getContractAddress(),
+            chainId: "1301", // Unichain Sepolia
+            chainName: "Unichain Sepolia"
+          }, veridaDID);
+          
+          // Save NFT data in localStorage for access across the app
+          localStorage.setItem("nftData", JSON.stringify({
+            tokenId,
+            transactionHash: txHash,
+            contractAddress: nftService.getContractAddress(),
+            mintDate: new Date().toISOString(),
+            chainId: "1301",
+            chainName: "Unichain Sepolia",
+            veridaDID: veridaDID
+          }));
+          
+          console.log("Successfully updated Cheqd DID with NFT information and linked Verida DID")
+        } catch (cheqdError) {
+          console.error("Error updating Cheqd DID with NFT data:", cheqdError)
+          // Continue with the flow even if Cheqd update fails
+        }
+      }
+      
+      await new Promise<void>((resolve) => {
+        let progress = 50
+        const interval = setInterval(() => {
+          progress += 5
+          setMintProgress(progress)
+          if (progress >= 75) {
+            clearInterval(interval)
+            resolve()
+          }
+        }, 200)
+      })
+      setMintingStage("finalizing")
+
+      // Step 4: Finalize (75%-100%)
+      await new Promise<void>((resolve) => {
+        let progress = 75
+        const interval = setInterval(() => {
+          progress += 5
+          setMintProgress(progress)
           if (progress >= 100) {
             clearInterval(interval)
             resolve()
           }
-        }, 250)
+        }, 200)
       })
-
-      // Generate random token ID and transaction hash
-      const tokenId = Math.floor(Math.random() * 1000000).toString()
-      const txHash = "0x" + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join("")
 
       // Wait a moment before proceeding to next step
       setTimeout(() => {
+        toast({
+          title: alreadyMinted ? "NFT Profile Loaded" : "NFT Minted Successfully",
+          description: `Your profile is ${alreadyMinted ? "linked to" : "now secured on"} the blockchain with token ID ${tokenId}`,
+          duration: 5000,
+        })
         onMintSuccess(tokenId, txHash)
-      }, 2000)
+      }, 1500)
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error occurred"
+      
+      // Check for "Already minted" error
+      if (errorMessage.includes("Already minted")) {
+        toast({
+          variant: "destructive",
+          title: "NFT Already Minted",
+          description: "You already have a profile NFT. Loading existing profile...",
+          duration: 5000,
+        });
+        
+        try {
+          // Use our utility to check for existing NFT
+          const existingNFT = await checkExistingNFT();
+          if (existingNFT.hasNFT && existingNFT.tokenId) {
+            // Continue with the success flow using the existing token ID
+            setTimeout(() => {
+              onMintSuccess(existingNFT.tokenId, "existing");
+            }, 1500);
+            return;
+          }
+        } catch (innerError) {
+          console.error("Error retrieving existing profile:", innerError);
+        }
+      }
+      
+      console.error("NFT Minting Error:", err)
+      
       toast({
         variant: "destructive",
         title: "NFT Minting Failed",
-        description: "Failed to mint NFT. Please try again.",
-        duration: 3000, // 3 seconds
+        description: `Failed to mint NFT: ${errorMessage}`,
+        duration: 5000,
       })
+      
       setIsMinting(false)
       setShowParticles(false)
+      setMintingStage(null)
     }
   }
 

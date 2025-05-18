@@ -6,15 +6,12 @@ export const profiles = [
     location: "San Francisco, CA",
     bio: "Blockchain developer by day, amateur photographer by night. Looking for someone who appreciates both technology and art. I believe in building meaningful connections in this digital world.",
     tagline: "Coding smart contracts and capturing moments",
-    profileImage: "/placeholder.svg?height=400&width=300",
+    profileImage: "/fuser1.png?height=400&width=300",
     compatibilityScore: 92,
     aiRecommended: true,
     interests: ["Blockchain", "Photography", "Hiking", "Jazz", "Coffee"],
     photos: [
-      "/placeholder.svg?height=400&width=300",
-      "/placeholder.svg?height=400&width=300",
-      "/placeholder.svg?height=400&width=300",
-      "/placeholder.svg?height=400&width=300",
+      "/fuser1.png?height=400&width=300",
     ],
     aiReason:
       "You both share a passion for blockchain technology and outdoor activities. Emma's interest in photography complements your appreciation for visual arts.",
@@ -27,10 +24,13 @@ export const profiles = [
     location: "New York, NY",
     bio: "Web3 enthusiast and fitness addict. I spend my weekends exploring new hiking trails and attending tech meetups. Looking for someone who values health, innovation, and good conversations.",
     tagline: "Exploring trails and blockchain protocols",
-    profileImage: "/placeholder.svg?height=400&width=300",
+    profileImage: "/user2.png?height=400&width=300",
     compatibilityScore: 85,
     aiRecommended: true,
     interests: ["Fitness", "Blockchain", "Hiking", "Reading", "Cooking"],
+    photos: [
+      "/user2.png?height=400&width=300",
+    ],
     verified: true,
   },
   {
@@ -40,10 +40,13 @@ export const profiles = [
     location: "Austin, TX",
     bio: "Creative designer with a love for decentralized systems. I believe in the power of both aesthetics and technology to change the world. Looking for someone who shares my curiosity and passion for innovation.",
     tagline: "Designing the future of web3",
-    profileImage: "/placeholder.svg?height=400&width=300",
+    profileImage: "/fuser2.png?height=400&width=300",
     compatibilityScore: 78,
     aiRecommended: false,
     interests: ["Design", "NFTs", "Music", "Travel", "Yoga"],
+    photos: [
+      "/fuser2.png?height=400&width=300",
+    ],
     verified: true,
   },
   {

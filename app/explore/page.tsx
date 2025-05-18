@@ -1,8 +1,41 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import ExploreMatches from "./components/explore-matches"
 
 export default function ExplorePage() {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Check if the wallet is connected by looking for saved address
+    const walletAddress = localStorage.getItem("walletAddress")
+    const cheqdWalletAddress = localStorage.getItem("cheqdWalletAddress")
+    const onboardingCompleted = localStorage.getItem("onboardingCompleted")
+    
+    if (!walletAddress) {
+      // Redirect to wallet page if no wallet address found
+      router.push("/wallet")
+    } else if (!cheqdWalletAddress || !onboardingCompleted) {
+      // Redirect to onboarding if Cheqd wallet not connected or onboarding not complete
+      router.push("/onboarding")
+    } else {
+      setIsLoading(false)
+    }
+  }, [router])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500 mb-4"></div>
+          <p className="text-pink-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 text-slate-800 overflow-hidden">
       {/* Animated background elements */}
@@ -43,8 +76,6 @@ export default function ExplorePage() {
       </div>
 
       <div className="relative container mx-auto px-4 py-12">
-        
-
         <ExploreMatches />
       </div>
 

@@ -183,7 +183,7 @@ export default function FeaturesSection({ sectionRef }: FeaturesSectionProps) {
                       Join the revolution and take control of your digital dating identity.
                     </p>
                   </div>
-                  <Link href="/onboarding">
+                  <Link href="/wallet">
                     <motion.div
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}

@@ -62,6 +62,9 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
         if (did) {
           setWalletAddress(did);
           
+          // Store Verida DID in localStorage for future use
+          localStorage.setItem("veridaDID", did);
+          
           // Only proceed to next step if both wallets are connected
           if (cheqdWalletAddress) {
             setTimeout(() => {
@@ -269,4 +272,3 @@ export default function ConnectWalletStep({ onWalletConnected }: ConnectWalletSt
     </>
   )
 }
-

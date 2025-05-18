@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { Heart, MessageCircle, Sparkles, User, Settings, Bell, Search, ChevronDown, LogOut, Bot } from "lucide-react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
+import { useVeridaClient, useProfileRestService } from "@/app/lib/clientside-verida"
 
 export default function DatingNavbar() {
   const pathname = usePathname()
@@ -13,8 +14,106 @@ export default function DatingNavbar() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [notifications, setNotifications] = useState(3) // Dummy notification count
   const [imageError, setImageError] = useState(false)
+  const [userData, setUserData] = useState({
+    name: "",
+    image: "",
+    premium: false,
+    did: ""
+  })
+  const [isLoading, setIsLoading] = useState(true)
+  const [dataLoaded, setDataLoaded] = useState(false)
+  
+  // Get Verida client and profile service
+  const { client, isLoading: clientLoading, getDidId } = useVeridaClient()
+  const { service: profileRestService, isLoading: serviceLoading } = useProfileRestService()
 
-  // Moving the useEffect hook before the early return to avoid the hooks error
+  // Load user data from Verida
+  useEffect(() => {
+    const loadUserData = async () => {
+      // Skip if already loaded or dependencies are still loading
+      if (dataLoaded || clientLoading || serviceLoading || !profileRestService) {
+        return
+      }
+      
+      try {
+        setIsLoading(true)
+        
+        // Get DID from client or localStorage
+        let did = localStorage.getItem("veridaDID") || ""
+        
+        if (!did && client) {
+          try {
+            did = await getDidId() || ""
+            if (did) {
+              localStorage.setItem("veridaDID", did)
+            }
+          } catch (error) {
+            console.error("Error getting DID:", error)
+          }
+        }
+        
+        if (did) {
+          // Load profile data from Verida
+          try {
+            const profile = await profileRestService.getProfile(did)
+            console.log("Loaded profile data for navbar:", profile)
+            
+            if (profile) {
+              // Get the primary photo
+              let photoUrl = ""
+              try {
+                const photos = await profileRestService.getProfilePhotos(did)
+                if (photos && photos.length > 0) {
+                  // Use primary photo if set, otherwise use first photo
+                  const primaryIndex = profile.primaryPhotoIndex !== undefined ? profile.primaryPhotoIndex : 0
+                  if (photos[primaryIndex]) {
+                    photoUrl = photos[primaryIndex].photoUrl
+                  }
+                }
+              } catch (photoError) {
+                console.error("Error loading photos:", photoError)
+              }
+              
+              setUserData({
+                name: profile.displayName || "User",
+                image: photoUrl || "https://i.pravatar.cc/150?img=32",
+                premium: !!localStorage.getItem("nftData"), // Premium if they have an NFT
+                did
+              })
+            }
+          } catch (error) {
+            console.error("Error loading profile:", error)
+            // Use default data if profile loading fails
+            setUserData({
+              name: "User",
+              image: "https://i.pravatar.cc/150?img=32",
+              premium: !!localStorage.getItem("nftData"),
+              did
+            })
+          }
+        } else {
+          // Use default data if no DID
+          setUserData({
+            name: "User",
+            image: "https://i.pravatar.cc/150?img=32",
+            premium: !!localStorage.getItem("nftData"),
+            did: ""
+          })
+        }
+        
+        // Mark as loaded to prevent further calls
+        setDataLoaded(true)
+      } catch (error) {
+        console.error("Error in loadUserData:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadUserData()
+  }, [client, clientLoading, serviceLoading, profileRestService, getDidId, dataLoaded])
+
+  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
@@ -25,7 +124,7 @@ export default function DatingNavbar() {
   }, [])
 
   // Pages where navbar should not appear
-  const excludedPages = ["/", "/profile", "/onboarding", "/ai-twin"]
+  const excludedPages = ["/", "/profile", "/onboarding", "/ai-twin", "/wallet"]
   
   // If current path is in excluded pages, don't render the navbar
   if (excludedPages.some(page => pathname === page || pathname.startsWith(`${page}/`))) {
@@ -34,11 +133,14 @@ export default function DatingNavbar() {
 
   const isActive = (path: string) => pathname === path
 
-  // For demo purposes - would connect to your authentication system
-  const user = {
-    name: "Jamie",
-    image: "https://i.pravatar.cc/150?img=32",
-    premium: true
+  // Handle logout
+  const handleLogout = () => {
+    // Clear localStorage data
+    localStorage.removeItem("walletAddress")
+    
+    
+    // Redirect to home page
+    window.location.href = "/"
   }
 
   const mainNavItems = [
@@ -51,21 +153,21 @@ export default function DatingNavbar() {
 
   // Render user avatar with fallback
   const renderUserAvatar = (size: number) => {
-    if (imageError) {
+    if (imageError || !userData.image) {
       return (
         <div className={`h-${size} w-${size} rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center text-white font-bold text-sm`}>
-          {user.name.charAt(0)}
+          {userData.name.charAt(0)}
         </div>
       )
     }
     
     return (
       <Image 
-        src={user.image} 
+        src={userData.image} 
         alt="Profile" 
         width={size * 4} 
         height={size * 4}
-        className={`rounded-full border-2 ${user.premium ? 'border-amber-400' : 'border-transparent'}`}
+        className={`rounded-full border-2 ${userData.premium ? 'border-amber-400' : 'border-transparent'}`}
         onError={() => setImageError(true)}
       />
     )
@@ -126,15 +228,7 @@ export default function DatingNavbar() {
               })}
               
               
-              {/* Notifications */}
-              <button className="relative p-2 rounded-full hover:bg-white/80 text-gray-700 transition-colors">
-                <Bell className="h-5 w-5" />
-                {notifications > 0 && (
-                  <span className="absolute top-0 right-0 bg-rose-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full shadow-sm">
-                    {notifications}
-                  </span>
-                )}
-              </button>
+              
               
               {/* User Profile */}
               <div className="relative">
@@ -143,14 +237,18 @@ export default function DatingNavbar() {
                   className="flex items-center gap-2 p-1.5 pl-2 pr-3 rounded-full hover:bg-white/80 transition-colors"
                 >
                   <div className="relative h-8 w-8">
-                    {renderUserAvatar(8)}
-                    {user.premium && (
+                    {isLoading ? (
+                      <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>
+                    ) : renderUserAvatar(8)}
+                    {userData.premium && (
                       <div className="absolute -bottom-1 -right-1 bg-amber-400 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full shadow-sm">
                         ✓
                       </div>
                     )}
                   </div>
-                  <span className="font-medium text-gray-800">{user.name}</span>
+                  <span className="font-medium text-gray-800">
+                    {isLoading ? "Loading..." : userData.name}
+                  </span>
                   <ChevronDown className="h-4 w-4 text-gray-500" />
                 </button>
                 
@@ -164,8 +262,11 @@ export default function DatingNavbar() {
                       className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl py-2 border border-gray-100"
                     >
                       <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                        <p className="text-xs text-gray-500">Connected via Verida</p>
+                        <p className="text-sm font-medium text-gray-900">{userData.name}</p>
+                        <p className="text-xs text-gray-500 truncate">Connected via Verida</p>
+                        {userData.did && (
+                          <p className="text-xs text-gray-400 truncate">{userData.did.substring(0, 10)}...{userData.did.substring(userData.did.length - 4)}</p>
+                        )}
                       </div>
                       
                       <Link href="/user" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
@@ -173,12 +274,10 @@ export default function DatingNavbar() {
                         Your Profile
                       </Link>
                       
-                      <Link href="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        <Settings className="h-4 w-4" />
-                        Settings
-                      </Link>
-                      
-                      <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-gray-50">
+                      <button 
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-gray-50"
+                      >
                         <LogOut className="h-4 w-4" />
                         Disconnect Wallet
                       </button>
@@ -246,7 +345,9 @@ export default function DatingNavbar() {
               className="flex flex-col items-center justify-center text-gray-500"
             >
               <div className="relative h-6 w-6 mb-1">
-                {renderUserAvatar(6)}
+                {isLoading ? (
+                  <div className="h-6 w-6 rounded-full bg-gray-200 animate-pulse"></div>
+                ) : renderUserAvatar(6)}
               </div>
               <span className="text-xs">More</span>
             </button>
@@ -261,8 +362,11 @@ export default function DatingNavbar() {
                   className="absolute bottom-16 right-0 w-48 bg-white rounded-2xl shadow-xl py-2 border border-gray-100"
                 >
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                    <p className="text-xs text-gray-500">Connected via Verida</p>
+                    <p className="text-sm font-medium text-gray-900">{userData.name}</p>
+                    <p className="text-xs text-gray-500 truncate">Connected via Verida</p>
+                    {userData.did && (
+                      <p className="text-xs text-gray-400 truncate">{userData.did.substring(0, 8)}...</p>
+                    )}
                   </div>
                   
                   <Link href="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
@@ -275,7 +379,10 @@ export default function DatingNavbar() {
                     Search
                   </Link>
                   
-                  <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-gray-50">
+                  <button 
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-gray-50"
+                  >
                     <LogOut className="h-4 w-4" />
                     Disconnect
                   </button>

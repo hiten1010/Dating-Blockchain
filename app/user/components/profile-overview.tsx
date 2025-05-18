@@ -19,14 +19,82 @@ import {
   AlertTriangleIcon,
   Hexagon,
 } from "lucide-react"
+import { useVeridaClient, useProfileRestService } from "@/app/lib/clientside-verida"
 
 export default function ProfileOverview() {
   const [activeTab, setActiveTab] = useState("overview")
   const [mounted, setMounted] = useState(false)
+  const [userData, setUserData] = useState({
+    did: "",
+    name: "",
+    hasNFT: false
+  })
+  const [dataLoaded, setDataLoaded] = useState(false)
+  
+  // Get Verida client and profile service
+  const { client, isLoading: clientLoading, getDidId } = useVeridaClient()
+  const { service: profileRestService, isLoading: serviceLoading } = useProfileRestService()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Load user data from Verida
+  useEffect(() => {
+    const loadUserData = async () => {
+      // Skip if already loaded or dependencies are still loading
+      if (dataLoaded || clientLoading || serviceLoading || !profileRestService || !mounted) {
+        return
+      }
+      
+      try {
+        // Get DID from localStorage
+        let did = localStorage.getItem("veridaDID") || ""
+        
+        if (!did && client) {
+          try {
+            did = await getDidId() || ""
+            if (did) {
+              localStorage.setItem("veridaDID", did)
+            }
+          } catch (error) {
+            console.error("Error getting DID:", error)
+          }
+        }
+        
+        if (did) {
+          // Load profile data from Verida
+          try {
+            const profile = await profileRestService.getProfile(did)
+            console.log("Loaded profile data for overview:", profile)
+            
+            if (profile) {
+              setUserData({
+                did,
+                name: profile.displayName || "User",
+                hasNFT: !!localStorage.getItem("nftData")
+              })
+            }
+          } catch (error) {
+            console.error("Error loading profile:", error)
+            // Use default data if profile loading fails
+            setUserData({
+              did,
+              name: "User",
+              hasNFT: !!localStorage.getItem("nftData")
+            })
+          }
+        }
+        
+        // Mark as loaded to prevent further calls
+        setDataLoaded(true)
+      } catch (error) {
+        console.error("Error in loadUserData:", error)
+      }
+    }
+    
+    loadUserData()
+  }, [client, clientLoading, serviceLoading, profileRestService, getDidId, mounted, dataLoaded])
 
   const tabs = [
     { id: "overview", label: "Overview", icon: UserIcon },
@@ -46,7 +114,9 @@ export default function ProfileOverview() {
         <div className="absolute -top-3 -left-3">
           <Hexagon className="h-10 w-10 text-indigo-500 fill-indigo-100" />
         </div>
-        <h2 className="text-xl font-semibold mb-2 text-indigo-800 ml-8">Your Profile at a Glance</h2>
+        <h2 className="text-xl font-semibold mb-2 text-indigo-800 ml-8">
+          {userData.name ? `${userData.name}'s Profile` : 'Your Profile at a Glance'}
+        </h2>
         <p className="text-sm text-slate-600">
           Any on-chain updates may involve blockchain transactions. Sensitive details are stored off-chain for privacy.
         </p>

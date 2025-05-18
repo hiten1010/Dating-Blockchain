@@ -12,7 +12,8 @@ import {
   Podcast,
   Film,
   ArrowRight,
-  Utensils
+  Utensils,
+  Link
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -203,13 +204,14 @@ export default function DateIdeasSection() {
               </div>
             </div>
           </div>
-          
+          <Link href="/wallet">
           <Button className="mt-8 bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl gooey-button">
             <span className="flex items-center">
               Explore More Date Ideas
               <ArrowRight className="ml-2 h-4 w-4" />
             </span>
           </Button>
+          </Link>
         </div>
       </div>
 

@@ -237,6 +237,115 @@ export const updateDid = async (did: string, publicKeyHex: string): Promise<Cheq
 };
 
 /**
+ * Update a DID document with NFT information
+ * @param did The DID to update
+ * @param publicKeyHex The public key hex
+ * @param nftData The NFT data to add to the DID document
+ * @param veridaDID Optional Verida DID to include in the DID document
+ * @returns The updated DID document
+ */
+export const updateDidWithNFT = async (
+  did: string, 
+  publicKeyHex: string, 
+  nftData: {
+    tokenId: string;
+    transactionHash: string;
+    contractAddress: string;
+    chainId: string;
+    chainName: string;
+  },
+  veridaDID?: string
+): Promise<CheqdDidUpdateResponse> => {
+  try {
+    // Convert hex key to base58
+    const publicKeyBase58 = hexToBase58(publicKeyHex);
+    
+    // Prepare services array
+    const services = [
+      {
+        id: `${did}#service-1`,
+        type: 'LinkedDomains',
+        serviceEndpoint: [
+          'https://example.com'
+        ]
+      },
+      {
+        id: `${did}#nft-profile`,
+        type: 'ProfileNFT',
+        serviceEndpoint: [
+          {
+            uri: `https://sepolia.uniscan.xyz/tx/${nftData.transactionHash}`,
+            tokenId: nftData.tokenId,
+            contractAddress: nftData.contractAddress,
+            chainId: nftData.chainId,
+            chainName: nftData.chainName,
+            transactionHash: nftData.transactionHash
+          }
+        ]
+      }
+    ];
+    
+    // Add Verida DID if provided
+    if (veridaDID) {
+      services.push({
+        id: `${did}#verida-identity`,
+        type: 'VeridaDID',
+        serviceEndpoint: [veridaDID]
+      });
+    }
+
+    const response = await fetch(`${CHEQD_API_BASE_URL}/did/update`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'x-api-key': CHEQD_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        network: CHEQD_NETWORK,
+        identifierFormatType: 'uuid',
+        did: did,
+        didDocument: {
+          '@context': [
+            'https://www.w3.org/ns/did/v1',
+            'https://w3id.org/security/suites/ed25519-2020/v1'
+          ],
+          id: did,
+          controller: [
+            did
+          ],
+          verificationMethod: [
+            {
+              id: `${did}#key-1`,
+              type: 'Ed25519VerificationKey2018',
+              controller: did,
+              publicKeyBase58: publicKeyBase58
+            }
+          ],
+          authentication: [
+            `${did}#key-1`
+          ],
+          service: services
+        },
+        options: {
+          key: publicKeyBase58,
+          verificationMethodType: 'Ed25519VerificationKey2018'
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update DID with NFT: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating DID with NFT:', error);
+    throw error;
+  }
+};
+
+/**
  * Complete Cheqd wallet setup process
  * Creates a keypair, creates a DID, and updates the DID document
  * @returns The completed wallet setup information

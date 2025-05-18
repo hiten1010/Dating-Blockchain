@@ -1313,3 +1313,41 @@ body::-webkit-scrollbar-thumb:hover {
   border: none;
 }
 
+/* Blockchain nodes animation */
+.blockchain-nodes {
+  background-image: radial-gradient(circle at center, rgba(109, 40, 217, 0.1) 2px, transparent 2px);
+  background-size: 50px 50px;
+  width: 100%;
+  height: 100%;
+  animation: nodeFloat 15s infinite linear;
+}
+
+@keyframes nodeFloat {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 50px 50px;
+  }
+}
+
+/* Animation utilities */
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+  background-size: 200% 100%;
+}
+
+.animate-shimmer-fast {
+  animation: shimmer 1.5s infinite linear;
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+

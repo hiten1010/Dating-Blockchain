@@ -7,7 +7,7 @@ export default function MainWrapper({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   
   // List of pages where navbar doesn't appear
-  const excludedPages = ["/", "/profile", "/onboarding", "/ai-twin"]
+  const excludedPages = ["/", "/profile", "/onboarding", "/ai-twin", "/wallet"]
   const isExcludedPage = excludedPages.some(page => pathname === page || pathname.startsWith(`${page}/`))
   
   return (

@@ -16,6 +16,7 @@ import {
   ArrowRight 
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function InteractiveDemo() {
   return (
@@ -147,12 +148,14 @@ export default function InteractiveDemo() {
             </div>
             
             <div className="mt-6 pt-4 border-t border-[#E5E7EB]">
+              <Link href="/wallet">
               <Button className="w-full bg-gradient-to-r from-[#6D28D9] to-[#EC4899] text-white hover:opacity-90 rounded-xl gooey-button">
                 <span className="flex items-center justify-center">
                   Try The Demo
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
               </Button>
+              </Link>
             </div>
           </div>
         </div>

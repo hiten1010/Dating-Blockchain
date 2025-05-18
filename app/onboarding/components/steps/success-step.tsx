@@ -114,4 +114,3 @@ export default function SuccessStep({ walletAddress }: SuccessStepProps) {
     </>
   )
 }
-
