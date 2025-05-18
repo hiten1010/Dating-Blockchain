@@ -12,12 +12,14 @@ A modern dating application built with decentralized identity and encrypted data
 - **Decentralized Chat**: Secure, private messaging stored on Verida blockchain
 - **AI Twin Creation**: Build a blockchain-stored AI representation of yourself
 - **Verifiable Credentials**: Identity verification through Cheqd's verifiable credentials
+- **NFT Profile Minting**: Transform your profile into an NFT on the Unichain Sepolia blockchain
 
 ## Technologies
 
 - Next.js 14
 - Verida Protocol (Client SDK, Account Web Vault)
 - Cheqd Protocol (DID creation and verification)
+- Unichain Sepolia (NFT minting)
 - React
 - TypeScript
 - Tailwind CSS
@@ -30,6 +32,7 @@ A modern dating application built with decentralized identity and encrypted data
 - Node.js 18+
 - npm or yarn
 - Git
+- Leap wallet extension (for NFT minting)
 
 ### Installation
 
@@ -50,6 +53,8 @@ A modern dating application built with decentralized identity and encrypted data
    NEXT_PUBLIC_CONTEXT_NAME="VeraLove Dating Application"
    NEXT_PUBLIC_LOGO_URL="https://your-logo-url.com/logo.png"
    NEXT_PUBLIC_CHEQD_API_KEY="your-cheqd-api-key"
+   NEXT_PUBLIC_NFT_CONTRACT_ADDRESS=0x968Cd0A56cAc23332c846957064A99Eabbdc464E
+   NEXT_PUBLIC_UNICHAIN_RPC_URL=https://sepolia.unichain.org
    ```
 
 4. Start the development server:
@@ -98,6 +103,191 @@ This application uses Verida for decentralized data storage and Cheqd for identi
 2. Identity verification is handled through Cheqd's verifiable credentials
 3. Photos are stored separately in the photos database
 4. All data is encrypted and only accessible by the user or those they grant permission to
+
+## NFT Profile System
+
+The NFT functionality allows users to mint their profiles as NFTs on the Unichain Sepolia blockchain, providing an immutable and verifiable representation of their dating profile.
+
+### NFT Smart Contract
+
+The NFT functionality uses a custom ProfileNFT contract (`ProfileNFT.sol`) deployed on the Unichain Sepolia blockchain at address `0x968Cd0A56cAc23332c846957064A99Eabbdc464E`. This is an ERC-721 NFT contract with additional functionality:
+
+```solidity
+// Key contract functions
+function createProfile(string memory tokenURI) public returns (uint256) {
+    require(!hasProfile(msg.sender), "Already minted");
+    // Mint logic...
+}
+
+function updateProfile(uint256 tokenId, string memory newTokenURI) public {
+    require(ownerOf(tokenId) == msg.sender, "Not owner");
+    // Update logic...
+}
+
+function burnProfile(uint256 tokenId) public {
+    require(ownerOf(tokenId) == msg.sender, "Not owner");
+    // Burn logic...
+}
+```
+
+### NFT Minting Process
+
+The NFT minting functionality is exposed through the mint-nft-step.tsx component in the profile creation flow:
+
+```typescript
+// Example usage
+import { nftService } from "@/app/services/nft-service";
+import { profileMetadataService } from "@/app/services/profile-metadata-service";
+
+// Generate and store metadata
+const metadata = profileMetadataService.generateMetadata(profileData, didId);
+const tokenURI = await profileMetadataService.storeMetadata(metadata);
+
+// Mint the NFT
+const { tokenId, txHash } = await nftService.createProfile(tokenURI);
+
+// Store NFT data in localStorage
+localStorage.setItem("nftData", JSON.stringify({
+  tokenId,
+  transactionHash: txHash,
+  contractAddress: nftService.getContractAddress(),
+  mintDate: new Date().toISOString(),
+  lastUpdated: new Date().toISOString(),
+  explorerUrl: `https://sepolia.uniscan.xyz/tx/${txHash}`,
+  chainId: "1301",
+  chainName: "Unichain Sepolia"
+}));
+```
+
+### Cheqd and NFT Integration
+
+When a profile NFT is minted, the following occurs:
+
+1. **User's Cheqd DID document is updated** to include:
+   - NFT transaction details
+   - Token ID reference
+   - Verida DID link for encrypted data access
+   - Contract address and chain information
+
+2. **DID Document Structure** includes multiple service endpoints:
+
+```json
+"service": [
+  {
+    "id": "did:cheqd:testnet:abcd1234#service-1",
+    "type": "LinkedDomains",
+    "serviceEndpoint": ["https://example.com"]
+  },
+  {
+    "id": "did:cheqd:testnet:abcd1234#nft-profile",
+    "type": "ProfileNFT",
+    "serviceEndpoint": [{
+      "uri": "https://sepolia.uniscan.xyz/tx/0x52178bef007c0224e5a65261f507d18a3db923280a618b13b1c4dff793060f8b",
+      "tokenId": "4152",
+      "contractAddress": "0x968Cd0A56cAc23332c846957064A99Eabbdc464E",
+      "chainId": "1301",
+      "chainName": "Unichain Sepolia",
+      "transactionHash": "0x52178bef007c0224e5a65261f507d18a3db923280a618b13b1c4dff793060f8b"
+    }]
+  },
+  {
+    "id": "did:cheqd:testnet:abcd1234#verida-identity",
+    "type": "VeridaDID",
+    "serviceEndpoint": ["did:vda:mainnet:0x8bf89E3eA0751d3B827EF2EBD2fa4685d1F8C7f2"]
+  }
+]
+```
+
+### NFT Metadata Structure
+
+```javascript
+{
+  name: "VeraLove Profile - {DisplayName}",
+  description: "Verified dating profile on VeraLove",
+  image: "ipfs://hash-of-profile-image",
+  attributes: [
+    { trait_type: "Display Name", value: "User's display name" },
+    { trait_type: "Verida DID", value: "did:verida:user-did" },
+    { trait_type: "Cheqd DID", value: "did:cheqd:testnet:user-did" },
+    { trait_type: "Interest Count", value: 5 },
+    { trait_type: "Photo Count", value: 3 },
+    { trait_type: "Creation Date", value: "2023-05-01" }
+  ],
+  external_url: "https://app.veralove.com/profile/{DID}"
+}
+```
+
+### NFT Minting Process Flow
+
+1. **Preparation**:
+   - User connects both Leap wallet (for blockchain transactions) and Cheqd wallet (for DID)
+   - Profile data is collected and stored encrypted via Verida protocol
+   - Metadata is prepared for the NFT
+
+2. **Minting**:
+   - The NFT contract verifies the user doesn't already have a profile NFT 
+   - NFT is minted with a URI pointing to the encrypted profile data
+   - Transaction hash and token ID are recorded
+
+3. **DID Update**:
+   - Cheqd DID document is updated to include NFT information
+   - Verida DID reference is added for encrypted data access
+   - The updated document is signed and submitted to the Cheqd network
+
+4. **Storage**:
+   - Transaction details are saved in localStorage for app reference
+   - Profile display shows verification from blockchain
+
+### Security and Privacy
+
+This dual-system architecture provides:
+
+- **Public verification** - Anyone can verify profile ownership via the blockchain
+- **Privacy protection** - Only the user controls access to their private data
+- **Identity portability** - The DID can be used across multiple services
+- **Revocable access** - User can revoke access to their encrypted data at any time
+- **Cryptographic security** - All transactions and DID updates are cryptographically signed
+
+The combination of blockchain NFTs and DIDs creates a robust identity framework:
+
+1. **Blockchain layer** provides:
+   - Immutable ownership records
+   - Public verification
+   - Transparent transaction history
+
+2. **DID layer** provides:
+   - Identity management
+   - Service endpoint discovery
+   - Credential verification
+
+3. **Verida layer** provides:
+   - Encrypted data storage
+   - User-controlled access
+   - Cross-application data portability
+
+### Error Handling
+
+The smart contract prevents a single address from minting multiple NFTs. If a user attempts to mint when they already have an NFT, the transaction will fail with:
+
+```
+Error: execution reverted: Already minted
+```
+
+In this case, the application should:
+1. Check if user already has an NFT before attempting to mint
+2. If already minted, load existing NFT details instead
+3. Allow profile updates without requiring a new NFT
+
+### Implementation Files
+
+Key files in the implementation:
+- `app/lib/cheqd-service.ts` - Cheqd DID management
+- `app/services/nft-service.ts` - NFT contract interaction
+- `app/profile/components/steps/mint-nft-step.tsx` - NFT minting UI
+- `app/user/components/nft-details.tsx` - NFT display UI
+- `app/user/components/off-chain-data.tsx` - Verida data display
+- `app/user/components/did-settings.tsx` - DID management UI
+- `utils/nft-check.ts` - NFT ownership verification utilities
 
 ## Cheqd Integration Architecture
 
@@ -436,101 +626,6 @@ Chat messages are stored with the following fields:
 }
 ```
 
-### Message Dictionary Format
-
-For efficient storage, messages can be stored in a dictionary format:
-
-```typescript
-{
-  "msg-1234567890": {
-    id: "msg-1234567890",
-    text: "Hello there!",
-    fromId: "did:vda:0x...",
-    fromName: "John",
-    timestamp: "2023-06-15T10:30:00Z",
-    read: true
-  },
-  "msg-0987654321": {
-    id: "msg-0987654321",
-    text: "Hi, how are you?",
-    fromId: "did:vda:0x...",
-    fromName: "Sarah",
-    timestamp: "2023-06-15T10:31:00Z",
-    read: false
-  }
-}
-```
-
-### Group Structure
-
-Conversations are organized into groups with the following structure:
-
-```typescript
-{
-  id: string;           // Unique group identifier
-  name: string;         // Group name (often "Chat with [Username]")
-  participants: {       // Array of participants
-    did: string;        // Participant's DID
-    name: string;       // Participant's name
-    avatar?: string;    // Optional avatar URL
-  }[];
-  lastMessage?: ChatMessage; // Last message in the conversation
-  unreadCount?: number; // Number of unread messages
-  createdAt: string;    // ISO timestamp of creation
-  updatedAt: string;    // ISO timestamp of last update
-}
-```
-
-### Chat Message Processing Flow
-
-1. **Message Creation**: 
-   - When a user sends a message, it's formatted according to the schema
-   - A unique message ID is generated
-   - The message is stored with references to the conversation group
-
-2. **Message Retrieval**:
-   - Messages are retrieved by querying the database with the groupId
-   - For direct messages, a consistent groupId is generated from both participants' DIDs
-   - For group chats, a unique identifier is created at group formation
-
-3. **Message Consolidation**:
-   - Multiple message records for the same conversation are combined
-   - Messages are sorted by timestamp
-   - Unread status is tracked per message
-
-4. **Group Management**:
-   - Groups are created when a user initiates a new conversation
-   - Group metadata includes participant information and conversation name
-   - Last message and unread count are tracked at the group level
-
-### Chat and AI Twin Integration
-
-The chat system is designed to integrate with the AI Twin functionality:
-
-- The conversation panel includes an AI Mode toggle
-- When enabled, the user's AI twin can respond on their behalf
-- AI responses are marked with a special indicator
-- AI-generated suggestions help users craft messages
-- Messages from AI twins are stored in the same blockchain structure with appropriate metadata
-
-### Authentication and Privacy
-
-- All chat data is encrypted using Verida's encryption protocols
-- Only conversation participants can decrypt and read messages
-- Each user's identity is verified through their DID
-- Messages are stored in user-controlled databases, ensuring data sovereignty
-
-### Implementation Details
-
-Key files for the chat system:
-
-- `app/lib/chat-message-service.ts`: Core service for chat operations
-- `app/chats/page.tsx`: Main chat page container
-- `app/chats/components/chat-interface.tsx`: Main chat UI orchestrator
-- `app/chats/components/chat-list.tsx`: Conversation list component
-- `app/chats/components/conversation-panel.tsx`: Individual conversation view
-- `app/lib/verida-client.ts`: Verida client configuration for blockchain interaction
-
 ## AI Twin System Architecture
 
 The AI Twin functionality allows users to create a digital representation of themselves stored securely on the Verida blockchain. This twin can interact with other users when the original user is offline, enhancing the dating experience.
@@ -615,14 +710,7 @@ AI Twin data is stored using the Verida Favourite schema with extensive metadata
       aiPersonality: string;
       aiConfidentiality: string[];
     }
-  },
-  
-  // Standard metadata
-  insertedAt: string;         // Creation timestamp
-  modifiedAt: string;         // Last modified timestamp
-  sourceApplication: string;  // App identifier
-  sourceId: string;           // Source record identifier
-  did: string;                // User's DID
+  }
 }
 ```
 
@@ -692,6 +780,9 @@ app/
 │   └── prompts/                  # AI prompt templates
 │       ├── ai-twin-prompts.ts    # AI twin personality prompts
 │       └── chat-suggestions-prompts.ts # Chat suggestion prompts
+├── services/
+│   ├── nft-service.ts            # NFT contract interaction service
+│   └── profile-metadata-service.ts # Metadata generation for NFTs
 ├── onboarding/                   # Onboarding flow components
 │   └── components/               # Onboarding step components
 │       ├── connect-wallet-step.tsx # Wallet connection step (Verida & Cheqd)
@@ -705,6 +796,13 @@ app/
 │       ├── preferences-step.tsx  # Interests and preferences collection
 │       ├── mint-nft-step.tsx     # NFT minting functionality
 │       └── success-step.tsx      # Profile creation completion
+├── user/                         # User profile components
+│   └── components/               # User profile components
+│       ├── profile-snapshot.tsx  # Profile overview display
+│       ├── nft-details.tsx       # NFT profile details display
+│       ├── did-settings.tsx      # DID management settings
+│       ├── off-chain-data.tsx    # Off-chain data management
+│       └── edit-profile-modal.tsx # Profile editing functionality
 ├── chats/                        # Chat interface components
 │   ├── page.tsx                  # Main chat page
 │   └── components/               # Chat UI components
@@ -713,9 +811,12 @@ app/
 │       └── conversation-panel.tsx # Individual conversation view with AI mode
 ├── chat-with-twin/               # AI Twin chat interface
 │   └── page.tsx                  # Dedicated page for chatting with your AI twin
+├── explore/                      # Match discovery components
+│   └── page.tsx                  # Main explore/discovery page
 ├── components/                   # Shared UI components
-│   └── ui/                       # UI component library
-│       └── heart-loader.tsx      # Heart-themed loading animation
+│   ├── ui/                       # UI component library
+│   │   └── heart-loader.tsx      # Heart-themed loading animation
+│   └── dating-navbar.tsx         # Main navigation component
 └── create-twin/                  # AI Twin creation components
     ├── page.tsx                  # Main AI Twin creation page
     └── components/               # AI Twin creation components
@@ -725,11 +826,12 @@ app/
 
 ### Centralized Configuration System
 
-The application uses a centralized configuration system to manage Verida and Cheqd related settings:
+The application uses a centralized configuration system to manage Verida, Cheqd, and NFT-related settings:
 
 1. **Configuration Files**: 
    - `app/lib/verida-config.ts` contains all Verida-related settings
    - `app/lib/cheqd-service.ts` contains Cheqd API configuration
+   - `app/services/nft-service.ts` contains NFT contract configuration
 
 2. **Key Configuration Parameters**:
    - `AUTH_TOKEN`: Authentication token for Verida REST API access
@@ -739,16 +841,15 @@ The application uses a centralized configuration system to manage Verida and Che
    - `APP_INFO`: Application metadata and versioning
    - `CHEQD_API_KEY`: Authentication token for Cheqd API access
    - `CHEQD_API_BASE_URL`: Base URL for Cheqd API endpoints
-
-### Adding New Features
-
-1. Update `verida-client.ts` if you need to add new database types or functions
-2. Extend `profile-service.ts` with new data operations
-3. Implement new UI components that utilize these services
+   - `NFT_CONTRACT_ADDRESS`: Address of the deployed NFT contract
+   - `UNICHAIN_RPC_URL`: RPC URL for the Unichain Sepolia network
 
 ## Resources
 
 - [Verida Documentation](https://developers.verida.network/protocol/client-sdk)
 - [Verida Client SDK](https://developers.verida.network/protocol/client-sdk/how-it-works)
 - [Verida Authentication](https://developers.verida.network/protocol/client-sdk/authentication)
+- [Cheqd Documentation](https://docs.cheqd.io/)
+- [NFT-MINTING.md](./NFT-MINTING.md) - Detailed guide on NFT profile minting
+- [CHEQD-NFT-CREATION.md](./CHEQD-NFT-CREATION.md) - Details on Cheqd DID integration
 

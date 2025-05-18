@@ -169,6 +169,11 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
     router.push('/user') // Redirect to profile page for now
   }
 
+  // Function to open transaction in explorer
+  const openTransactionInExplorer = () => {
+    window.open(`https://sepolia.uniscan.xyz/tx/${transactionHash}`, '_blank')
+  }
+
   return (
     <>
       <CardHeader className="text-center py-2">
@@ -367,7 +372,12 @@ export default function SuccessStep({ profileData, didId, nftTokenId, transactio
                       <span className="font-mono text-xs mr-1 bg-purple-50 px-2 py-0.5 rounded-lg">
                         {transactionHash.substring(0, 10)}...{transactionHash.substring(transactionHash.length - 6)}
                       </span>
-                      <Button variant="ghost" size="icon" className="h-5 w-5 bg-purple-100 hover:bg-purple-200">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-5 w-5 bg-purple-100 hover:bg-purple-200"
+                        onClick={openTransactionInExplorer}
+                      >
                         <ExternalLinkIcon className="h-3 w-3 text-purple-700" />
                       </Button>
                     </div>
