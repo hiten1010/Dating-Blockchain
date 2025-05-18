@@ -92,9 +92,8 @@ const NavigationWalletButton = () => {
       // Ensure the local state is updated
       setWalletAddress("")
       
-      // Make sure localStorage and sessionStorage are cleared
+      // Make sure localStorage is cleared
       localStorage.removeItem("walletAddress")
-      sessionStorage.removeItem("walletAddress")
       
       // Dispatch storage event to notify other components
       window.dispatchEvent(new StorageEvent('storage', {
@@ -115,7 +114,36 @@ const NavigationWalletButton = () => {
     if (storedAddress) {
       setWalletAddress(storedAddress)
     }
-  }, [])
+
+    // Set up listener for storage changes from other components
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "walletAddress") {
+        if (e.newValue) {
+          setWalletAddress(e.newValue)
+        } else {
+          setWalletAddress("")
+        }
+      }
+    }
+    
+    window.addEventListener("storage", handleStorageChange)
+    
+    // Also listen for localStorage changes in current window
+    const handleCurrentWindowStorageChange = () => {
+      const currentAddress = localStorage.getItem("walletAddress")
+      if (currentAddress !== walletAddress) {
+        setWalletAddress(currentAddress || "")
+      }
+    }
+    
+    // Poll for changes every second (for same-window updates)
+    const interval = setInterval(handleCurrentWindowStorageChange, 1000)
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [walletAddress])
 
   // For desktop
   const desktopButton = walletAddress ? (

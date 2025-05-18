@@ -38,18 +38,17 @@ export default function ConnectButton() {
       }
       
       if (!isLeapWalletInstalled()) {
-        throw new Error("Leap wallet extension not detected. Please install it to continue.");
+          // Open a new tab with the Leap wallet website if not installed
+        window.open("https://www.leapwallet.io/", "_blank")
+        throw new Error("Leap wallet not installed. Please install it and reload this page.")
       }
 
-      // Connect to Unichain Sepolia
       try {
-        console.log("Connecting to Leap wallet");
-        const address = await connectLeap();
-        console.log("Connected successfully:", address);
+        const address = await connectLeap()
         
         if (address) {
           setWalletAddress(address)
-          sessionStorage.setItem("walletAddress", address)
+          // Store address in local storage to persist across sessions
           localStorage.setItem("walletAddress", address)
           
           // Trigger storage event for current window
@@ -58,26 +57,29 @@ export default function ConnectButton() {
             newValue: address
           }))
         } else {
-          throw new Error("No accounts returned from the wallet.");
+          throw new Error("No accounts found in Leap wallet. Please create an account for Unichain Sepolia.")
         }
       } catch (error) {
-        console.warn("Connection failed:", error);
-        
         const errorMessage = error instanceof Error ? error.message : String(error);
         
         if (errorMessage.includes("No accounts") || errorMessage.includes("account for Unichain")) {
           setShowAccountCreationInfo(true);
-          throw new Error("No Unichain Sepolia account found in your Leap wallet. Please create an account first.");
-        } else if (errorMessage.includes("provider")) {
-          throw new Error("Could not connect to Leap wallet. Make sure it's installed and enabled for this site.");
+          throw new Error("No Unichain Sepolia account found. Please add this network to your wallet.");
         } else {
           throw error;
         }
       }
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Failed to connect wallet";
-      setError(errorMessage);
-      console.error(e);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to connect wallet.")
+      setShowAccountCreationInfo(true)
+      console.error("Wallet connection error:", err)
+      
+      // Auto-hide simple errors after 5 seconds, but keep account creation info visible
+      if (!showAccountCreationInfo) {
+        setTimeout(() => {
+          setShowAccountCreationInfo(false)
+        }, 5000)
+      }
     } finally {
       setIsConnecting(false)
     }
@@ -94,9 +96,8 @@ export default function ConnectButton() {
       // Ensure the local state is updated
       setWalletAddress("")
       
-      // Make sure localStorage and sessionStorage are cleared
+      // Make sure localStorage is cleared
       localStorage.removeItem("walletAddress")
-      sessionStorage.removeItem("walletAddress")
       
       // Dispatch storage event to notify other components
       window.dispatchEvent(new StorageEvent('storage', {
@@ -113,9 +114,40 @@ export default function ConnectButton() {
 
   /* Restore on refresh */
   useEffect(() => {
-    const stored = sessionStorage.getItem("walletAddress") || localStorage.getItem("walletAddress")
-    if (stored) setWalletAddress(stored)
-  }, [])
+    const storedAddress = localStorage.getItem("walletAddress")
+    if (storedAddress) {
+      setWalletAddress(storedAddress)
+    }
+
+    // Set up listener for storage changes from other components
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "walletAddress") {
+        if (e.newValue) {
+          setWalletAddress(e.newValue)
+        } else {
+          setWalletAddress("")
+        }
+      }
+    }
+    
+    window.addEventListener("storage", handleStorageChange)
+    
+    // Also listen for localStorage changes in current window
+    const handleCurrentWindowStorageChange = () => {
+      const currentAddress = localStorage.getItem("walletAddress")
+      if (currentAddress !== walletAddress) {
+        setWalletAddress(currentAddress || "")
+      }
+    }
+    
+    // Poll for changes every second (for same-window updates)
+    const interval = setInterval(handleCurrentWindowStorageChange, 1000)
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [walletAddress])
 
   /* ---------- UI ---------- */
   return (

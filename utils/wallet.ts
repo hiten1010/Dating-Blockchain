@@ -241,15 +241,14 @@ export const disconnectLeap = async (): Promise<void> => {
     }
     
     // Leap doesn't support wallet_disconnectSite method
-    // Instead, we'll clear local storage and session storage
+    // Instead, we'll clear local storage
     // This is a client-side disconnect that doesn't affect the wallet's connection state
     // but effectively disconnects the user from the app
     
     console.log("Disconnecting Leap wallet (client-side)");
     
-    // Clear any stored addresses
+    // Clear stored address from localStorage only
     localStorage.removeItem("walletAddress");
-    sessionStorage.removeItem("walletAddress");
     
     // Optionally try the standard Leap disconnect method (may not work for EVM chains)
     try {
