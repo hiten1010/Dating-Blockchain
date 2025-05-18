@@ -110,14 +110,3 @@ The AI behavior can be customized through your profile settings:
 - Voice message transcription and generation
 - Image recognition for context-aware responses to shared photos
 
-## Troubleshooting
-
-### Common Issues
-
-1. **AI not responding**: Check your internet connection and verify API keys are valid
-2. **Unexpected responses**: Try refreshing the conversation or toggling AI mode off and on
-3. **Loading errors**: Ensure your blockchain wallet is properly connected
-
-### Support
-
-For technical support, please contact our development team at dev@datablockchain.com 
