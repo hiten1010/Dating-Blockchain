@@ -82,6 +82,9 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
               age: profile.age || profileData.age,
               location: profile.location || profileData.location,
               bio: profile.bio || profileData.bio,
+              // Store _id and _rev for updates
+              _id: profile._id,
+              _rev: profile._rev
             });
             
             toast({
@@ -98,10 +101,11 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
       }
     };
     
-    if (clientInitialized && profileRestService) {
+    // Only fetch profile data once when the client is initialized and the service is available
+    if (clientInitialized && profileRestService && !profileData.displayName) {
       fetchProfileData();
     }
-  }, [clientInitialized, profileRestService, updateProfileData, profileData, toast]);
+  }, [clientInitialized, profileRestService]);
 
   const handleContinue = async () => {
     if (!profileData.displayName) {
@@ -124,165 +128,38 @@ export default function BasicInfoStep({ profileData, updateProfileData, onContin
       return
     }
     
-    // Save profile data to Verida
-    setIsSaving(true);
-    setError(null);
-    
+    // Get DID if possible to store in profile data
     try {
-      console.log("Starting profile save process...");
-      
-      // Get DID if possible
-      let did = "unknown";
-      try {
-        // Make sure client is initialized
-        if (!veridaClient.getClient()) {
-          console.log("Initializing Verida client before save...");
-          await veridaClient.init();
-        }
-        
-        // Ensure we're connected to Verida to get DID
-        if (!veridaClient.isConnected()) {
-          console.log("Connecting to Verida before save...");
-          const connected = await veridaClient.connect();
-          if (connected) {
-            did = veridaClient.getDid() || "unknown";
-            console.log("Connected successfully, got DID:", did);
-          } else {
-            console.warn("Failed to connect to Verida, will use 'unknown' DID");
-          }
-        } else {
-          did = veridaClient.getDid() || "unknown";
-          console.log("Already connected, using DID:", did);
-        }
-      } catch (didError) {
-        console.error("Error getting DID, will use 'unknown':", didError);
+      // Make sure client is initialized
+      if (!veridaClient.getClient()) {
+        console.log("Initializing Verida client...");
+        await veridaClient.init();
       }
       
-      if (did === "unknown") {
-        console.warn("Using 'unknown' as DID. This might cause issues with data retrieval later.");
-        toast({
-          title: "Authentication Notice",
-          description: "Unable to authenticate with Verida. Your data will be saved with a temporary identifier.",
-          duration: 5000,
-        });
-      }
-      
-      // Prepare profile data
-      const profileDataToSave = {
-        did: did,
-        displayName: profileData.displayName,
-        age: profileData.age,
-        location: profileData.location || "",
-        bio: profileData.bio || "",
-        // Ensure interests are initialized
-        interests: profileData.interests || [],
-        // Ensure relationshipGoals is initialized
-        relationshipGoals: profileData.relationshipGoals || "",
-        // Ensure primaryPhotoIndex is initialized
-        primaryPhotoIndex: profileData.primaryPhotoIndex || 0
-      };
-      
-      console.log("Saving profile data:", profileDataToSave);
-      
-      // Try to save using the REST service first
-      if (profileRestService) {
-        try {
-          console.log("Using REST API to save profile with standard schemas");
-          const savedProfile = await profileRestService.saveProfile(profileDataToSave);
-          console.log("Profile saved successfully via REST API:", savedProfile);
+      // Ensure we're connected to Verida to get DID
+      if (!veridaClient.isConnected()) {
+        console.log("Connecting to Verida...");
+        const connected = await veridaClient.connect();
+        if (connected) {
+          const did = veridaClient.getDid() || "unknown";
+          console.log("Connected successfully, got DID:", did);
           
-          toast({
-            title: "Profile Saved",
-            description: "Your profile has been securely stored using Verida.",
-            duration: 3000,
-          });
-          
-          // Continue to next step
-          onContinue();
-          return;
-        } catch (restError: any) {
-          // Check for specific REST API errors
-          const errorMessage = restError instanceof Error ? restError.message : String(restError);
-          
-          if (errorMessage.includes("Missing scope")) {
-            console.error("REST API error - Missing scope:", errorMessage);
-            setError("The app lacks permission to save your profile. The API token is missing required scopes.");
-            
-            toast({
-              variant: "destructive",
-              title: "Permission Error",
-              description: "Your profile cannot be saved due to missing API permissions. Please use the Continue anyway button to proceed.",
-              duration: 5000,
-            });
-          } else if (errorMessage.includes("Invalid permission")) {
-            console.error("REST API error - Invalid permission:", errorMessage);
-            setError("The app lacks permission to save your profile. Please use the Continue anyway button to proceed.");
-            
-            // REMOVED: Try falling back to SDK approach
-            // console.log("Attempting to fall back to SDK approach after REST API permission error");
-          } else {
-            console.error("REST API error:", errorMessage);
-            setError(`REST API error: ${errorMessage}. Please use the Continue anyway button to proceed.`);
-            
-            // REMOVED: Try falling back to SDK approach
-            // console.log("Attempting to fall back to SDK approach after REST API error");
-          }
+          // Just store the DID in the profile data for later use
+          updateProfileData({ did: did });
         }
       } else {
-        console.log("REST service not available");
-        setError("REST service not available. Please use the Continue anyway button to proceed.");
-        toast({
-          variant: "destructive",
-          title: "Service Unavailable",
-          description: "The profile service is not available. Please use the Continue anyway button to proceed.",
-          duration: 5000,
-        });
+        const did = veridaClient.getDid() || "unknown";
+        console.log("Already connected, using DID:", did);
+        
+        // Just store the DID in the profile data for later use
+        updateProfileData({ did: did });
       }
-      
-      // REMOVED SDK fallback approach - comment out the entire SDK fallback block
-      /* 
-      // Fall back to SDK approach - this may not work correctly with standard schemas
-      // without further modifications to ProfileService
-      try {
-        console.log("Using SDK to save profile");
-        const savedProfile = await ProfileService.saveProfile(profileDataToSave);
-        console.log("Profile saved successfully via SDK:", savedProfile);
-        
-        toast({
-          title: "Profile Saved (SDK)",
-          description: "Your profile has been stored using the Verida SDK.",
-          duration: 3000,
-        });
-        
-        // Continue to next step
-        onContinue();
-      } catch (sdkError) {
-        console.error("SDK approach also failed:", sdkError);
-        const errorMessage = sdkError instanceof Error ? sdkError.message : String(sdkError);
-        setError(`SDK save error: ${errorMessage}`);
-        
-        toast({
-          variant: "destructive",
-          title: "Profile Save Failed",
-          description: "Both REST API and SDK approaches failed to save your profile.",
-          duration: 3000,
-        });
-      }
-      */
-    } catch (err) {
-      console.error("Error in profile save process:", err);
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage);
-      
-      toast({
-        variant: "destructive",
-        title: "Profile Save Failed",
-        description: "An unexpected error occurred while saving your profile.",
-        duration: 3000,
-      });
-    } finally {
-      setIsSaving(false);
+    } catch (error) {
+      console.error("Error getting DID:", error);
     }
+    
+    // Continue to next step without saving
+    onContinue();
   }
 
   return (
